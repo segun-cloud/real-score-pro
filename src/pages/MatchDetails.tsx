@@ -223,7 +223,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
             </div>
             <div className="space-y-4">
               <div className="bg-gradient-primary/10 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Prediction: Home Win (65%)</h4>
+                <h4 className="font-medium mb-2">Prediction: Home Win (65%)</h4>
                 <p className="text-sm text-muted-foreground">
                   Based on recent form, head-to-head records, and statistical analysis, 
                   Real Madrid has a 65% chance of winning this match.
@@ -240,7 +240,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
                 </div>
                 <div>
                   <h5 className="font-medium mb-2">Predicted Score</h5>
-                  <p className="text-2xl font-bold text-primary">2-1</p>
+                  <p className="text-lg font-bold text-primary">2-1</p>
                 </div>
               </div>
             </div>
@@ -268,7 +268,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Match Details</h1>
+          <h1 className="text-base font-semibold">Match Details</h1>
         </div>
 
         {/* Match Header */}
@@ -285,40 +285,38 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
           
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <div className="text-lg font-semibold">{matchDetails.homeTeam}</div>
+              <div className="text-base font-semibold">{matchDetails.homeTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-3xl font-bold text-primary mt-2">{matchDetails.homeScore}</div>
+                <div className="text-xl font-bold text-primary mt-2">{matchDetails.homeScore}</div>
               )}
             </div>
             
             <div className="mx-4 text-center">
-              <div className="text-2xl font-bold text-muted-foreground">VS</div>
+              <div className="text-lg font-bold text-muted-foreground">VS</div>
               {matchDetails.status === 'live' && matchDetails.minute && (
                 <div className="text-sm text-live font-semibold mt-1">{matchDetails.minute}'</div>
               )}
             </div>
             
             <div className="text-center flex-1">
-              <div className="text-lg font-semibold">{matchDetails.awayTeam}</div>
+              <div className="text-base font-semibold">{matchDetails.awayTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-3xl font-bold text-primary mt-2">{matchDetails.awayScore}</div>
+                <div className="text-xl font-bold text-primary mt-2">{matchDetails.awayScore}</div>
               )}
             </div>
           </div>
         </Card>
 
         {/* Vertical Tab Navigation */}
-        <div className="flex gap-4">
-          <div className="w-1/3">
-            <TabNavigation
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              vertical={true}
-            />
-          </div>
+        <div className="space-y-4">
+          <TabNavigation
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            vertical={false}
+          />
           
-          <div className="flex-1">
+          <div>
             {renderTabContent()}
           </div>
         </div>

@@ -44,7 +44,7 @@ export const Profile = ({ onBack }: ProfileProps) => {
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">Profile</h1>
+          <h1 className="text-base font-semibold">Profile</h1>
         </div>
 
         <div className="space-y-4">
@@ -52,7 +52,7 @@ export const Profile = ({ onBack }: ProfileProps) => {
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-semibold">User Profile</h2>
+                <h2 className="text-lg font-semibold">User Profile</h2>
                 <p className="text-muted-foreground">Manage your account settings</p>
               </div>
               {userProfile.isPremium && (
@@ -66,12 +66,12 @@ export const Profile = ({ onBack }: ProfileProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-4 bg-gradient-coins/10 rounded-lg">
                 <Coins className="h-6 w-6 mx-auto mb-2 text-coins" />
-                <p className="text-2xl font-bold">{userProfile.coins.toLocaleString()}</p>
+                <p className="text-lg font-bold">{userProfile.coins.toLocaleString()}</p>
                 <p className="text-sm text-muted-foreground">Total Coins</p>
               </div>
               <div className="text-center p-4 bg-gradient-primary/10 rounded-lg">
                 <Crown className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <p className="text-2xl font-bold">{userProfile.isPremium ? 'Active' : 'Free'}</p>
+                <p className="text-lg font-bold">{userProfile.isPremium ? 'Active' : 'Free'}</p>
                 <p className="text-sm text-muted-foreground">Subscription</p>
               </div>
             </div>

@@ -20,7 +20,7 @@ export const Header = ({ coins, onMenuClick, onProfileClick }: HeaderProps) => {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
             RealScore
           </h1>
         </div>

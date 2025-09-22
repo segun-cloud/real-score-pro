@@ -65,7 +65,7 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
         
         <div className="text-right">
           {match.status === 'live' || match.status === 'finished' ? (
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold">
               <div>{match.homeScore ?? 0}</div>
               <div>{match.awayScore ?? 0}</div>
             </div>

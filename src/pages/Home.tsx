@@ -5,7 +5,7 @@ import { NativeAd } from "@/components/NativeAd";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, ArrowLeft } from "lucide-react";
 import { Match } from "@/types/sports";
 import { mockMatches, mockUserProfile } from "@/data/mockData";
 
@@ -61,6 +61,14 @@ export const Home = ({ onMatchClick, onProfileClick }: HomeProps) => {
       />
       
       <div className="p-4 space-y-4">
+        {/* Back Button */}
+        <div className="flex items-center gap-3 mb-4">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-base font-semibold">Sports</h2>
+        </div>
+        
         {/* Search and Filter */}
         <div className="space-y-3">
           <div className="relative">
@@ -92,7 +100,7 @@ export const Home = ({ onMatchClick, onProfileClick }: HomeProps) => {
         {/* Live Matches Section */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-lg font-semibold">Live Matches</h2>
+            <h2 className="text-base font-semibold">Live Matches</h2>
             <Badge variant="destructive" className="bg-live text-live-foreground animate-pulse">
               LIVE
             </Badge>
@@ -111,7 +119,7 @@ export const Home = ({ onMatchClick, onProfileClick }: HomeProps) => {
 
         {/* Upcoming Matches Section */}
         <div>
-          <h2 className="text-lg font-semibold mb-3">Upcoming Matches</h2>
+          <h2 className="text-base font-semibold mb-3">Upcoming Matches</h2>
           <div className="space-y-3">
             {filteredMatches
               .filter(match => match.status === 'scheduled')
@@ -126,7 +134,7 @@ export const Home = ({ onMatchClick, onProfileClick }: HomeProps) => {
 
         {/* Recent Results Section */}
         <div>
-          <h2 className="text-lg font-semibold mb-3">Recent Results</h2>
+          <h2 className="text-base font-semibold mb-3">Recent Results</h2>
           <div className="space-y-3">
             {filteredMatches
               .filter(match => match.status === 'finished')
