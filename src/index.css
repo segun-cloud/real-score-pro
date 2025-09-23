@@ -8,7 +8,7 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 248 250 252;
+    --background: 197 71 73; /* Sky blue background */
     --foreground: 15 23 42;
 
     --card: 255 255 255;
@@ -76,7 +76,7 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 15 23 42;
+    --background: 0 0 0; /* Pure black background */
     --foreground: 248 250 252;
 
     --card: 30 41 59;
@@ -144,7 +144,15 @@ All colors MUST be HSL.
     -webkit-tap-highlight-color: transparent;
   }
 
-  /* Custom scrollbar for webkit browsers */
+  /* Scrollbar utilities for horizontal scrolling */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   ::-webkit-scrollbar {
     width: 6px;
   }

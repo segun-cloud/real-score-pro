@@ -14,21 +14,45 @@ interface TabNavigationProps {
 }
 
 export const TabNavigation = ({ tabs, activeTab, onTabChange, vertical = false }: TabNavigationProps) => {
+  if (vertical) {
+    return (
+      <div className="w-full mb-4">
+        <div className="flex overflow-x-auto scrollbar-hide gap-2 p-1 bg-muted rounded-lg">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.id}
+              variant={activeTab === tab.id ? "default" : "ghost"}
+              onClick={() => onTabChange(tab.id)}
+              className={`flex-shrink-0 whitespace-nowrap text-xs px-3 py-2 ${
+                activeTab === tab.id 
+                  ? 'bg-primary text-primary-foreground shadow-soft' 
+                  : 'hover:bg-secondary'
+              }`}
+            >
+              {tab.icon && <span className="mr-1">{tab.icon}</span>}
+              <span>{tab.label}</span>
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
   return (
-    <div className={`${vertical ? 'flex flex-col space-y-1' : 'flex space-x-1'} p-1 bg-muted rounded-lg`}>
+    <div className="flex space-x-1 p-1 bg-muted rounded-lg">
       {tabs.map((tab) => (
         <Button
           key={tab.id}
           variant={activeTab === tab.id ? "default" : "ghost"}
           onClick={() => onTabChange(tab.id)}
-          className={`${vertical ? 'justify-start' : 'flex-1'} ${
+          className={`flex-1 ${
             activeTab === tab.id 
               ? 'bg-primary text-primary-foreground shadow-soft' 
               : 'hover:bg-secondary'
           }`}
         >
           {tab.icon && <span className="mr-2">{tab.icon}</span>}
-          <span className={vertical ? '' : 'text-xs sm:text-sm'}>{tab.label}</span>
+          <span className="text-xs sm:text-sm">{tab.label}</span>
         </Button>
       ))}
     </div>

@@ -247,11 +247,287 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
           </Card>
         );
 
-      default:
+      case 'commentary':
         return (
-          <Card className="p-4 text-center">
-            <p className="text-muted-foreground">Content for {activeTab} tab coming soon...</p>
-          </Card>
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Live Commentary</h3>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {matchDetails.commentary.map((comment, index) => (
+                <div key={index} className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                  <span className="text-xs font-mono bg-primary text-primary-foreground px-2 py-1 rounded">
+                    {comment.minute}'
+                  </span>
+                  <p className="text-xs flex-1">{comment.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 'lineups':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Team Lineups</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-3">
+                <h4 className="text-xs font-medium text-center">{matchDetails.homeTeam}</h4>
+                <div className="bg-emerald-50 dark:bg-emerald-950 p-3 rounded-lg">
+                  <div className="text-center text-xs font-mono mb-2">4-3-3</div>
+                  <div className="space-y-2">
+                    <div className="text-center"><span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">1</span> <span className="text-xs">Courtois</span></div>
+                    <div className="flex justify-between text-xs">
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">2</span> Carvajal</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">3</span> Militao</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">4</span> Alaba</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">5</span> Mendy</span>
+                    </div>
+                    <div className="flex justify-center gap-8 text-xs">
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">8</span> Kroos</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">14</span> Casemiro</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">10</span> Modric</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">20</span> Vinicius</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">9</span> Benzema</span>
+                      <span><span className="bg-primary text-primary-foreground px-1 rounded">7</span> Hazard</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-xs font-medium text-center">{matchDetails.awayTeam}</h4>
+                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
+                  <div className="text-center text-xs font-mono mb-2">4-3-3</div>
+                  <div className="space-y-2">
+                    <div className="text-center"><span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">1</span> <span className="text-xs">ter Stegen</span></div>
+                    <div className="flex justify-between text-xs">
+                      <span><span className="bg-blue-600 text-white px-1 rounded">2</span> Dest</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">3</span> Pique</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">4</span> Araujo</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">18</span> Alba</span>
+                    </div>
+                    <div className="flex justify-center gap-8 text-xs">
+                      <span><span className="bg-blue-600 text-white px-1 rounded">21</span> de Jong</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">5</span> Busquets</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">16</span> Pedri</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span><span className="bg-blue-600 text-white px-1 rounded">22</span> Raphinha</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">9</span> Lewandowski</span>
+                      <span><span className="bg-blue-600 text-white px-1 rounded">7</span> Dembele</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'standings':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">{matchDetails.league} Standings</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2 px-1">#</th>
+                    <th className="text-left py-2 px-2">Team</th>
+                    <th className="text-center py-2 px-1">P</th>
+                    <th className="text-center py-2 px-1">W</th>
+                    <th className="text-center py-2 px-1">D</th>
+                    <th className="text-center py-2 px-1">L</th>
+                    <th className="text-center py-2 px-1">GF</th>
+                    <th className="text-center py-2 px-1">GA</th>
+                    <th className="text-center py-2 px-1">GD</th>
+                    <th className="text-center py-2 px-1">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { pos: 1, team: "Real Madrid", p: 20, w: 15, d: 3, l: 2, gf: 45, ga: 18, pts: 48 },
+                    { pos: 2, team: "Barcelona", p: 20, w: 14, d: 4, l: 2, gf: 42, ga: 15, pts: 46 },
+                    { pos: 3, team: "Atletico Madrid", p: 20, w: 12, d: 5, l: 3, gf: 38, ga: 22, pts: 41 },
+                    { pos: 4, team: "Real Sociedad", p: 20, w: 11, d: 4, l: 5, gf: 35, ga: 25, pts: 37 },
+                    { pos: 5, team: "Villarreal", p: 20, w: 10, d: 4, l: 6, gf: 32, ga: 28, pts: 34 }
+                  ].map((team) => (
+                    <tr key={team.pos} className={`border-b hover:bg-muted/50 ${
+                      team.team === matchDetails.homeTeam || team.team === matchDetails.awayTeam 
+                        ? 'bg-primary/10' : ''
+                    }`}>
+                      <td className="py-2 px-1 font-medium">{team.pos}</td>
+                      <td className="py-2 px-2 font-medium">{team.team}</td>
+                      <td className="text-center py-2 px-1">{team.p}</td>
+                      <td className="text-center py-2 px-1">{team.w}</td>
+                      <td className="text-center py-2 px-1">{team.d}</td>
+                      <td className="text-center py-2 px-1">{team.l}</td>
+                      <td className="text-center py-2 px-1">{team.gf}</td>
+                      <td className="text-center py-2 px-1">{team.ga}</td>
+                      <td className="text-center py-2 px-1">{team.gf - team.ga}</td>
+                      <td className="text-center py-2 px-1 font-bold">{team.pts}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+
+      case 'fixtures':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Recent & Upcoming Fixtures</h3>
+            <div className="space-y-3">
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{matchDetails.homeTeam} Fixtures</h4>
+                <div className="space-y-2">
+                  {[
+                    { date: "Jan 12", opponent: "vs Sevilla", result: "W 2-1", status: "finished" },
+                    { date: "Jan 15", opponent: "vs Barcelona", result: "2-1", status: "live" },
+                    { date: "Jan 18", opponent: "@ Valencia", result: "-", status: "scheduled" },
+                    { date: "Jan 22", opponent: "vs Atletico", result: "-", status: "scheduled" }
+                  ].map((fixture, i) => (
+                    <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded text-xs">
+                      <span className="text-muted-foreground">{fixture.date}</span>
+                      <span className="flex-1 text-center">{fixture.opponent}</span>
+                      <span className={`font-medium ${
+                        fixture.status === 'finished' 
+                          ? fixture.result.startsWith('W') ? 'text-green-600' : 'text-red-600'
+                          : fixture.status === 'live' ? 'text-primary' : 'text-muted-foreground'
+                      }`}>
+                        {fixture.result}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-medium text-muted-foreground mb-2">{matchDetails.awayTeam} Fixtures</h4>
+                <div className="space-y-2">
+                  {[
+                    { date: "Jan 12", opponent: "vs Athletic", result: "W 3-0", status: "finished" },
+                    { date: "Jan 15", opponent: "@ Real Madrid", result: "1-2", status: "live" },
+                    { date: "Jan 19", opponent: "vs Getafe", result: "-", status: "scheduled" },
+                    { date: "Jan 23", opponent: "@ Real Sociedad", result: "-", status: "scheduled" }
+                  ].map((fixture, i) => (
+                    <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded text-xs">
+                      <span className="text-muted-foreground">{fixture.date}</span>
+                      <span className="flex-1 text-center">{fixture.opponent}</span>
+                      <span className={`font-medium ${
+                        fixture.status === 'finished' 
+                          ? fixture.result.startsWith('W') ? 'text-green-600' : 'text-red-600'
+                          : fixture.status === 'live' ? 'text-primary' : 'text-muted-foreground'
+                      }`}>
+                        {fixture.result}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'media':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Match Media</h3>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-xs font-medium mb-2">Match Highlights</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    "Benzema Goal (23')",
+                    "Lewandowski Goal (67')",
+                    "Vinicius Goal (78')",
+                    "Best Saves"
+                  ].map((highlight, i) => (
+                    <div key={i} className="bg-muted p-3 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors">
+                      <div className="aspect-video bg-primary/20 rounded mb-2 flex items-center justify-center">
+                        <span className="text-xs text-muted-foreground">▶️ Play</span>
+                      </div>
+                      <p className="text-xs font-medium">{highlight}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="text-xs font-medium mb-2">Match Photos</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {Array.from({length: 6}).map((_, i) => (
+                    <div key={i} className="aspect-square bg-muted rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
+                      <span className="text-xs text-muted-foreground">📷</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'tracker':
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-semibold">Live Tracker</h3>
+            <div className="space-y-4">
+              <div className="bg-emerald-100 dark:bg-emerald-900 rounded-lg p-4 relative">
+                <div className="text-center text-xs font-medium mb-2">Football Pitch</div>
+                <div className="relative bg-green-500 rounded-lg h-48 flex flex-col">
+                  {/* Goal areas */}
+                  <div className="h-6 bg-green-400 mx-auto w-16 rounded-b"></div>
+                  <div className="flex-1 flex items-center justify-center relative">
+                    {/* Center circle */}
+                    <div className="w-16 h-16 border-2 border-white rounded-full flex items-center justify-center">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
+                    {/* Players */}
+                    <div className="absolute top-2 left-8 w-2 h-2 bg-red-500 rounded-full" title="Benzema"></div>
+                    <div className="absolute top-6 right-12 w-2 h-2 bg-blue-500 rounded-full" title="Lewandowski"></div>
+                    <div className="absolute bottom-4 left-4 w-2 h-2 bg-red-500 rounded-full" title="Vinicius"></div>
+                    {/* Ball */}
+                    <div className="absolute top-8 left-12 w-1 h-1 bg-white rounded-full animate-pulse"></div>
+                  </div>
+                  <div className="h-6 bg-green-400 mx-auto w-16 rounded-t"></div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium">{matchDetails.homeTeam}</h4>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>Ball Possession</span>
+                      <span>{matchDetails.statistics.possession?.home}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Attacks</span>
+                      <span>47</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dangerous Attacks</span>
+                      <span>23</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-xs font-medium">{matchDetails.awayTeam}</h4>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span>Ball Possession</span>
+                      <span>{matchDetails.statistics.possession?.away}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Attacks</span>
+                      <span>42</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Dangerous Attacks</span>
+                      <span>19</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         );
     }
   };
@@ -268,7 +544,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-base font-semibold">Match Details</h1>
+          <h1 className="text-sm font-semibold">Match Details</h1>
         </div>
 
         {/* Match Header */}
@@ -285,23 +561,23 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
           
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <div className="text-base font-semibold">{matchDetails.homeTeam}</div>
+              <div className="text-sm font-semibold">{matchDetails.homeTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-xl font-bold text-primary mt-2">{matchDetails.homeScore}</div>
+                <div className="text-lg font-bold text-primary mt-2">{matchDetails.homeScore}</div>
               )}
             </div>
             
             <div className="mx-4 text-center">
-              <div className="text-lg font-bold text-muted-foreground">VS</div>
+              <div className="text-base font-bold text-muted-foreground">VS</div>
               {matchDetails.status === 'live' && matchDetails.minute && (
-                <div className="text-sm text-live font-semibold mt-1">{matchDetails.minute}'</div>
+                <div className="text-xs text-live font-semibold mt-1">{matchDetails.minute}'</div>
               )}
             </div>
             
             <div className="text-center flex-1">
-              <div className="text-base font-semibold">{matchDetails.awayTeam}</div>
+              <div className="text-sm font-semibold">{matchDetails.awayTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-xl font-bold text-primary mt-2">{matchDetails.awayScore}</div>
+                <div className="text-lg font-bold text-primary mt-2">{matchDetails.awayScore}</div>
               )}
             </div>
           </div>
@@ -309,12 +585,12 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
 
         {/* Vertical Tab Navigation */}
         <div className="space-y-4">
-          <TabNavigation
-            tabs={tabs}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            vertical={false}
-          />
+        <TabNavigation
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          vertical={true}
+        />
           
           <div>
             {renderTabContent()}
