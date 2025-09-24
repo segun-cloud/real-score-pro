@@ -2,35 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 197 71 73; /* Sky blue background */
-    --foreground: 15 23 42;
+    --background: 135 206 235; /* Sky blue for light mode */
+    --foreground: 0 0 0; /* Black text */
 
-    --card: 255 255 255;
-    --card-foreground: 15 23 42;
+    --card: 255 255 255; /* Clean white cards */
+    --card-foreground: 0 0 0; /* Black text on cards */
 
     --popover: 255 255 255;
-    --popover-foreground: 15 23 42;
+    --popover-foreground: 0 0 0;
 
-    --primary: 16 185 129;
-    --primary-foreground: 248 250 252;
+    --primary: 59 130 246; /* Clean blue */
+    --primary-foreground: 255 255 255;
 
-    --secondary: 241 245 249;
-    --secondary-foreground: 51 65 85;
+    --secondary: 241 245 249; /* Very light gray */
+    --secondary-foreground: 15 23 42;
 
-    --muted: 248 250 252;
+    --muted: 248 250 252; /* Subtle gray */
     --muted-foreground: 100 116 139;
 
-    --accent: 34 197 94;
-    --accent-foreground: 255 255 255;
+    --accent: 241 245 249;
+    --accent-foreground: 15 23 42;
 
     --destructive: 239 68 68;
-    --destructive-foreground: 248 250 252;
+    --destructive-foreground: 255 255 255;
 
     --warning: 245 158 11;
     --warning-foreground: 255 255 255;
@@ -40,7 +38,7 @@ All colors MUST be HSL.
 
     --border: 226 232 240;
     --input: 226 232 240;
-    --ring: 16 185 129;
+    --ring: 59 130 246;
 
     --coins: 245 158 11;
     --coins-foreground: 255 255 255;
@@ -48,81 +46,87 @@ All colors MUST be HSL.
     --live: 239 68 68;
     --live-foreground: 255 255 255;
 
-    --gradient-primary: linear-gradient(135deg, hsl(16 185 129), hsl(34 197 94));
-    --gradient-accent: linear-gradient(135deg, hsl(34 197 94), hsl(142 71 45));
-    --gradient-coins: linear-gradient(135deg, hsl(245 158 11), hsl(41 100 56));
+    --sidebar-background: 255 255 255;
+    --sidebar-foreground: 15 23 42;
+    --sidebar-primary: 59 130 246;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 241 245 249;
+    --sidebar-accent-foreground: 15 23 42;
+    --sidebar-border: 226 232 240;
+    --sidebar-ring: 59 130 246;
 
-    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-medium: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-strong: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --radius: 0.5rem;
 
-    --radius: 0.75rem;
+    /* Simple gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(214 100 75), hsl(214 100 65));
+    --gradient-accent: linear-gradient(135deg, hsl(220 13 91), hsl(220 13 85));
+    --gradient-coins: linear-gradient(135deg, hsl(38 92 50), hsl(45 93 47));
 
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Clean shadows */
+    --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 
   .dark {
-    --background: 0 0 0; /* Pure black background */
-    --foreground: 248 250 252;
+    --background: 0 0 0; /* Pure black for dark mode */
+    --foreground: 255 255 255; /* White text */
 
-    --card: 30 41 59;
-    --card-foreground: 248 250 252;
+    --card: 24 24 27; /* Dark gray cards */
+    --card-foreground: 255 255 255; /* White text on cards */
 
-    --popover: 30 41 59;
-    --popover-foreground: 248 250 252;
+    --popover: 24 24 27;
+    --popover-foreground: 255 255 255;
 
-    --primary: 16 185 129;
-    --primary-foreground: 15 23 42;
+    --primary: 59 130 246; /* Same blue */
+    --primary-foreground: 255 255 255;
 
-    --secondary: 51 65 85;
-    --secondary-foreground: 226 232 240;
+    --secondary: 39 39 42; /* Dark gray */
+    --secondary-foreground: 244 244 245;
 
-    --muted: 51 65 85;
-    --muted-foreground: 148 163 184;
+    --muted: 39 39 42;
+    --muted-foreground: 161 161 170;
 
-    --accent: 34 197 94;
-    --accent-foreground: 15 23 42;
+    --accent: 39 39 42;
+    --accent-foreground: 244 244 245;
 
     --destructive: 239 68 68;
-    --destructive-foreground: 248 250 252;
+    --destructive-foreground: 255 255 255;
 
     --warning: 245 158 11;
-    --warning-foreground: 255 255 255;
+    --warning-foreground: 0 0 0;
 
     --success: 34 197 94;
-    --success-foreground: 255 255 255;
+    --success-foreground: 0 0 0;
 
-    --border: 51 65 85;
-    --input: 51 65 85;
-    --ring: 16 185 129;
+    --border: 39 39 42;
+    --input: 39 39 42;
+    --ring: 59 130 246;
 
     --coins: 245 158 11;
-    --coins-foreground: 255 255 255;
+    --coins-foreground: 0 0 0;
 
     --live: 239 68 68;
     --live-foreground: 255 255 255;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    --sidebar-background: 24 24 27;
+    --sidebar-foreground: 244 244 245;
+    --sidebar-primary: 59 130 246;
+    --sidebar-primary-foreground: 255 255 255;
+    --sidebar-accent: 39 39 42;
+    --sidebar-accent-foreground: 244 244 245;
+    --sidebar-border: 39 39 42;
+    --sidebar-ring: 59 130 246;
+
+    /* Dark gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(214 100 65), hsl(214 100 55));
+    --gradient-accent: linear-gradient(135deg, hsl(240 4 16), hsl(240 6 10));
+    --gradient-coins: linear-gradient(135deg, hsl(38 92 50), hsl(45 93 47));
+
+    /* Dark shadows */
+    --shadow-soft: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-strong: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
   }
 }
 

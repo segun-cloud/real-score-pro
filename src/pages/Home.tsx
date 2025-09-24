@@ -12,12 +12,12 @@ import { mockMatches, mockUserProfile } from "@/data/mockData";
 interface HomeProps {
   onMatchClick: (match: Match) => void;
   onProfileClick: () => void;
+  selectedSport: string;
 }
 
-export const Home = ({ onMatchClick, onProfileClick }: HomeProps) => {
+export const Home = ({ onMatchClick, onProfileClick, selectedSport }: HomeProps) => {
   const [matches, setMatches] = useState<Match[]>(mockMatches);
   const [filteredMatches, setFilteredMatches] = useState<Match[]>(mockMatches);
-  const [selectedSport, setSelectedSport] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [userProfile] = useState(mockUserProfile);
 
@@ -81,18 +81,16 @@ export const Home = ({ onMatchClick, onProfileClick }: HomeProps) => {
             />
           </div>
           
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {sports.map((sport) => (
-              <Button
+              <Badge
                 key={sport}
                 variant={selectedSport === sport ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedSport(sport)}
-                className="flex items-center gap-2 whitespace-nowrap"
+                className="flex items-center gap-2 whitespace-nowrap px-3 py-2"
               >
                 <span>{getSportEmoji(sport)}</span>
                 <span className="capitalize">{sport}</span>
-              </Button>
+              </Badge>
             ))}
           </div>
         </div>

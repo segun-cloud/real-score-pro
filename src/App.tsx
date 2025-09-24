@@ -7,6 +7,8 @@ import { Home } from "./pages/Home";
 import { MatchDetails } from "./pages/MatchDetails";
 import { Profile } from "./pages/Profile";
 import { Match } from "./types/sports";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "./components/AppSidebar";
 
 const queryClient = new QueryClient();
 
@@ -15,6 +17,7 @@ type Screen = 'home' | 'match-details' | 'profile';
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [selectedSport, setSelectedSport] = useState<string>('all');
 
   const handleMatchClick = (match: Match) => {
     setSelectedMatchId(match.id);
@@ -30,6 +33,10 @@ const App = () => {
     setCurrentScreen('profile');
   };
 
+  const handleSportChange = (sport: string) => {
+    setSelectedSport(sport);
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
@@ -37,6 +44,7 @@ const App = () => {
           <Home 
             onMatchClick={handleMatchClick}
             onProfileClick={handleProfileClick}
+            selectedSport={selectedSport}
           />
         );
       case 'match-details':
@@ -50,6 +58,7 @@ const App = () => {
           <Home 
             onMatchClick={handleMatchClick}
             onProfileClick={handleProfileClick}
+            selectedSport={selectedSport}
           />
         );
       case 'profile':
@@ -59,6 +68,7 @@ const App = () => {
           <Home 
             onMatchClick={handleMatchClick}
             onProfileClick={handleProfileClick}
+            selectedSport={selectedSport}
           />
         );
     }
@@ -69,9 +79,20 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <div className="min-h-screen bg-background">
-          {renderScreen()}
-        </div>
+        <SidebarProvider>
+          <div className="min-h-screen w-full flex bg-background">
+            <AppSidebar 
+              selectedSport={selectedSport} 
+              onSportChange={handleSportChange}
+            />
+            <main className="flex-1">
+              <div className="h-12 flex items-center border-b bg-card px-4">
+                <SidebarTrigger />
+              </div>
+              {renderScreen()}
+            </main>
+          </div>
+        </SidebarProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
