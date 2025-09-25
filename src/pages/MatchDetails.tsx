@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { MatchDetails as MatchDetailsType } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { SportTracker } from "@/components/SportTracker";
 
 interface MatchDetailsProps {
   matchId: string;
@@ -467,78 +468,26 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
 
       case 'tracker':
         return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Live Tracker</h3>
-            <div className="space-y-4">
-              <div className="bg-emerald-100 dark:bg-emerald-900 rounded-lg p-4 relative">
-                <div className="text-center text-xs font-medium mb-2">Football Pitch</div>
-                <div className="relative bg-green-500 rounded-lg h-48 flex flex-col">
-                  {/* Goal areas */}
-                  <div className="h-6 bg-green-400 mx-auto w-16 rounded-b"></div>
-                  <div className="flex-1 flex items-center justify-center relative">
-                    {/* Center circle */}
-                    <div className="w-16 h-16 border-2 border-white rounded-full flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                    {/* Players */}
-                    <div className="absolute top-2 left-8 w-2 h-2 bg-red-500 rounded-full" title="Benzema"></div>
-                    <div className="absolute top-6 right-12 w-2 h-2 bg-blue-500 rounded-full" title="Lewandowski"></div>
-                    <div className="absolute bottom-4 left-4 w-2 h-2 bg-red-500 rounded-full" title="Vinicius"></div>
-                    {/* Ball */}
-                    <div className="absolute top-8 left-12 w-1 h-1 bg-white rounded-full animate-pulse"></div>
-                  </div>
-                  <div className="h-6 bg-green-400 mx-auto w-16 rounded-t"></div>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium">{matchDetails.homeTeam}</h4>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span>Ball Possession</span>
-                      <span>{matchDetails.statistics.possession?.home}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Attacks</span>
-                      <span>47</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Dangerous Attacks</span>
-                      <span>23</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h4 className="text-xs font-medium">{matchDetails.awayTeam}</h4>
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span>Ball Possession</span>
-                      <span>{matchDetails.statistics.possession?.away}%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Attacks</span>
-                      <span>42</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Dangerous Attacks</span>
-                      <span>19</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <SportTracker
+            match={{
+              id: matchDetails.id,
+              homeTeam: matchDetails.homeTeam,
+              awayTeam: matchDetails.awayTeam,
+              homeScore: matchDetails.homeScore,
+              awayScore: matchDetails.awayScore,
+              status: matchDetails.status,
+              startTime: matchDetails.startTime,
+              sport: matchDetails.sport,
+              league: matchDetails.league,
+              minute: matchDetails.minute,
+            }}
+          />
         );
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Header 
-        coins={userProfile.coins} 
-        onProfileClick={onProfileClick}
-      />
-      
       <div className="p-4">
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="icon" onClick={onBack}>

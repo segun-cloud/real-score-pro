@@ -1,27 +1,21 @@
 import { useState, useEffect } from "react";
-import { Header } from "@/components/Header";
 import { MatchCard } from "@/components/MatchCard";
 import { NativeAd } from "@/components/NativeAd";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, ArrowLeft } from "lucide-react";
+import { Search } from "lucide-react";
 import { Match } from "@/types/sports";
 import { mockMatches, mockUserProfile } from "@/data/mockData";
 
 interface HomeProps {
   onMatchClick: (match: Match) => void;
-  onProfileClick: () => void;
   selectedSport: string;
 }
 
-export const Home = ({ onMatchClick, onProfileClick, selectedSport }: HomeProps) => {
+export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const [matches, setMatches] = useState<Match[]>(mockMatches);
   const [filteredMatches, setFilteredMatches] = useState<Match[]>(mockMatches);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userProfile] = useState(mockUserProfile);
-
-  const sports = ["all", "football", "basketball", "tennis", "baseball", "boxing"];
 
   useEffect(() => {
     let filtered = matches;
@@ -54,44 +48,19 @@ export const Home = ({ onMatchClick, onProfileClick, selectedSport }: HomeProps)
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header 
-        coins={userProfile.coins} 
-        onProfileClick={onProfileClick}
-      />
-      
-      <div className="p-4 space-y-4">
-        {/* Back Button */}
-        <div className="flex items-center gap-3 mb-4">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h2 className="text-base font-semibold">Sports</h2>
-        </div>
-        
-        {/* Search and Filter */}
-        <div className="space-y-3">
+    <div className="space-y-6">
+      <div className="px-4">
+        {/* Search */}
+        <div className="mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search teams, leagues..."
+              type="text"
+              placeholder="Search matches..."
+              className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
             />
-          </div>
-          
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {sports.map((sport) => (
-              <Badge
-                key={sport}
-                variant={selectedSport === sport ? "default" : "outline"}
-                className="flex items-center gap-2 whitespace-nowrap px-3 py-2"
-              >
-                <span>{getSportEmoji(sport)}</span>
-                <span className="capitalize">{sport}</span>
-              </Badge>
-            ))}
           </div>
         </div>
 

@@ -43,7 +43,6 @@ const App = () => {
         return (
           <Home 
             onMatchClick={handleMatchClick}
-            onProfileClick={handleProfileClick}
             selectedSport={selectedSport}
           />
         );
@@ -57,7 +56,6 @@ const App = () => {
         ) : (
           <Home 
             onMatchClick={handleMatchClick}
-            onProfileClick={handleProfileClick}
             selectedSport={selectedSport}
           />
         );
@@ -67,7 +65,6 @@ const App = () => {
         return (
           <Home 
             onMatchClick={handleMatchClick}
-            onProfileClick={handleProfileClick}
             selectedSport={selectedSport}
           />
         );
