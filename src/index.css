@@ -6,54 +6,54 @@
 
 @layer base {
   :root {
-    --background: 135 206 235; /* Sky blue for light mode */
-    --foreground: 0 0 0; /* Black text */
+    --background: 197 71% 73%; /* Sky blue for light mode */
+    --foreground: 0 0% 0%; /* Black text */
 
-    --card: 255 255 255; /* Clean white cards */
-    --card-foreground: 0 0 0; /* Black text on cards */
+    --card: 0 0% 100%; /* Clean white cards */
+    --card-foreground: 0 0% 0%; /* Black text on cards */
 
-    --popover: 255 255 255;
-    --popover-foreground: 0 0 0;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
 
-    --primary: 59 130 246; /* Clean blue */
-    --primary-foreground: 255 255 255;
+    --primary: 221 83% 53%; /* Clean blue */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 241 245 249; /* Very light gray */
-    --secondary-foreground: 15 23 42;
+    --secondary: 210 40% 96%; /* Very light gray */
+    --secondary-foreground: 215 25% 27%;
 
-    --muted: 248 250 252; /* Subtle gray */
-    --muted-foreground: 100 116 139;
+    --muted: 214 32% 91%; /* Subtle gray */
+    --muted-foreground: 215 16% 47%;
 
-    --accent: 241 245 249;
-    --accent-foreground: 15 23 42;
+    --accent: 210 40% 96%;
+    --accent-foreground: 215 25% 27%;
 
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --warning: 245 158 11;
-    --warning-foreground: 255 255 255;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --success: 34 197 94;
-    --success-foreground: 255 255 255;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
 
-    --border: 226 232 240;
-    --input: 226 232 240;
-    --ring: 59 130 246;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 221 83% 53%;
 
-    --coins: 245 158 11;
-    --coins-foreground: 255 255 255;
+    --coins: 38 92% 50%;
+    --coins-foreground: 0 0% 100%;
 
-    --live: 239 68 68;
-    --live-foreground: 255 255 255;
+    --live: 0 84% 60%;
+    --live-foreground: 0 0% 100%;
 
-    --sidebar-background: 255 255 255;
-    --sidebar-foreground: 15 23 42;
-    --sidebar-primary: 59 130 246;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 241 245 249;
-    --sidebar-accent-foreground: 15 23 42;
-    --sidebar-border: 226 232 240;
-    --sidebar-ring: 59 130 246;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 215 25% 27%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 221 83% 53%;
 
     --radius: 0.5rem;
 
@@ -69,54 +69,54 @@
   }
 
   .dark {
-    --background: 0 0 0; /* Pure black for dark mode */
-    --foreground: 255 255 255; /* White text */
+    --background: 0 0% 0%; /* Pure black for dark mode */
+    --foreground: 0 0% 100%; /* White text */
 
-    --card: 24 24 27; /* Dark gray cards */
-    --card-foreground: 255 255 255; /* White text on cards */
+    --card: 240 10% 9%; /* Dark gray cards */
+    --card-foreground: 0 0% 100%; /* White text on cards */
 
-    --popover: 24 24 27;
-    --popover-foreground: 255 255 255;
+    --popover: 240 10% 9%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 59 130 246; /* Same blue */
-    --primary-foreground: 255 255 255;
+    --primary: 221 83% 53%; /* Same blue */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 39 39 42; /* Dark gray */
-    --secondary-foreground: 244 244 245;
+    --secondary: 240 6% 16%; /* Dark gray */
+    --secondary-foreground: 240 5% 96%;
 
-    --muted: 39 39 42;
-    --muted-foreground: 161 161 170;
+    --muted: 240 6% 16%;
+    --muted-foreground: 240 4% 66%;
 
-    --accent: 39 39 42;
-    --accent-foreground: 244 244 245;
+    --accent: 240 6% 16%;
+    --accent-foreground: 240 5% 96%;
 
-    --destructive: 239 68 68;
-    --destructive-foreground: 255 255 255;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --warning: 245 158 11;
-    --warning-foreground: 0 0 0;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
 
-    --success: 34 197 94;
-    --success-foreground: 0 0 0;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 0%;
 
-    --border: 39 39 42;
-    --input: 39 39 42;
-    --ring: 59 130 246;
+    --border: 240 6% 16%;
+    --input: 240 6% 16%;
+    --ring: 221 83% 53%;
 
-    --coins: 245 158 11;
-    --coins-foreground: 0 0 0;
+    --coins: 38 92% 50%;
+    --coins-foreground: 0 0% 0%;
 
-    --live: 239 68 68;
-    --live-foreground: 255 255 255;
+    --live: 0 84% 60%;
+    --live-foreground: 0 0% 100%;
 
-    --sidebar-background: 24 24 27;
-    --sidebar-foreground: 244 244 245;
-    --sidebar-primary: 59 130 246;
-    --sidebar-primary-foreground: 255 255 255;
-    --sidebar-accent: 39 39 42;
-    --sidebar-accent-foreground: 244 244 245;
-    --sidebar-border: 39 39 42;
-    --sidebar-ring: 59 130 246;
+    --sidebar-background: 240 10% 9%;
+    --sidebar-foreground: 240 5% 96%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 6% 16%;
+    --sidebar-accent-foreground: 240 5% 96%;
+    --sidebar-border: 240 6% 16%;
+    --sidebar-ring: 221 83% 53%;
 
     /* Dark gradients */
     --gradient-primary: linear-gradient(135deg, hsl(214 100 65), hsl(214 100 55));
