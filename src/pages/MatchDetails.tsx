@@ -534,19 +534,21 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
         </Card>
       </div>
 
-      {/* Scrollable Tab Navigation */}
-      <div className="flex-shrink-0 px-4 py-2 bg-background/95 backdrop-blur-sm border-b">
-        <TabNavigation
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          vertical={true}
-        />
-      </div>
-      
-      {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {renderTabContent()}
+      {/* Main area with vertical tabs + content */}
+      <div className="flex-1 min-h-0 px-4 py-3">
+        <div className="h-full min-h-0 flex gap-3">
+          <aside className="w-36 sm:w-44 lg:w-56 shrink-0 overflow-y-auto">
+            <TabNavigation
+              tabs={tabs}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              vertical={true}
+            />
+          </aside>
+          <main className="flex-1 overflow-y-auto">
+            {renderTabContent()}
+          </main>
+        </div>
       </div>
     </div>
   );

@@ -16,21 +16,21 @@ interface TabNavigationProps {
 export const TabNavigation = ({ tabs, activeTab, onTabChange, vertical = false }: TabNavigationProps) => {
   if (vertical) {
     return (
-      <div className="w-full mb-4">
-        <div className="flex overflow-x-auto scrollbar-hide gap-2 p-1 bg-muted rounded-lg">
+      <div className="h-full">
+        <div className="flex flex-col gap-2 p-1 bg-muted rounded-lg overflow-y-auto max-h-full">
           {tabs.map((tab) => (
             <Button
               key={tab.id}
               variant={activeTab === tab.id ? "default" : "ghost"}
               onClick={() => onTabChange(tab.id)}
-              className={`flex-shrink-0 whitespace-nowrap text-xs px-3 py-2 ${
-                activeTab === tab.id 
-                  ? 'bg-primary text-primary-foreground shadow-soft' 
-                  : 'hover:bg-secondary'
+              className={`justify-start w-full text-xs px-3 py-2 ${
+                activeTab === tab.id
+                  ? "bg-primary text-primary-foreground shadow-soft"
+                  : "hover:bg-secondary"
               }`}
             >
-              {tab.icon && <span className="mr-1">{tab.icon}</span>}
-              <span>{tab.label}</span>
+              {tab.icon && <span className="mr-2">{tab.icon}</span>}
+              <span className="truncate">{tab.label}</span>
             </Button>
           ))}
         </div>
