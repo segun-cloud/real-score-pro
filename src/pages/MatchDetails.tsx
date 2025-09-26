@@ -89,14 +89,14 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
     switch (activeTab) {
       case "details":
         return (
-          <div className="space-y-4">
-            <Card className="p-4">
-              <h3 className="font-semibold mb-3">Match Events</h3>
+          <div className="space-y-3">
+            <Card className="p-3">
+              <h3 className="font-semibold mb-2 text-sm">Match Events</h3>
               <div className="space-y-2">
                 {matchDetails.events.map((event, index) => (
-                  <div key={index} className="flex items-center gap-3 p-2 bg-secondary/50 rounded">
-                    <Badge variant="outline">{event.minute}'</Badge>
-                    <span className="text-sm">{event.description}</span>
+                  <div key={index} className="flex items-center gap-2 p-2 bg-secondary/50 rounded text-xs">
+                    <Badge variant="outline" className="text-xs px-1 py-0">{event.minute}'</Badge>
+                    <span className="text-xs">{event.description}</span>
                   </div>
                 ))}
               </div>
@@ -487,8 +487,9 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="p-4">
+    <div className="h-screen bg-background flex flex-col">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 p-4 border-b bg-background/95 backdrop-blur-sm">
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
@@ -497,54 +498,55 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
         </div>
 
         {/* Match Header */}
-        <Card className="p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
+        <Card className="p-3">
+          <div className="flex items-center justify-between mb-2">
             <Badge 
               variant={matchDetails.status === 'live' ? 'destructive' : 'secondary'}
-              className={matchDetails.status === 'live' ? 'bg-live text-live-foreground' : ''}
+              className={matchDetails.status === 'live' ? 'bg-live text-live-foreground text-xs px-2 py-1' : 'text-xs px-2 py-1'}
             >
               {matchDetails.status === 'live' ? 'LIVE' : matchDetails.status.toUpperCase()}
             </Badge>
-            <span className="text-sm text-muted-foreground">{matchDetails.league}</span>
+            <span className="text-xs text-muted-foreground">{matchDetails.league}</span>
           </div>
           
           <div className="flex items-center justify-between">
             <div className="text-center flex-1">
-              <div className="text-sm font-semibold">{matchDetails.homeTeam}</div>
+              <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-lg font-bold text-primary mt-2">{matchDetails.homeScore}</div>
+                <div className="text-lg font-bold text-primary mt-1">{matchDetails.homeScore}</div>
               )}
             </div>
             
-            <div className="mx-4 text-center">
-              <div className="text-base font-bold text-muted-foreground">VS</div>
+            <div className="mx-3 text-center">
+              <div className="text-sm font-bold text-muted-foreground">VS</div>
               {matchDetails.status === 'live' && matchDetails.minute && (
-                <div className="text-xs text-live font-semibold mt-1">{matchDetails.minute}'</div>
+                <div className="text-xs text-live font-semibold">{matchDetails.minute}'</div>
               )}
             </div>
             
             <div className="text-center flex-1">
-              <div className="text-sm font-semibold">{matchDetails.awayTeam}</div>
+              <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-lg font-bold text-primary mt-2">{matchDetails.awayScore}</div>
+                <div className="text-lg font-bold text-primary mt-1">{matchDetails.awayScore}</div>
               )}
             </div>
           </div>
         </Card>
+      </div>
 
-        {/* Vertical Tab Navigation */}
-        <div className="space-y-4">
+      {/* Scrollable Tab Navigation */}
+      <div className="flex-shrink-0 px-4 py-2 bg-background/95 backdrop-blur-sm border-b">
         <TabNavigation
           tabs={tabs}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           vertical={true}
         />
-          
-          <div>
-            {renderTabContent()}
-          </div>
-        </div>
+      </div>
+      
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {renderTabContent()}
       </div>
     </div>
   );
