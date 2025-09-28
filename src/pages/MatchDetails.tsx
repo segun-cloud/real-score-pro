@@ -536,7 +536,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
 
       {/* Main area with vertical tabs + content */}
       <div className="flex-1 min-h-0 px-4 py-3">
-        <div className="h-full min-h-0 flex gap-3">
+        <div className="h-full min-h-0 flex gap-3 overflow-hidden">
           <aside className="h-full w-36 sm:w-44 lg:w-56 shrink-0">
             <TabNavigation
               tabs={tabs}

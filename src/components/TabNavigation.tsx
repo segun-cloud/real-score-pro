@@ -17,7 +17,7 @@ export const TabNavigation = ({ tabs, activeTab, onTabChange, vertical = false }
   if (vertical) {
     return (
       <div className="h-full">
-        <div className="flex flex-col gap-2 p-1 bg-muted rounded-lg overflow-y-auto max-h-full">
+        <div className="flex h-full flex-col gap-2 p-1 bg-muted rounded-lg overflow-y-auto">
           {tabs.map((tab) => (
             <Button
               key={tab.id}
