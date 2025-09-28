@@ -39,22 +39,26 @@ export const TabNavigation = ({ tabs, activeTab, onTabChange, vertical = false }
   }
   
   return (
-    <div className="flex space-x-1 p-1 bg-muted rounded-lg">
-      {tabs.map((tab) => (
-        <Button
-          key={tab.id}
-          variant={activeTab === tab.id ? "default" : "ghost"}
-          onClick={() => onTabChange(tab.id)}
-          className={`flex-1 ${
-            activeTab === tab.id 
-              ? 'bg-primary text-primary-foreground shadow-soft' 
-              : 'hover:bg-secondary'
-          }`}
-        >
-          {tab.icon && <span className="mr-2">{tab.icon}</span>}
-          <span className="text-xs sm:text-sm">{tab.label}</span>
-        </Button>
-      ))}
+    <div className="relative">
+      <div className="p-1 bg-muted rounded-lg overflow-x-auto">
+        <div className="flex gap-1 min-w-max snap-x snap-mandatory">
+          {tabs.map((tab) => (
+            <Button
+              key={tab.id}
+              variant={activeTab === tab.id ? "default" : "ghost"}
+              onClick={() => onTabChange(tab.id)}
+              className={`whitespace-nowrap px-3 ${
+                activeTab === tab.id 
+                  ? 'bg-primary text-primary-foreground shadow-soft' 
+                  : 'hover:bg-secondary'
+              } snap-start`}
+            >
+              {tab.icon && <span className="mr-2">{tab.icon}</span>}
+              <span className="text-xs sm:text-sm">{tab.label}</span>
+            </Button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
