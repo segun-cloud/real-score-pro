@@ -39,8 +39,8 @@ export const TabNavigation = ({ tabs, activeTab, onTabChange, vertical = false }
   }
   
   return (
-    <div className="relative">
-      <div className="p-1 bg-muted rounded-lg overflow-x-auto">
+    <div className="relative w-full max-w-full">
+      <div className="p-1 bg-muted rounded-lg overflow-x-auto w-full">
         <div className="flex gap-1 min-w-max snap-x snap-mandatory">
           {tabs.map((tab) => (
             <Button

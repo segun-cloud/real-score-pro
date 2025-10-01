@@ -487,9 +487,9 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col">
+    <div className="h-screen bg-background flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Fixed Header */}
-      <div className="sticky top-0 z-20 flex-shrink-0 p-4 border-b bg-background/95 backdrop-blur-sm">
+      <div className="sticky top-0 z-20 flex-shrink-0 p-4 border-b bg-background/95 backdrop-blur-sm w-full">
         <div className="flex items-center gap-3 mb-4">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
@@ -535,8 +535,8 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
       </div>
 
       {/* Main area with horizontal tabs + content */}
-      <div className="flex-1 min-h-0 px-4 py-3 flex flex-col overflow-hidden">
-        <div className="mb-4">
+      <div className="flex-1 min-h-0 px-4 py-3 flex flex-col overflow-hidden w-full">
+        <div className="mb-4 w-full">
           <TabNavigation
             tabs={tabs}
             activeTab={activeTab}
@@ -544,7 +544,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
             vertical={false}
           />
         </div>
-        <main className="flex-1 min-h-0 overflow-y-auto">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
           {renderTabContent()}
         </main>
       </div>
