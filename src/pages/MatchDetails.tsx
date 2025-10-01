@@ -535,7 +535,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
       </div>
 
       {/* Main area with horizontal tabs + content */}
-      <div className="flex-1 min-h-0 px-4 py-3 flex flex-col overflow-hidden w-full">
+      <div className="flex-1 min-h-0 px-4 py-3 flex flex-col overflow-hidden w-full min-w-0">
         <div className="mb-4 w-full">
           <TabNavigation
             tabs={tabs}
@@ -544,7 +544,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
             vertical={false}
           />
         </div>
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full min-w-0">
           {renderTabContent()}
         </main>
       </div>

@@ -77,16 +77,18 @@ const App = () => {
         <Toaster />
         <Sonner />
         <SidebarProvider>
-          <div className="min-h-screen w-full flex bg-background">
+          <div className="min-h-screen w-full flex bg-background overflow-x-hidden">
             <AppSidebar 
               selectedSport={selectedSport} 
               onSportChange={handleSportChange}
             />
-            <main className="flex-1">
+            <main className="flex-1 min-w-0 overflow-x-hidden">
               <div className="h-12 flex items-center border-b bg-card px-4">
                 <SidebarTrigger />
               </div>
-              {renderScreen()}
+              <div className="mx-auto w-full max-w-[480px]">
+                {renderScreen()}
+              </div>
             </main>
           </div>
         </SidebarProvider>
