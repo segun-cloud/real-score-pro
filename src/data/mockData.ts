@@ -118,6 +118,12 @@ export const getMockMatchDetails = (matchId: string): MatchDetails => {
       shotsOnTarget: { home: 6, away: 4 },
       corners: { home: 7, away: 5 },
       fouls: { home: 12, away: 15 },
+      freeKicks: { home: 8, away: 11 },
+      penalties: { home: 1, away: 0 },
+      passes: { home: 487, away: 423 },
+      attacks: { home: 56, away: 48 },
+      dangerousAttacks: { home: 32, away: 28 },
+      bigChances: { home: 4, away: 3 },
     },
     commentary: [
       { minute: 78, text: "GOAL! Vinicius Jr. scores a brilliant goal to put Real Madrid ahead!" },

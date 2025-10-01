@@ -54,6 +54,12 @@ export interface Statistics {
   shotsOnTarget?: { home: number; away: number };
   corners?: { home: number; away: number };
   fouls?: { home: number; away: number };
+  freeKicks?: { home: number; away: number };
+  penalties?: { home: number; away: number };
+  passes?: { home: number; away: number };
+  attacks?: { home: number; away: number };
+  dangerousAttacks?: { home: number; away: number };
+  bigChances?: { home: number; away: number };
 }
 
 export interface Commentary {

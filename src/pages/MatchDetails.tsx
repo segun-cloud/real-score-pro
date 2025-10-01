@@ -130,33 +130,96 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
       case "statistics":
         return (
           <Card className="p-4">
-            <h3 className="font-semibold mb-4">Match Statistics</h3>
-            <div className="space-y-4">
+            <h3 className="font-semibold mb-4 text-center">Match Statistics</h3>
+            <div className="space-y-3">
               {matchDetails.statistics.possession && (
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>Possession</span>
-                    <span>{matchDetails.statistics.possession.home}% - {matchDetails.statistics.possession.away}%</span>
+                  <div className="flex justify-between items-center text-xs mb-1">
+                    <span className="font-semibold text-primary">{matchDetails.statistics.possession.home}%</span>
+                    <span className="text-muted-foreground">Possession</span>
+                    <span className="font-semibold text-primary">{matchDetails.statistics.possession.away}%</span>
                   </div>
                   <Progress value={matchDetails.statistics.possession.home} className="h-2" />
                 </div>
               )}
+              
               {matchDetails.statistics.shots && (
-                <div className="flex justify-between">
-                  <span className="text-sm">Shots</span>
-                  <span className="font-semibold">{matchDetails.statistics.shots.home} - {matchDetails.statistics.shots.away}</span>
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shots.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Shots</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shots.away}</span>
                 </div>
               )}
+              
               {matchDetails.statistics.shotsOnTarget && (
-                <div className="flex justify-between">
-                  <span className="text-sm">Shots on Target</span>
-                  <span className="font-semibold">{matchDetails.statistics.shotsOnTarget.home} - {matchDetails.statistics.shotsOnTarget.away}</span>
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shotsOnTarget.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Shots on Target</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shotsOnTarget.away}</span>
                 </div>
               )}
+              
+              {matchDetails.statistics.passes && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.passes.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Passes</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.passes.away}</span>
+                </div>
+              )}
+              
+              {matchDetails.statistics.attacks && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.attacks.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Attacks</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.attacks.away}</span>
+                </div>
+              )}
+              
+              {matchDetails.statistics.dangerousAttacks && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.dangerousAttacks.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Dangerous Attacks</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.dangerousAttacks.away}</span>
+                </div>
+              )}
+              
+              {matchDetails.statistics.bigChances && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.bigChances.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Big Chances</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.bigChances.away}</span>
+                </div>
+              )}
+              
               {matchDetails.statistics.corners && (
-                <div className="flex justify-between">
-                  <span className="text-sm">Corners</span>
-                  <span className="font-semibold">{matchDetails.statistics.corners.home} - {matchDetails.statistics.corners.away}</span>
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.corners.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Corners</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.corners.away}</span>
+                </div>
+              )}
+              
+              {matchDetails.statistics.freeKicks && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.freeKicks.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Free Kicks</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.freeKicks.away}</span>
+                </div>
+              )}
+              
+              {matchDetails.statistics.fouls && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.fouls.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Fouls</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.fouls.away}</span>
+                </div>
+              )}
+              
+              {matchDetails.statistics.penalties && (
+                <div className="flex justify-between items-center text-xs py-2 border-b">
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.penalties.home}</span>
+                  <span className="text-muted-foreground flex-1 text-center">Penalties</span>
+                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.penalties.away}</span>
                 </div>
               )}
             </div>
