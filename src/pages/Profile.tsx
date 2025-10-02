@@ -37,6 +37,8 @@ export const Profile = ({ onBack }: ProfileProps) => {
       <Header 
         coins={userProfile.coins} 
         onProfileClick={() => {}}
+        selectedSport="all"
+        onSportChange={() => {}}
       />
       
       <div className="p-4">

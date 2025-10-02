@@ -6,7 +6,7 @@ export interface Match {
   awayScore?: number;
   status: 'scheduled' | 'live' | 'finished';
   startTime: string;
-  sport: 'football' | 'basketball' | 'tennis' | 'baseball' | 'boxing';
+  sport: 'football' | 'basketball' | 'tennis' | 'baseball' | 'boxing' | 'cricket' | 'ice-hockey' | 'rugby' | 'american-football';
   league: string;
   minute?: number;
   homeTeamLogo?: string;

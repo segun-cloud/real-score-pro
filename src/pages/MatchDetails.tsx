@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Brain, Coins, Crown } from "lucide-react";
-import { Header } from "@/components/Header";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";

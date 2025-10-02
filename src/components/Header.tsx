@@ -1,12 +1,33 @@
 import { Coins, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface HeaderProps {
   coins: number;
   onProfileClick?: () => void;
+  selectedSport: string;
+  onSportChange: (sport: string) => void;
 }
 
-export const Header = ({ coins, onProfileClick }: HeaderProps) => {
+const sports = [
+  { id: 'all', name: 'All Sports', emoji: '🏆' },
+  { id: 'football', name: 'Football', emoji: '⚽' },
+  { id: 'basketball', name: 'Basketball', emoji: '🏀' },
+  { id: 'tennis', name: 'Tennis', emoji: '🎾' },
+  { id: 'baseball', name: 'Baseball', emoji: '⚾' },
+  { id: 'cricket', name: 'Cricket', emoji: '🏏' },
+  { id: 'ice-hockey', name: 'Ice Hockey', emoji: '🏒' },
+  { id: 'rugby', name: 'Rugby', emoji: '🏉' },
+  { id: 'american-football', name: 'American Football', emoji: '🏈' },
+];
+
+export const Header = ({ coins, onProfileClick, selectedSport, onSportChange }: HeaderProps) => {
   return (
     <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
       <div className="flex items-center justify-between p-3">
@@ -14,20 +35,35 @@ export const Header = ({ coins, onProfileClick }: HeaderProps) => {
           <h1 className="text-lg font-bold bg-gradient-primary bg-clip-text text-transparent">
             RealScore
           </h1>
+          
+          <Select value={selectedSport} onValueChange={onSportChange}>
+            <SelectTrigger className="w-[140px] h-8 text-xs bg-background">
+              <SelectValue placeholder="Select sport" />
+            </SelectTrigger>
+            <SelectContent className="bg-card z-[100]">
+              {sports.map((sport) => (
+                <SelectItem key={sport.id} value={sport.id} className="text-sm">
+                  <span className="mr-2">{sport.emoji}</span>
+                  {sport.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-gradient-coins px-3 py-2 rounded-lg">
-            <Coins className="h-4 w-4 text-coins-foreground" />
-            <span className="text-sm font-semibold text-coins-foreground">{coins.toLocaleString()}</span>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 bg-gradient-coins px-2 py-1 rounded-lg">
+            <Coins className="h-3 w-3 text-coins-foreground" />
+            <span className="text-xs font-semibold text-coins-foreground">{coins.toLocaleString()}</span>
           </div>
           
           <Button 
             variant="ghost" 
             size="icon"
+            className="h-8 w-8"
             onClick={onProfileClick}
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3 w-3" />
           </Button>
         </div>
       </div>

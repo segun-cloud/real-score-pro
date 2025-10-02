@@ -11,9 +11,8 @@ import { Favourites } from "./pages/Favourites";
 import { Feeds } from "./pages/Feeds";
 import { FunHub } from "./pages/FunHub";
 import { Match } from "./types/sports";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "./components/AppSidebar";
 import { BottomNavigation } from "./components/BottomNavigation";
+import { Header } from "./components/Header";
 
 const queryClient = new QueryClient();
 
@@ -94,26 +93,21 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <SidebarProvider>
-          <div className="min-h-screen w-full flex bg-background overflow-x-hidden">
-            <AppSidebar 
-              selectedSport={selectedSport} 
-              onSportChange={handleSportChange}
-            />
-            <main className="flex-1 min-w-0 overflow-x-hidden">
-              <div className="h-12 flex items-center border-b bg-card px-4">
-                <SidebarTrigger />
-              </div>
-              <div className="mx-auto w-full max-w-[480px] pb-16">
-                {renderScreen()}
-              </div>
-            </main>
+        <div className="min-h-screen w-full bg-background overflow-x-hidden">
+          <Header 
+            coins={1000} 
+            onProfileClick={handleProfileClick}
+            selectedSport={selectedSport}
+            onSportChange={handleSportChange}
+          />
+          <div className="mx-auto w-full max-w-[480px] pb-16">
+            {renderScreen()}
           </div>
           <BottomNavigation 
             activeScreen={currentScreen === 'match-details' ? 'matches' : currentScreen}
             onNavigate={handleNavigate}
           />
-        </SidebarProvider>
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
   );
