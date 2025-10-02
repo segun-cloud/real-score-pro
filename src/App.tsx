@@ -91,9 +91,9 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <div className="min-h-screen w-full bg-background overflow-x-hidden">
+          <Toaster />
+          <Sonner />
           <Header 
             coins={1000} 
             onProfileClick={handleProfileClick}
