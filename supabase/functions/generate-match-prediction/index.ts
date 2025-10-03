@@ -90,10 +90,10 @@ serve(async (req) => {
     const sportSpecificContext = sportPrompts[match.sport] || sportPrompts['football'];
 
     const systemPrompt = `You are an expert sports analyst specializing in ${match.sport}. 
-Provide a data-driven match prediction with win probabilities, predicted score, and key factors.
-Be concise but insightful. Consider current statistics, recent form, and sport-specific factors.`;
+Provide structured betting market predictions in JSON format only.
+Return ONLY valid JSON, no additional text.`;
 
-    const userPrompt = `Analyze this ${match.sport} match:
+    const userPrompt = `Analyze this ${match.sport} match and provide betting market predictions:
 
 **Teams:** ${match.homeTeam} vs ${match.awayTeam}
 **Status:** ${match.status}
@@ -107,12 +107,37 @@ ${match.odds.draw ? `- Draw: ${match.odds.draw}` : ''}
 
 ${sportSpecificContext}
 
-Provide:
-1. Win probability for each team (percentage)
-2. Predicted final score
-3. 3-4 key factors influencing the outcome
-4. Brief analysis (2-3 sentences)
-5. Confidence level (Low/Medium/High)`;
+Return JSON with this exact structure:
+{
+  "match_result": {
+    "home_win": number (0-100),
+    "draw": number (0-100) or null for sports without draws,
+    "away_win": number (0-100)
+  },
+  "btts": {
+    "yes": number (0-100),
+    "no": number (0-100)
+  },
+  "over_under": {
+    "over_2_5": number (0-100),
+    "under_2_5": number (0-100)
+  },
+  "correct_score": {
+    "prediction": "X-Y",
+    "probability": number (0-100),
+    "alternatives": [
+      { "score": "X-Y", "probability": number }
+    ]
+  },
+  "half_time_score": {
+    "prediction": "X-Y",
+    "home_leading": number (0-100),
+    "draw": number (0-100),
+    "away_leading": number (0-100)
+  },
+  "key_insights": ["insight1", "insight2", "insight3"],
+  "confidence": "Low" | "Medium" | "High"
+}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -127,7 +152,7 @@ Provide:
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 1500,
       }),
     });
 
@@ -153,7 +178,31 @@ Provide:
     }
 
     const data = await response.json();
-    const prediction = data.choices[0].message.content;
+    const predictionText = data.choices[0].message.content;
+
+    console.log('Raw AI response:', predictionText);
+
+    // Parse JSON from AI response
+    let prediction;
+    try {
+      // Extract JSON if wrapped in markdown code blocks
+      const jsonMatch = predictionText.match(/```json\n?([\s\S]*?)\n?```/) || 
+                        predictionText.match(/```\n?([\s\S]*?)\n?```/);
+      const jsonStr = jsonMatch ? jsonMatch[1] : predictionText;
+      prediction = JSON.parse(jsonStr.trim());
+    } catch (parseError) {
+      console.error('Failed to parse AI response as JSON:', parseError);
+      // Return a fallback structure
+      prediction = {
+        match_result: { home_win: 50, draw: 25, away_win: 25 },
+        btts: { yes: 50, no: 50 },
+        over_under: { over_2_5: 50, under_2_5: 50 },
+        correct_score: { prediction: "1-1", probability: 15, alternatives: [] },
+        half_time_score: { prediction: "0-0", home_leading: 33, draw: 34, away_leading: 33 },
+        key_insights: ["Analysis unavailable"],
+        confidence: "Low"
+      };
+    }
 
     console.log('Successfully generated prediction');
 

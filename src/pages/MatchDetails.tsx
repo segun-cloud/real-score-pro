@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Coins, Crown, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3 } from "lucide-react";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MatchDetails as MatchDetailsType } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
@@ -22,7 +23,7 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
   const [activeTab, setActiveTab] = useState("details");
   const [userProfile, setUserProfile] = useState(mockUserProfile);
   const [aiPredictionUnlocked, setAiPredictionUnlocked] = useState(false);
-  const [aiPrediction, setAiPrediction] = useState<string>("");
+  const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
   const { toast } = useToast();
 
@@ -278,8 +279,8 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
               </div>
               
               {userProfile.coins >= 20 ? (
-                <Button onClick={handleUnlockPrediction} className="w-full mb-3">
-                  Unlock for 20 Coins
+                <Button onClick={handleUnlockPrediction} className="w-full mb-3" disabled={isLoadingPrediction}>
+                  {isLoadingPrediction ? "Generating..." : "Unlock for 20 Coins"}
                 </Button>
               ) : (
                 <div className="space-y-3">
@@ -318,62 +319,214 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
 
         if (isLoadingPrediction) {
           return (
-            <Card className="p-6">
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="relative">
-                  <Brain className="h-16 w-16 text-primary animate-pulse" />
-                  <Sparkles className="h-6 w-6 text-coins absolute -top-1 -right-1 animate-bounce" />
-                </div>
-                <h3 className="font-semibold mt-4 mb-2">Analyzing Match Data...</h3>
-                <p className="text-sm text-muted-foreground text-center max-w-md">
-                  Our AI is analyzing team statistics, recent form, head-to-head records, and 
-                  {matchDetails?.sport}-specific factors to generate your prediction.
-                </p>
-                <div className="w-full max-w-xs mt-4">
-                  <Progress value={66} className="h-2" />
-                </div>
+            <div className="space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            </div>
+          );
+        }
+
+        if (!aiPrediction) {
+          return (
+            <Card className="p-6 text-center">
+              <p className="text-sm text-muted-foreground">Prediction data unavailable</p>
             </Card>
           );
         }
 
         return (
-          <Card className="p-4">
-            <div className="flex items-center gap-2 mb-4">
-              <Brain className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">AI Match Prediction</h3>
-              <Badge variant="secondary" className="ml-auto">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Live Analysis
+          <div className="space-y-6">
+            {/* Confidence Badge */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-bold">AI Prediction</h3>
+              </div>
+              <Badge variant={
+                aiPrediction.confidence === "High" ? "default" : 
+                aiPrediction.confidence === "Medium" ? "secondary" : 
+                "outline"
+              }>
+                {aiPrediction.confidence} Confidence
               </Badge>
             </div>
-            
-            {aiPrediction ? (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-lg border border-primary/20">
-                  <div className="prose prose-sm max-w-none text-foreground">
-                    {aiPrediction.split('\n').map((line, index) => (
-                      line.trim() && <p key={index} className="mb-2 last:mb-0">{line}</p>
-                    ))}
+
+            {/* 1x2 Match Result Bar */}
+            <Card className="p-4 bg-gradient-to-br from-blue-500/5 to-purple-500/5">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  <h4 className="font-semibold">Match Result</h4>
+                </div>
+                <div className="flex gap-1 h-12 rounded-lg overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold transition-all hover:opacity-90"
+                    style={{ width: `${aiPrediction.match_result.home_win}%` }}
+                  >
+                    {aiPrediction.match_result.home_win > 15 && `${aiPrediction.match_result.home_win}%`}
+                  </div>
+                  {aiPrediction.match_result.draw !== null && (
+                    <div 
+                      className="bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center text-white font-bold transition-all hover:opacity-90"
+                      style={{ width: `${aiPrediction.match_result.draw}%` }}
+                    >
+                      {aiPrediction.match_result.draw > 15 && `${aiPrediction.match_result.draw}%`}
+                    </div>
+                  )}
+                  <div 
+                    className="bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold transition-all hover:opacity-90"
+                    style={{ width: `${aiPrediction.match_result.away_win}%` }}
+                  >
+                    {aiPrediction.match_result.away_win > 15 && `${aiPrediction.match_result.away_win}%`}
                   </div>
                 </div>
-                
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Sparkles className="h-3 w-3" />
-                    <span>Powered by AI • Generated just now</span>
-                  </div>
-                  <Badge variant="outline" className="text-xs">
-                    {matchDetails?.sport}
-                  </Badge>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Home Win</span>
+                  {aiPrediction.match_result.draw !== null && <span>Draw</span>}
+                  <span>Away Win</span>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <p className="text-sm">Prediction data unavailable</p>
-              </div>
-            )}
-          </Card>
+            </Card>
+
+            {/* Betting Markets Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* BTTS */}
+              <Card className="p-4 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Target className="w-4 h-4 text-orange-500" />
+                    <h4 className="font-semibold">Both Teams to Score</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`p-3 rounded-lg text-center transition-all ${
+                      aiPrediction.btts.yes > aiPrediction.btts.no 
+                        ? 'bg-green-500/20 border-2 border-green-500' 
+                        : 'bg-muted'
+                    }`}>
+                      <div className="text-2xl font-bold">{aiPrediction.btts.yes}%</div>
+                      <div className="text-xs text-muted-foreground">YES</div>
+                    </div>
+                    <div className={`p-3 rounded-lg text-center transition-all ${
+                      aiPrediction.btts.no > aiPrediction.btts.yes 
+                        ? 'bg-red-500/20 border-2 border-red-500' 
+                        : 'bg-muted'
+                    }`}>
+                      <div className="text-2xl font-bold">{aiPrediction.btts.no}%</div>
+                      <div className="text-xs text-muted-foreground">NO</div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Over/Under */}
+              <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-purple-500" />
+                    <h4 className="font-semibold">Over/Under 2.5</h4>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className={`p-3 rounded-lg text-center transition-all ${
+                      aiPrediction.over_under.over_2_5 > aiPrediction.over_under.under_2_5 
+                        ? 'bg-blue-500/20 border-2 border-blue-500' 
+                        : 'bg-muted'
+                    }`}>
+                      <div className="text-2xl font-bold">{aiPrediction.over_under.over_2_5}%</div>
+                      <div className="text-xs text-muted-foreground">OVER</div>
+                    </div>
+                    <div className={`p-3 rounded-lg text-center transition-all ${
+                      aiPrediction.over_under.under_2_5 > aiPrediction.over_under.over_2_5 
+                        ? 'bg-indigo-500/20 border-2 border-indigo-500' 
+                        : 'bg-muted'
+                    }`}>
+                      <div className="text-2xl font-bold">{aiPrediction.over_under.under_2_5}%</div>
+                      <div className="text-xs text-muted-foreground">UNDER</div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Score Predictions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Correct Score */}
+              <Card className="p-4 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Correct Score</h4>
+                  <div className="text-center p-4 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg">
+                    <div className="text-4xl font-bold text-white mb-1">
+                      {aiPrediction.correct_score.prediction}
+                    </div>
+                    <Badge variant="secondary" className="bg-white/20 text-white">
+                      {aiPrediction.correct_score.probability}% probability
+                    </Badge>
+                  </div>
+                  {aiPrediction.correct_score.alternatives?.length > 0 && (
+                    <div className="space-y-1">
+                      <div className="text-xs text-muted-foreground">Alternative scores:</div>
+                      <div className="flex gap-2 flex-wrap">
+                        {aiPrediction.correct_score.alternatives.map((alt: any, idx: number) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {alt.score} ({alt.probability}%)
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+
+              {/* Half-Time Score */}
+              <Card className="p-4 bg-gradient-to-br from-teal-500/5 to-green-500/5">
+                <div className="space-y-3">
+                  <h4 className="font-semibold">Half-Time Score</h4>
+                  <div className="text-center p-4 bg-gradient-to-br from-teal-500 to-green-500 rounded-lg">
+                    <div className="text-4xl font-bold text-white mb-1">
+                      {aiPrediction.half_time_score.prediction}
+                    </div>
+                    <div className="text-xs text-white/80">Predicted HT Result</div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Home Leading</span>
+                      <span className="font-semibold">{aiPrediction.half_time_score.home_leading}%</span>
+                    </div>
+                    <Progress value={aiPrediction.half_time_score.home_leading} className="h-2" />
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Draw</span>
+                      <span className="font-semibold">{aiPrediction.half_time_score.draw}%</span>
+                    </div>
+                    <Progress value={aiPrediction.half_time_score.draw} className="h-2" />
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Away Leading</span>
+                      <span className="font-semibold">{aiPrediction.half_time_score.away_leading}%</span>
+                    </div>
+                    <Progress value={aiPrediction.half_time_score.away_leading} className="h-2" />
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Key Insights */}
+            <Card className="p-4 bg-gradient-to-br from-indigo-500/5 to-purple-500/5">
+              <h4 className="font-semibold mb-3">Key Insights</h4>
+              <ul className="space-y-2">
+                {aiPrediction.key_insights.map((insight: string, idx: number) => (
+                  <li key={idx} className="flex items-start gap-2 text-sm">
+                    <span className="text-primary mt-1">•</span>
+                    <span>{insight}</span>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </div>
         );
 
       case 'commentary':
