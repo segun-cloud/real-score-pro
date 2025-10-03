@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Coins, Crown } from "lucide-react";
+import { ArrowLeft, Brain, Coins, Crown, Sparkles } from "lucide-react";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,6 +22,8 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
   const [activeTab, setActiveTab] = useState("details");
   const [userProfile, setUserProfile] = useState(mockUserProfile);
   const [aiPredictionUnlocked, setAiPredictionUnlocked] = useState(false);
+  const [aiPrediction, setAiPrediction] = useState<string>("");
+  const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,15 +48,51 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
     { id: "tracker", label: "Live Tracker" },
   ];
 
-  const handleUnlockPrediction = () => {
+  const handleUnlockPrediction = async () => {
     if (userProfile.coins >= 20) {
       setUserProfile(prev => ({ ...prev, coins: prev.coins - 20 }));
       setAiPredictionUnlocked(true);
       setActiveTab("prediction");
-      toast({
-        title: "Prediction Unlocked!",
-        description: "AI prediction has been unlocked for 20 coins.",
-      });
+      setIsLoadingPrediction(true);
+
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-match-prediction`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({ match: matchDetails }),
+          }
+        );
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to generate prediction');
+        }
+
+        const data = await response.json();
+        setAiPrediction(data.prediction);
+        
+        toast({
+          title: "AI Prediction Ready!",
+          description: "Your match prediction has been generated.",
+        });
+      } catch (error) {
+        console.error('Error generating prediction:', error);
+        toast({
+          title: "Prediction Error",
+          description: error instanceof Error ? error.message : "Failed to generate prediction. Please try again.",
+          variant: "destructive",
+        });
+        // Refund coins on error
+        setUserProfile(prev => ({ ...prev, coins: prev.coins + 20 }));
+        setAiPredictionUnlocked(false);
+      } finally {
+        setIsLoadingPrediction(false);
+      }
     } else {
       toast({
         title: "Insufficient Coins",
@@ -278,35 +316,63 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
           );
         }
 
+        if (isLoadingPrediction) {
+          return (
+            <Card className="p-6">
+              <div className="flex flex-col items-center justify-center py-8">
+                <div className="relative">
+                  <Brain className="h-16 w-16 text-primary animate-pulse" />
+                  <Sparkles className="h-6 w-6 text-coins absolute -top-1 -right-1 animate-bounce" />
+                </div>
+                <h3 className="font-semibold mt-4 mb-2">Analyzing Match Data...</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-md">
+                  Our AI is analyzing team statistics, recent form, head-to-head records, and 
+                  {matchDetails?.sport}-specific factors to generate your prediction.
+                </p>
+                <div className="w-full max-w-xs mt-4">
+                  <Progress value={66} className="h-2" />
+                </div>
+              </div>
+            </Card>
+          );
+        }
+
         return (
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-4">
               <Brain className="h-5 w-5 text-primary" />
               <h3 className="font-semibold">AI Match Prediction</h3>
+              <Badge variant="secondary" className="ml-auto">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Live Analysis
+              </Badge>
             </div>
-            <div className="space-y-4">
-              <div className="bg-gradient-primary/10 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Prediction: Home Win (65%)</h4>
-                <p className="text-sm text-muted-foreground">
-                  Based on recent form, head-to-head records, and statistical analysis, 
-                  Real Madrid has a 65% chance of winning this match.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h5 className="font-medium mb-2">Key Factors</h5>
-                  <ul className="text-sm space-y-1">
-                    <li>• Home advantage</li>
-                    <li>• Better recent form</li>
-                    <li>• Head-to-head dominance</li>
-                  </ul>
+            
+            {aiPrediction ? (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-4 rounded-lg border border-primary/20">
+                  <div className="prose prose-sm max-w-none text-foreground">
+                    {aiPrediction.split('\n').map((line, index) => (
+                      line.trim() && <p key={index} className="mb-2 last:mb-0">{line}</p>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <h5 className="font-medium mb-2">Predicted Score</h5>
-                  <p className="text-lg font-bold text-primary">2-1</p>
+                
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Sparkles className="h-3 w-3" />
+                    <span>Powered by AI • Generated just now</span>
+                  </div>
+                  <Badge variant="outline" className="text-xs">
+                    {matchDetails?.sport}
+                  </Badge>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <p className="text-sm">Prediction data unavailable</p>
+              </div>
+            )}
           </Card>
         );
 

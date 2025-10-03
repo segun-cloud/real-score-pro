@@ -1,0 +1,4 @@
+project_id = "ioajkewinekfdoayvwqs"
+
+[functions.generate-match-prediction]
+verify_jwt = false
