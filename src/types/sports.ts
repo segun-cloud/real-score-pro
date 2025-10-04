@@ -40,12 +40,16 @@ export interface Odds {
 export interface Lineups {
   home: Player[];
   away: Player[];
+  homeFormation?: string;
+  awayFormation?: string;
 }
 
 export interface Player {
   name: string;
   position: string;
   number: number;
+  isSubstitute?: boolean;
+  captain?: boolean;
 }
 
 export interface Statistics {

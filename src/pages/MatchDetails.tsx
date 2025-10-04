@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3 } from "lucide-react";
+import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users } from "lucide-react";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { MatchDetails as MatchDetailsType } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { SportTracker } from "@/components/SportTracker";
+import { FootballPitch } from "@/components/FootballPitch";
 
 interface MatchDetailsProps {
   matchId: string;
@@ -547,59 +548,92 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
         );
 
       case 'lineups':
+        if (!matchDetails.lineups) {
+          return <div className="text-center text-muted-foreground py-8">Lineups not available</div>;
+        }
+        
+        const homeSubstitutes = matchDetails.lineups.home.filter(p => p.isSubstitute);
+        const awaySubstitutes = matchDetails.lineups.away.filter(p => p.isSubstitute);
+        
         return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold">Team Lineups</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-3">
-                <h4 className="text-xs font-medium text-center">{matchDetails.homeTeam}</h4>
-                <div className="bg-emerald-50 dark:bg-emerald-950 p-3 rounded-lg">
-                  <div className="text-center text-xs font-mono mb-2">4-3-3</div>
-                  <div className="space-y-2">
-                    <div className="text-center"><span className="bg-primary text-primary-foreground px-2 py-1 rounded text-xs">1</span> <span className="text-xs">Courtois</span></div>
-                    <div className="flex justify-between text-xs">
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">2</span> Carvajal</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">3</span> Militao</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">4</span> Alaba</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">5</span> Mendy</span>
-                    </div>
-                    <div className="flex justify-center gap-8 text-xs">
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">8</span> Kroos</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">14</span> Casemiro</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">10</span> Modric</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">20</span> Vinicius</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">9</span> Benzema</span>
-                      <span><span className="bg-primary text-primary-foreground px-1 rounded">7</span> Hazard</span>
-                    </div>
-                  </div>
-                </div>
+          <div className="space-y-6">
+            {/* Formations Header */}
+            <div className="text-center">
+              <h3 className="text-lg font-bold mb-1">Team Formations</h3>
+              <p className="text-sm text-muted-foreground">
+                {matchDetails.homeTeam} ({matchDetails.lineups.homeFormation}) vs {matchDetails.awayTeam} ({matchDetails.lineups.awayFormation})
+              </p>
+            </div>
+
+            {/* Visual Pitch Display */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <FootballPitch
+                players={matchDetails.lineups.home}
+                formation={matchDetails.lineups.homeFormation || "4-3-3"}
+                teamName={matchDetails.homeTeam}
+                isHome={true}
+              />
+              <FootballPitch
+                players={matchDetails.lineups.away}
+                formation={matchDetails.lineups.awayFormation || "4-3-3"}
+                teamName={matchDetails.awayTeam}
+                isHome={false}
+              />
+            </div>
+
+            {/* Substitutes Bench */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 justify-center">
+                <Users className="w-5 h-5 text-muted-foreground" />
+                <h3 className="text-lg font-bold">Substitutes Bench</h3>
               </div>
-              <div className="space-y-3">
-                <h4 className="text-xs font-medium text-center">{matchDetails.awayTeam}</h4>
-                <div className="bg-blue-50 dark:bg-blue-950 p-3 rounded-lg">
-                  <div className="text-center text-xs font-mono mb-2">4-3-3</div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Home Substitutes */}
+                <Card className="p-4 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900">
+                  <h4 className="font-semibold text-sm mb-3 text-center text-emerald-700 dark:text-emerald-400">
+                    {matchDetails.homeTeam}
+                  </h4>
                   <div className="space-y-2">
-                    <div className="text-center"><span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">1</span> <span className="text-xs">ter Stegen</span></div>
-                    <div className="flex justify-between text-xs">
-                      <span><span className="bg-blue-600 text-white px-1 rounded">2</span> Dest</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">3</span> Pique</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">4</span> Araujo</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">18</span> Alba</span>
-                    </div>
-                    <div className="flex justify-center gap-8 text-xs">
-                      <span><span className="bg-blue-600 text-white px-1 rounded">21</span> de Jong</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">5</span> Busquets</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">16</span> Pedri</span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span><span className="bg-blue-600 text-white px-1 rounded">22</span> Raphinha</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">9</span> Lewandowski</span>
-                      <span><span className="bg-blue-600 text-white px-1 rounded">7</span> Dembele</span>
-                    </div>
+                    {homeSubstitutes.map((player) => (
+                      <div
+                        key={player.number}
+                        className="flex items-center gap-3 p-2 rounded-lg bg-background/50 border border-emerald-200/50 dark:border-emerald-900/50 hover:bg-background/80 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                          {player.number}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{player.name}</p>
+                          <p className="text-xs text-muted-foreground">{player.position}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                </Card>
+
+                {/* Away Substitutes */}
+                <Card className="p-4 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+                  <h4 className="font-semibold text-sm mb-3 text-center text-blue-700 dark:text-blue-400">
+                    {matchDetails.awayTeam}
+                  </h4>
+                  <div className="space-y-2">
+                    {awaySubstitutes.map((player) => (
+                      <div
+                        key={player.number}
+                        className="flex items-center gap-3 p-2 rounded-lg bg-background/50 border border-blue-200/50 dark:border-blue-900/50 hover:bg-background/80 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                          {player.number}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{player.name}</p>
+                          <p className="text-xs text-muted-foreground">{player.position}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
               </div>
             </div>
           </div>
