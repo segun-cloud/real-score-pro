@@ -14,7 +14,326 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      competition_participants: {
+        Row: {
+          competition_id: string
+          final_position: number | null
+          id: string
+          points_earned: number | null
+          team_id: string
+        }
+        Insert: {
+          competition_id: string
+          final_position?: number | null
+          id?: string
+          points_earned?: number | null
+          team_id: string
+        }
+        Update: {
+          competition_id?: string
+          final_position?: number | null
+          id?: string
+          points_earned?: number | null
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_participants_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "competition_participants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "user_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitions: {
+        Row: {
+          created_at: string
+          division: number | null
+          end_date: string
+          entry_fee: number
+          id: string
+          name: string
+          prize_coins: number
+          sport: Database["public"]["Enums"]["sport_type"]
+          start_date: string
+          status: Database["public"]["Enums"]["competition_status"] | null
+        }
+        Insert: {
+          created_at?: string
+          division?: number | null
+          end_date: string
+          entry_fee: number
+          id?: string
+          name: string
+          prize_coins: number
+          sport: Database["public"]["Enums"]["sport_type"]
+          start_date: string
+          status?: Database["public"]["Enums"]["competition_status"] | null
+        }
+        Update: {
+          created_at?: string
+          division?: number | null
+          end_date?: string
+          entry_fee?: number
+          id?: string
+          name?: string
+          prize_coins?: number
+          sport?: Database["public"]["Enums"]["sport_type"]
+          start_date?: string
+          status?: Database["public"]["Enums"]["competition_status"] | null
+        }
+        Relationships: []
+      }
+      matches: {
+        Row: {
+          away_score: number | null
+          away_team_id: string
+          competition_id: string
+          created_at: string
+          home_score: number | null
+          home_team_id: string
+          id: string
+          match_date: string
+          status: Database["public"]["Enums"]["match_status"] | null
+        }
+        Insert: {
+          away_score?: number | null
+          away_team_id: string
+          competition_id: string
+          created_at?: string
+          home_score?: number | null
+          home_team_id: string
+          id?: string
+          match_date: string
+          status?: Database["public"]["Enums"]["match_status"] | null
+        }
+        Update: {
+          away_score?: number | null
+          away_team_id?: string
+          competition_id?: string
+          created_at?: string
+          home_score?: number | null
+          home_team_id?: string
+          id?: string
+          match_date?: string
+          status?: Database["public"]["Enums"]["match_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_away_team_id_fkey"
+            columns: ["away_team_id"]
+            isOneToOne: false
+            referencedRelation: "user_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_home_team_id_fkey"
+            columns: ["home_team_id"]
+            isOneToOne: false
+            referencedRelation: "user_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_emblems: {
+        Row: {
+          id: number
+          name: string
+          svg_path: string
+          unlock_cost: number
+        }
+        Insert: {
+          id?: number
+          name: string
+          svg_path: string
+          unlock_cost?: number
+        }
+        Update: {
+          id?: number
+          name?: string
+          svg_path?: string
+          unlock_cost?: number
+        }
+        Relationships: []
+      }
+      team_kits: {
+        Row: {
+          id: number
+          name: string
+          pattern: string | null
+          primary_color: string
+          secondary_color: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          unlock_cost: number
+        }
+        Insert: {
+          id?: number
+          name: string
+          pattern?: string | null
+          primary_color: string
+          secondary_color: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          unlock_cost?: number
+        }
+        Update: {
+          id?: number
+          name?: string
+          pattern?: string | null
+          primary_color?: string
+          secondary_color?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          unlock_cost?: number
+        }
+        Relationships: []
+      }
+      team_players: {
+        Row: {
+          created_at: string
+          defending: number | null
+          id: string
+          jersey_number: number
+          overall_rating: number | null
+          pace: number | null
+          passing: number | null
+          physical: number | null
+          player_name: string
+          position: string
+          shooting: number | null
+          team_id: string
+          training_level: number | null
+        }
+        Insert: {
+          created_at?: string
+          defending?: number | null
+          id?: string
+          jersey_number: number
+          overall_rating?: number | null
+          pace?: number | null
+          passing?: number | null
+          physical?: number | null
+          player_name: string
+          position: string
+          shooting?: number | null
+          team_id: string
+          training_level?: number | null
+        }
+        Update: {
+          created_at?: string
+          defending?: number | null
+          id?: string
+          jersey_number?: number
+          overall_rating?: number | null
+          pace?: number | null
+          passing?: number | null
+          physical?: number | null
+          player_name?: string
+          position?: string
+          shooting?: number | null
+          team_id?: string
+          training_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_players_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "user_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          coins: number
+          created_at: string
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          coins?: number
+          created_at?: string
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          coins?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_teams: {
+        Row: {
+          created_at: string
+          division: number | null
+          draws: number | null
+          emblem_id: number | null
+          id: string
+          kit_id: number | null
+          losses: number | null
+          points: number | null
+          sport: Database["public"]["Enums"]["sport_type"]
+          team_name: string
+          user_id: string
+          wins: number | null
+        }
+        Insert: {
+          created_at?: string
+          division?: number | null
+          draws?: number | null
+          emblem_id?: number | null
+          id?: string
+          kit_id?: number | null
+          losses?: number | null
+          points?: number | null
+          sport: Database["public"]["Enums"]["sport_type"]
+          team_name: string
+          user_id: string
+          wins?: number | null
+        }
+        Update: {
+          created_at?: string
+          division?: number | null
+          draws?: number | null
+          emblem_id?: number | null
+          id?: string
+          kit_id?: number | null
+          losses?: number | null
+          points?: number | null
+          sport?: Database["public"]["Enums"]["sport_type"]
+          team_name?: string
+          user_id?: string
+          wins?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_teams_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +342,18 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      competition_status: "upcoming" | "active" | "completed"
+      match_status: "scheduled" | "completed"
+      sport_type:
+        | "football"
+        | "basketball"
+        | "tennis"
+        | "baseball"
+        | "boxing"
+        | "cricket"
+        | "ice-hockey"
+        | "rugby"
+        | "american-football"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +480,20 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      competition_status: ["upcoming", "active", "completed"],
+      match_status: ["scheduled", "completed"],
+      sport_type: [
+        "football",
+        "basketball",
+        "tennis",
+        "baseball",
+        "boxing",
+        "cricket",
+        "ice-hockey",
+        "rugby",
+        "american-football",
+      ],
+    },
   },
 } as const
