@@ -167,99 +167,107 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
         );
 
       case "statistics":
+        const renderStatRow = (label: string, homeStat?: number, awayStat?: number) => {
+          if (homeStat === undefined || awayStat === undefined) return null;
+          return (
+            <div className="flex justify-between items-center text-xs py-2 border-b">
+              <span className="font-semibold text-primary w-12 text-center">{homeStat}</span>
+              <span className="text-muted-foreground flex-1 text-center">{label}</span>
+              <span className="font-semibold text-primary w-12 text-center">{awayStat}</span>
+            </div>
+          );
+        };
+
+        const renderPercentageRow = (label: string, homePercent?: number, awayPercent?: number) => {
+          if (homePercent === undefined || awayPercent === undefined) return null;
+          return (
+            <div className="flex justify-between items-center text-xs py-2 border-b">
+              <span className="font-semibold text-primary w-12 text-center">{homePercent}%</span>
+              <span className="text-muted-foreground flex-1 text-center">{label}</span>
+              <span className="font-semibold text-primary w-12 text-center">{awayPercent}%</span>
+            </div>
+          );
+        };
+
         return (
           <Card className="p-4">
             <h3 className="font-semibold mb-4 text-center">Match Statistics</h3>
             <div className="space-y-3">
-              {matchDetails.statistics.possession && (
-                <div>
-                  <div className="flex justify-between items-center text-xs mb-1">
-                    <span className="font-semibold text-primary">{matchDetails.statistics.possession.home}%</span>
-                    <span className="text-muted-foreground">Possession</span>
-                    <span className="font-semibold text-primary">{matchDetails.statistics.possession.away}%</span>
-                  </div>
-                  <Progress value={matchDetails.statistics.possession.home} className="h-2" />
-                </div>
+              {/* Football/Soccer Stats */}
+              {matchDetails.sport === 'football' && (
+                <>
+                  {matchDetails.statistics.possession && (
+                    <div>
+                      <div className="flex justify-between items-center text-xs mb-1">
+                        <span className="font-semibold text-primary">{matchDetails.statistics.possession.home}%</span>
+                        <span className="text-muted-foreground">Possession</span>
+                        <span className="font-semibold text-primary">{matchDetails.statistics.possession.away}%</span>
+                      </div>
+                      <Progress value={matchDetails.statistics.possession.home} className="h-2" />
+                    </div>
+                  )}
+                  {renderStatRow("Shots", matchDetails.statistics.shots?.home, matchDetails.statistics.shots?.away)}
+                  {renderStatRow("Shots on Target", matchDetails.statistics.shotsOnTarget?.home, matchDetails.statistics.shotsOnTarget?.away)}
+                  {renderStatRow("Passes", matchDetails.statistics.passes?.home, matchDetails.statistics.passes?.away)}
+                  {renderStatRow("Attacks", matchDetails.statistics.attacks?.home, matchDetails.statistics.attacks?.away)}
+                  {renderStatRow("Dangerous Attacks", matchDetails.statistics.dangerousAttacks?.home, matchDetails.statistics.dangerousAttacks?.away)}
+                  {renderStatRow("Big Chances", matchDetails.statistics.bigChances?.home, matchDetails.statistics.bigChances?.away)}
+                  {renderStatRow("Corners", matchDetails.statistics.corners?.home, matchDetails.statistics.corners?.away)}
+                  {renderStatRow("Free Kicks", matchDetails.statistics.freeKicks?.home, matchDetails.statistics.freeKicks?.away)}
+                  {renderStatRow("Fouls", matchDetails.statistics.fouls?.home, matchDetails.statistics.fouls?.away)}
+                  {renderStatRow("Penalties", matchDetails.statistics.penalties?.home, matchDetails.statistics.penalties?.away)}
+                </>
               )}
-              
-              {matchDetails.statistics.shots && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shots.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Shots</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shots.away}</span>
-                </div>
+
+              {/* Basketball Stats */}
+              {matchDetails.sport === 'basketball' && (
+                <>
+                  {renderPercentageRow("Field Goal %", matchDetails.statistics.fieldGoalPercentage?.home, matchDetails.statistics.fieldGoalPercentage?.away)}
+                  {renderPercentageRow("3-Point %", matchDetails.statistics.threePointPercentage?.home, matchDetails.statistics.threePointPercentage?.away)}
+                  {renderPercentageRow("Free Throw %", matchDetails.statistics.freeThrowPercentage?.home, matchDetails.statistics.freeThrowPercentage?.away)}
+                  {renderStatRow("Rebounds", matchDetails.statistics.rebounds?.home, matchDetails.statistics.rebounds?.away)}
+                  {renderStatRow("Assists", matchDetails.statistics.assists?.home, matchDetails.statistics.assists?.away)}
+                  {renderStatRow("Steals", matchDetails.statistics.steals?.home, matchDetails.statistics.steals?.away)}
+                  {renderStatRow("Blocks", matchDetails.statistics.blocks?.home, matchDetails.statistics.blocks?.away)}
+                  {renderStatRow("Turnovers", matchDetails.statistics.turnovers?.home, matchDetails.statistics.turnovers?.away)}
+                  {renderStatRow("Fouls", matchDetails.statistics.fouls?.home, matchDetails.statistics.fouls?.away)}
+                </>
               )}
-              
-              {matchDetails.statistics.shotsOnTarget && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shotsOnTarget.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Shots on Target</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.shotsOnTarget.away}</span>
-                </div>
+
+              {/* Tennis Stats */}
+              {matchDetails.sport === 'tennis' && (
+                <>
+                  {renderStatRow("Aces", matchDetails.statistics.aces?.home, matchDetails.statistics.aces?.away)}
+                  {renderStatRow("Double Faults", matchDetails.statistics.doubleFaults?.home, matchDetails.statistics.doubleFaults?.away)}
+                  {renderPercentageRow("First Serve %", matchDetails.statistics.firstServePercentage?.home, matchDetails.statistics.firstServePercentage?.away)}
+                  {renderStatRow("Break Points Won", matchDetails.statistics.breakPointsWon?.home, matchDetails.statistics.breakPointsWon?.away)}
+                  {renderStatRow("Winners", matchDetails.statistics.winners?.home, matchDetails.statistics.winners?.away)}
+                  {renderStatRow("Unforced Errors", matchDetails.statistics.unforcedErrors?.home, matchDetails.statistics.unforcedErrors?.away)}
+                </>
               )}
-              
-              {matchDetails.statistics.passes && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.passes.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Passes</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.passes.away}</span>
-                </div>
+
+              {/* Baseball Stats */}
+              {matchDetails.sport === 'baseball' && (
+                <>
+                  {renderStatRow("Hits", matchDetails.statistics.hits?.home, matchDetails.statistics.hits?.away)}
+                  {renderStatRow("Runs", matchDetails.statistics.runs?.home, matchDetails.statistics.runs?.away)}
+                  {renderStatRow("Errors", matchDetails.statistics.errors?.home, matchDetails.statistics.errors?.away)}
+                  {renderStatRow("Home Runs", matchDetails.statistics.homeRuns?.home, matchDetails.statistics.homeRuns?.away)}
+                  {renderStatRow("Strikeouts", matchDetails.statistics.strikeouts?.home, matchDetails.statistics.strikeouts?.away)}
+                  {renderStatRow("Walks", matchDetails.statistics.walks?.home, matchDetails.statistics.walks?.away)}
+                </>
               )}
-              
-              {matchDetails.statistics.attacks && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.attacks.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Attacks</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.attacks.away}</span>
-                </div>
-              )}
-              
-              {matchDetails.statistics.dangerousAttacks && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.dangerousAttacks.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Dangerous Attacks</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.dangerousAttacks.away}</span>
-                </div>
-              )}
-              
-              {matchDetails.statistics.bigChances && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.bigChances.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Big Chances</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.bigChances.away}</span>
-                </div>
-              )}
-              
-              {matchDetails.statistics.corners && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.corners.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Corners</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.corners.away}</span>
-                </div>
-              )}
-              
-              {matchDetails.statistics.freeKicks && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.freeKicks.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Free Kicks</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.freeKicks.away}</span>
-                </div>
-              )}
-              
-              {matchDetails.statistics.fouls && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.fouls.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Fouls</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.fouls.away}</span>
-                </div>
-              )}
-              
-              {matchDetails.statistics.penalties && (
-                <div className="flex justify-between items-center text-xs py-2 border-b">
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.penalties.home}</span>
-                  <span className="text-muted-foreground flex-1 text-center">Penalties</span>
-                  <span className="font-semibold text-primary w-8 text-center">{matchDetails.statistics.penalties.away}</span>
-                </div>
+
+              {/* Boxing Stats */}
+              {matchDetails.sport === 'boxing' && (
+                <>
+                  {renderStatRow("Punches Thrown", matchDetails.statistics.punchesThrown?.home, matchDetails.statistics.punchesThrown?.away)}
+                  {renderStatRow("Punches Landed", matchDetails.statistics.punchesLanded?.home, matchDetails.statistics.punchesLanded?.away)}
+                  {renderPercentageRow("Punch Accuracy", matchDetails.statistics.punchAccuracy?.home, matchDetails.statistics.punchAccuracy?.away)}
+                  {renderStatRow("Power Punches", matchDetails.statistics.powerPunches?.home, matchDetails.statistics.powerPunches?.away)}
+                  {renderStatRow("Jabs", matchDetails.statistics.jabs?.home, matchDetails.statistics.jabs?.away)}
+                  {renderStatRow("Knockdowns", matchDetails.statistics.knockdowns?.home, matchDetails.statistics.knockdowns?.away)}
+                </>
               )}
             </div>
           </Card>

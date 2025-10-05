@@ -53,6 +53,7 @@ export interface Player {
 }
 
 export interface Statistics {
+  // Football/Soccer
   possession?: { home: number; away: number };
   shots?: { home: number; away: number };
   shotsOnTarget?: { home: number; away: number };
@@ -64,6 +65,41 @@ export interface Statistics {
   attacks?: { home: number; away: number };
   dangerousAttacks?: { home: number; away: number };
   bigChances?: { home: number; away: number };
+  
+  // Basketball
+  fieldGoalPercentage?: { home: number; away: number };
+  threePointPercentage?: { home: number; away: number };
+  freeThrowPercentage?: { home: number; away: number };
+  rebounds?: { home: number; away: number };
+  assists?: { home: number; away: number };
+  steals?: { home: number; away: number };
+  blocks?: { home: number; away: number };
+  turnovers?: { home: number; away: number };
+  
+  // Tennis
+  aces?: { home: number; away: number };
+  doubleFaults?: { home: number; away: number };
+  firstServePercentage?: { home: number; away: number };
+  breakPointsWon?: { home: number; away: number };
+  winners?: { home: number; away: number };
+  unforcedErrors?: { home: number; away: number };
+  
+  // Baseball
+  hits?: { home: number; away: number };
+  runs?: { home: number; away: number };
+  errors?: { home: number; away: number };
+  battingAverage?: { home: number; away: number };
+  strikeouts?: { home: number; away: number };
+  walks?: { home: number; away: number };
+  homeRuns?: { home: number; away: number };
+  
+  // Boxing
+  punchesThrown?: { home: number; away: number };
+  punchesLanded?: { home: number; away: number };
+  punchAccuracy?: { home: number; away: number };
+  powerPunches?: { home: number; away: number };
+  jabs?: { home: number; away: number };
+  knockdowns?: { home: number; away: number };
 }
 
 export interface Commentary {

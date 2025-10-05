@@ -98,6 +98,65 @@ export const getMockMatchDetails = (matchId: string): MatchDetails => {
   const match = mockMatches.find(m => m.id === matchId);
   if (!match) throw new Error("Match not found");
 
+  // Sport-specific statistics
+  const getStatisticsBySport = () => {
+    switch (match.sport) {
+      case 'basketball':
+        return {
+          fieldGoalPercentage: { home: 48, away: 52 },
+          threePointPercentage: { home: 38, away: 42 },
+          freeThrowPercentage: { home: 82, away: 78 },
+          rebounds: { home: 42, away: 38 },
+          assists: { home: 24, away: 28 },
+          steals: { home: 8, away: 6 },
+          blocks: { home: 5, away: 7 },
+          turnovers: { home: 12, away: 15 },
+          fouls: { home: 18, away: 21 },
+        };
+      case 'tennis':
+        return {
+          aces: { home: 12, away: 8 },
+          doubleFaults: { home: 3, away: 5 },
+          firstServePercentage: { home: 68, away: 62 },
+          breakPointsWon: { home: 4, away: 2 },
+          winners: { home: 32, away: 28 },
+          unforcedErrors: { home: 18, away: 24 },
+        };
+      case 'baseball':
+        return {
+          hits: { home: 9, away: 7 },
+          runs: { home: 5, away: 3 },
+          errors: { home: 1, away: 2 },
+          homeRuns: { home: 2, away: 1 },
+          strikeouts: { home: 8, away: 10 },
+          walks: { home: 4, away: 3 },
+        };
+      case 'boxing':
+        return {
+          punchesThrown: { home: 487, away: 523 },
+          punchesLanded: { home: 178, away: 192 },
+          punchAccuracy: { home: 37, away: 37 },
+          powerPunches: { home: 89, away: 102 },
+          jabs: { home: 89, away: 90 },
+          knockdowns: { home: 0, away: 1 },
+        };
+      default: // football
+        return {
+          possession: { home: 52, away: 48 },
+          shots: { home: 14, away: 11 },
+          shotsOnTarget: { home: 6, away: 4 },
+          corners: { home: 7, away: 5 },
+          fouls: { home: 12, away: 15 },
+          freeKicks: { home: 8, away: 11 },
+          penalties: { home: 1, away: 0 },
+          passes: { home: 487, away: 423 },
+          attacks: { home: 56, away: 48 },
+          dangerousAttacks: { home: 32, away: 28 },
+          bigChances: { home: 4, away: 3 },
+        };
+    }
+  };
+
   return {
     ...match,
     events: [
@@ -108,11 +167,11 @@ export const getMockMatchDetails = (matchId: string): MatchDetails => {
     ],
     odds: {
       homeWin: 2.1,
-      draw: 3.2,
+      draw: match.sport === 'tennis' || match.sport === 'baseball' || match.sport === 'boxing' ? undefined : 3.2,
       awayWin: 2.8,
       updated: "2024-01-15T19:45:00Z",
     },
-    lineups: {
+    lineups: match.sport === 'football' ? {
       home: [
         // Starting XI
         { name: "Courtois", position: "GK", number: 1, captain: false },
@@ -159,20 +218,8 @@ export const getMockMatchDetails = (matchId: string): MatchDetails => {
       ],
       homeFormation: "4-3-3",
       awayFormation: "4-3-3",
-    },
-    statistics: {
-      possession: { home: 52, away: 48 },
-      shots: { home: 14, away: 11 },
-      shotsOnTarget: { home: 6, away: 4 },
-      corners: { home: 7, away: 5 },
-      fouls: { home: 12, away: 15 },
-      freeKicks: { home: 8, away: 11 },
-      penalties: { home: 1, away: 0 },
-      passes: { home: 487, away: 423 },
-      attacks: { home: 56, away: 48 },
-      dangerousAttacks: { home: 32, away: 28 },
-      bigChances: { home: 4, away: 3 },
-    },
+    } : undefined,
+    statistics: getStatisticsBySport(),
     commentary: [
       { minute: 78, text: "GOAL! Vinicius Jr. scores a brilliant goal to put Real Madrid ahead!" },
       { minute: 75, text: "Barcelona pressing for an equalizer, creating several chances." },
