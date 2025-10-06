@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MatchDetails as MatchDetailsType, Match } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { SportTracker } from "@/components/SportTracker";
 import { FootballPitch } from "@/components/FootballPitch";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,7 +28,6 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   const [aiPredictionUnlocked, setAiPredictionUnlocked] = useState(false);
   const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     const loadMatchDetails = async () => {
@@ -142,6 +141,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
     ...(hasLineups ? [{ id: "lineups", label: "Lineups" }] : []),
     ...(hasStats ? [{ id: "statistics", label: "Stats" }] : []),
     { id: "tracker", label: "Live Tracker" },
+    ...(matchDetails.status !== 'finished' ? [{ id: "prediction", label: "AI Prediction" }] : []),
   ];
 
   const handleUnlockPrediction = async () => {
@@ -172,16 +172,13 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
         const data = await response.json();
         setAiPrediction(data.prediction);
         
-        toast({
-          title: "AI Prediction Ready!",
+        toast.success("AI Prediction Ready!", {
           description: "Your match prediction has been generated.",
         });
       } catch (error) {
         console.error('Error generating prediction:', error);
-        toast({
-          title: "Prediction Error",
+        toast.error("Prediction Error", {
           description: error instanceof Error ? error.message : "Failed to generate prediction. Please try again.",
-          variant: "destructive",
         });
         // Refund coins on error
         setUserProfile(prev => ({ ...prev, coins: prev.coins + 20 }));
@@ -190,10 +187,8 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
         setIsLoadingPrediction(false);
       }
     } else {
-      toast({
-        title: "Insufficient Coins",
+      toast.error("Insufficient Coins", {
         description: "You need 20 coins to unlock this prediction.",
-        variant: "destructive",
       });
     }
   };
@@ -201,8 +196,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   const handleWatchRewardedAd = () => {
     // Simulate rewarded ad watch
     setUserProfile(prev => ({ ...prev, coins: prev.coins + 25 }));
-    toast({
-      title: "Coins Earned!",
+    toast.success("Coins Earned!", {
       description: "You earned 25 coins for watching the ad!",
     });
   };
@@ -913,6 +907,17 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
           </Button>
           <h1 className="text-sm font-semibold">Match Details</h1>
         </div>
+
+        {/* League Badge */}
+        {matchDetails.league && (
+          <button 
+            onClick={() => toast(`View ${matchDetails.league} details`)}
+            className="mb-3 flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
+          >
+            <span className="text-sm">🏆</span>
+            <span className="font-medium">{matchDetails.league}</span>
+          </button>
+        )}
 
         {/* Match Header */}
         <Card className="p-3">

@@ -64,10 +64,15 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const loadApiMatches = async () => {
     setIsLoadingApi(true);
     try {
+      // Format date as YYYY-MM-DD
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      
+      console.log('Fetching matches for date:', formattedDate, 'sport:', selectedSport);
+      
       const { data, error } = await supabase.functions.invoke('fetch-matches-apisports', {
         body: {
           sport: selectedSport.toLowerCase(),
-          date: selectedDate.toISOString().split('T')[0],
+          date: formattedDate,
           liveOnly: showLiveOnly,
         },
       });

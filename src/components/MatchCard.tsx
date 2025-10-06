@@ -40,9 +40,17 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
       onClick={() => onClick(match)}
     >
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-1 min-w-0">
           <span className="text-xs">{getSportIcon()}</span>
-          <span className="text-[10px] text-muted-foreground font-medium">{match.league}</span>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              // This will be implemented to navigate to league details
+            }}
+            className="text-[10px] text-muted-foreground font-medium hover:text-primary transition-colors truncate"
+          >
+            {match.league}
+          </button>
         </div>
         {getStatusBadge()}
       </div>
