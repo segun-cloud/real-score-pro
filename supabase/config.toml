@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.fetch-live-matches]
 verify_jwt = false
+
+[functions.fetch-matches-apisports]
+verify_jwt = false
+
+[functions.fetch-match-details-apisports]
+verify_jwt = false
+
+[functions.fetch-highlights]
+verify_jwt = false
+
+[functions.fetch-sports-feeds]
+verify_jwt = false
