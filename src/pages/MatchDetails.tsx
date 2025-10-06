@@ -141,7 +141,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
     ...(hasLineups ? [{ id: "lineups", label: "Lineups" }] : []),
     ...(hasStats ? [{ id: "statistics", label: "Stats" }] : []),
     { id: "tracker", label: "Live Tracker" },
-    ...(matchDetails.status !== 'finished' ? [{ id: "prediction", label: "AI Prediction" }] : []),
+    ...(matchDetails?.status !== 'finished' ? [{ id: "prediction", label: "AI Prediction" }] : []),
   ];
 
   const handleUnlockPrediction = async () => {
