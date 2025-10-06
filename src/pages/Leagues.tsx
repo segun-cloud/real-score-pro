@@ -109,7 +109,7 @@ export const Leagues = () => {
             {COUNTRY_FLAGS[selectedLeague.country]} {selectedLeague.name}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {SPORT_CONFIG[selectedLeague.sport].icon} {SPORT_CONFIG[selectedLeague.sport].name} • Tier {selectedLeague.tier}
+            {selectedLeague.country} • {SPORT_CONFIG[selectedLeague.sport].name}
           </p>
         </div>
 
@@ -129,10 +129,6 @@ export const Leagues = () => {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Sport</span>
                 <span className="font-medium">{SPORT_CONFIG[selectedLeague.sport].icon} {SPORT_CONFIG[selectedLeague.sport].name}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Division Tier</span>
-                <Badge variant="secondary">Tier {selectedLeague.tier}</Badge>
               </div>
             </CardContent>
           </Card>
