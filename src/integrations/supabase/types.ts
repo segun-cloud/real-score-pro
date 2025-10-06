@@ -92,6 +92,75 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_emblems: {
+        Row: {
+          bg_color: string
+          created_at: string
+          icon: string
+          icon_color: string
+          id: string
+          name: string
+          shape: string
+          user_id: string
+        }
+        Insert: {
+          bg_color: string
+          created_at?: string
+          icon: string
+          icon_color: string
+          id?: string
+          name: string
+          shape: string
+          user_id: string
+        }
+        Update: {
+          bg_color?: string
+          created_at?: string
+          icon?: string
+          icon_color?: string
+          id?: string
+          name?: string
+          shape?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      custom_kits: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          pattern: string
+          primary_color: string
+          secondary_color: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          tertiary_color: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          pattern: string
+          primary_color: string
+          secondary_color: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          tertiary_color?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          pattern?: string
+          primary_color?: string
+          secondary_color?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          tertiary_color?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           away_score: number | null
@@ -284,6 +353,8 @@ export type Database = {
       user_teams: {
         Row: {
           created_at: string
+          custom_emblem_id: string | null
+          custom_kit_id: string | null
           division: number | null
           draws: number | null
           emblem_id: number | null
@@ -298,6 +369,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_emblem_id?: string | null
+          custom_kit_id?: string | null
           division?: number | null
           draws?: number | null
           emblem_id?: number | null
@@ -312,6 +385,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_emblem_id?: string | null
+          custom_kit_id?: string | null
           division?: number | null
           draws?: number | null
           emblem_id?: number | null
@@ -325,6 +400,20 @@ export type Database = {
           wins?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "user_teams_custom_emblem_id_fkey"
+            columns: ["custom_emblem_id"]
+            isOneToOne: false
+            referencedRelation: "custom_emblems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_teams_custom_kit_id_fkey"
+            columns: ["custom_kit_id"]
+            isOneToOne: false
+            referencedRelation: "custom_kits"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "user_teams_user_id_fkey"
             columns: ["user_id"]

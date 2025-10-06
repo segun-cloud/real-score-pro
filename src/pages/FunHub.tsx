@@ -65,13 +65,21 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
     }
   };
 
-  const handleCreateTeam = async (teamName: string, emblemId: number, kitId: number) => {
+  const handleCreateTeam = async (
+    teamName: string, 
+    emblemId: number | null, 
+    kitId: number | null,
+    customEmblemId: string | null,
+    customKitId: string | null
+  ) => {
     if (!selectedSport || !userId) return;
 
     try {
-
       const sportConfig = SPORT_CONFIG[selectedSport];
-      const totalCost = sportConfig.playerCount * 50 + 50;
+      const playersCost = sportConfig.playerCount * 50;
+      
+      // Calculate costs (custom emblem/kit costs already deducted during customization)
+      const totalCost = playersCost;
 
       // Create team
       const { data: team, error: teamError } = await supabase
@@ -81,7 +89,9 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
           sport: selectedSport,
           team_name: teamName,
           emblem_id: emblemId,
-          kit_id: kitId
+          kit_id: kitId,
+          custom_emblem_id: customEmblemId,
+          custom_kit_id: customKitId
         })
         .select()
         .single();
@@ -158,6 +168,7 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
         <div className="p-4">
           <TeamBuilder
             sport={selectedSport}
+            userId={userId}
             userCoins={userCoins}
             onBack={() => {
               setShowTeamBuilder(false);
@@ -191,8 +202,14 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
           </TabsList>
 
           <TabsContent value="my-teams" className="mt-4 space-y-4">
+            <MyTeamsTab
+              teams={userTeams}
+              onViewTeam={(id) => toast.info('Team details coming soon!')}
+              onTrainPlayers={(id) => toast.info('Training coming soon!')}
+              onCustomizeKit={(id) => toast.info('Kit customization coming soon!')}
+            />
             {userTeams.length === 0 && (
-              <div className="space-y-4 mb-6">
+              <div className="space-y-4">
                 <h2 className="text-lg font-bold">🎮 Create Your First Team</h2>
                 <SportSelector
                   onSelectSport={handleSportSelect}
@@ -200,12 +217,15 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
                 />
               </div>
             )}
-            <MyTeamsTab
-              teams={userTeams}
-              onViewTeam={(id) => toast.info('Team details coming soon!')}
-              onTrainPlayers={(id) => toast.info('Training coming soon!')}
-              onCustomizeKit={(id) => toast.info('Kit customization coming soon!')}
-            />
+            {userTeams.length > 0 && userTeams.length < Object.keys(SPORT_CONFIG).length && (
+              <div className="space-y-4 mt-6">
+                <h2 className="text-lg font-bold">Create Another Team</h2>
+                <SportSelector
+                  onSelectSport={handleSportSelect}
+                  userTeams={userTeams.map(t => ({ sport: t.sport, division: t.division }))}
+                />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="competitions" className="mt-4">
