@@ -7,36 +7,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const API_SPORTS_KEY = Deno.env.get('API_SPORTS_KEY');
+const ALLSPORTS_API_KEY = Deno.env.get('API_SPORTS_KEY'); // Keeping same env var name for compatibility
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-// API endpoints for different sports
-const API_ENDPOINTS = {
-  football: 'https://v3.football.api-sports.io/fixtures',
-  basketball: 'https://v1.basketball.api-sports.io/games',
-  tennis: 'https://v1.tennis.api-sports.io/games',
-  baseball: 'https://v1.baseball.api-sports.io/games',
-  boxing: 'https://v1.boxing.api-sports.io/fights',
-};
+// AllSportsAPI base URL
+const ALLSPORTS_BASE_URL = 'https://apiv3.allsportsapi.com';
 
-// Status mapping from API to our format
+// Status mapping from AllSportsAPI to our format
 const mapStatus = (apiStatus: string): string => {
   const statusMap: Record<string, string> = {
-    'NS': 'scheduled',
-    'LIVE': 'live',
-    '1H': 'live',
-    '2H': 'live',
-    'HT': 'live',
-    'FT': 'finished',
-    'AET': 'finished',
-    'PEN': 'finished',
-    'CANC': 'cancelled',
-    'PST': 'postponed',
+    '': 'scheduled',
+    'Finished': 'finished',
+    'After Pen.': 'finished',
+    'After ET': 'finished',
+    'Postponed': 'postponed',
+    'Cancelled': 'cancelled',
+    'Halftime': 'live',
+    'Playing': 'live',
   };
-  return statusMap[apiStatus] || 'scheduled';
+  return statusMap[apiStatus] || (apiStatus ? 'live' : 'scheduled');
 };
 
 async function logApiRequest(endpoint: string, sport: string, status: number, cached: boolean) {
@@ -84,15 +76,13 @@ async function saveToCache(matches: any[]) {
 }
 
 async function fetchFootballMatches(date: string) {
-  console.log(`Calling API-Sports Football API for date: ${date}`);
-  const response = await fetch(`${API_ENDPOINTS.football}?date=${date}`, {
-    headers: {
-      'x-rapidapi-key': API_SPORTS_KEY!,
-      'x-rapidapi-host': 'v3.football.api-sports.io',
-    },
-  });
+  console.log(`Calling AllSportsAPI Football for date: ${date}`);
+  
+  const url = `${ALLSPORTS_BASE_URL}/football/?met=Fixtures&APIkey=${ALLSPORTS_API_KEY}&from=${date}&to=${date}`;
+  
+  const response = await fetch(url);
 
-  await logApiRequest('fixtures', 'football', response.status, false);
+  await logApiRequest('football/fixtures', 'football', response.status, false);
 
   console.log(`API Response Status: ${response.status}`);
   
@@ -103,41 +93,39 @@ async function fetchFootballMatches(date: string) {
   }
 
   const data = await response.json();
-  console.log(`API Response:`, JSON.stringify(data).substring(0, 500));
-  console.log(`Number of fixtures returned: ${data.response?.length || 0}`);
+  console.log(`API Response sample:`, JSON.stringify(data).substring(0, 500));
+  console.log(`Number of fixtures returned: ${data.result?.length || 0}`);
   
-  if (!data.response || data.response.length === 0) {
+  if (!data.result || data.result.length === 0) {
     console.log('No matches found in API response');
     return [];
   }
   
-  return data.response.map((fixture: any) => ({
-    id: `api-football-${fixture.fixture.id}`,
-    api_match_id: `football-${fixture.fixture.id}`,
+  return data.result.map((match: any) => ({
+    id: `api-football-${match.match_id}`,
+    api_match_id: `football-${match.match_id}`,
     sport: 'football',
-    homeTeam: fixture.teams.home.name,
-    awayTeam: fixture.teams.away.name,
-    homeScore: fixture.goals.home,
-    awayScore: fixture.goals.away,
-    status: mapStatus(fixture.fixture.status.short),
-    startTime: fixture.fixture.date,
-    league: fixture.league.name,
-    homeTeamLogo: fixture.teams.home.logo,
-    awayTeamLogo: fixture.teams.away.logo,
-    minute: fixture.fixture.status.elapsed,
+    homeTeam: match.match_hometeam_name,
+    awayTeam: match.match_awayteam_name,
+    homeScore: parseInt(match.match_hometeam_score) || null,
+    awayScore: parseInt(match.match_awayteam_score) || null,
+    status: mapStatus(match.match_status),
+    startTime: `${match.match_date} ${match.match_time}`,
+    league: match.league_name,
+    homeTeamLogo: match.team_home_badge || match.home_team_logo,
+    awayTeamLogo: match.team_away_badge || match.away_team_logo,
+    minute: match.match_status === '' ? null : parseInt(match.match_status.replace("'", '')) || null,
   }));
 }
 
 async function fetchBasketballMatches(date: string) {
-  console.log(`Calling API-Sports Basketball API for date: ${date}`);
-  const response = await fetch(`${API_ENDPOINTS.basketball}?date=${date}`, {
-    headers: {
-      'x-rapidapi-key': API_SPORTS_KEY!,
-      'x-rapidapi-host': 'v1.basketball.api-sports.io',
-    },
-  });
+  console.log(`Calling AllSportsAPI Basketball for date: ${date}`);
+  
+  const url = `${ALLSPORTS_BASE_URL}/basketball/?met=Fixtures&APIkey=${ALLSPORTS_API_KEY}&from=${date}&to=${date}`;
+  
+  const response = await fetch(url);
 
-  await logApiRequest('games', 'basketball', response.status, false);
+  await logApiRequest('basketball/fixtures', 'basketball', response.status, false);
 
   console.log(`API Response Status: ${response.status}`);
 
@@ -148,27 +136,27 @@ async function fetchBasketballMatches(date: string) {
   }
 
   const data = await response.json();
-  console.log(`API Response:`, JSON.stringify(data).substring(0, 500));
-  console.log(`Number of games returned: ${data.response?.length || 0}`);
+  console.log(`API Response sample:`, JSON.stringify(data).substring(0, 500));
+  console.log(`Number of games returned: ${data.result?.length || 0}`);
   
-  if (!data.response || data.response.length === 0) {
+  if (!data.result || data.result.length === 0) {
     console.log('No games found in API response');
     return [];
   }
   
-  return data.response.map((game: any) => ({
-    id: `api-basketball-${game.id}`,
-    api_match_id: `basketball-${game.id}`,
+  return data.result.map((match: any) => ({
+    id: `api-basketball-${match.match_id}`,
+    api_match_id: `basketball-${match.match_id}`,
     sport: 'basketball',
-    homeTeam: game.teams.home.name,
-    awayTeam: game.teams.away.name,
-    homeScore: game.scores.home.total,
-    awayScore: game.scores.away.total,
-    status: mapStatus(game.status.short),
-    startTime: game.date,
-    league: game.league.name,
-    homeTeamLogo: game.teams.home.logo,
-    awayTeamLogo: game.teams.away.logo,
+    homeTeam: match.match_hometeam_name,
+    awayTeam: match.match_awayteam_name,
+    homeScore: parseInt(match.match_hometeam_score) || null,
+    awayScore: parseInt(match.match_awayteam_score) || null,
+    status: mapStatus(match.match_status),
+    startTime: `${match.match_date} ${match.match_time}`,
+    league: match.league_name,
+    homeTeamLogo: match.team_home_badge,
+    awayTeamLogo: match.team_away_badge,
   }));
 }
 
@@ -180,8 +168,9 @@ serve(async (req) => {
   try {
     const { sport, date, liveOnly } = await req.json();
     
-    if (!API_SPORTS_KEY) {
-      throw new Error('API_SPORTS_KEY not configured');
+    if (!ALLSPORTS_API_KEY) {
+      console.error('ALLSPORTS_API_KEY not configured');
+      throw new Error('API key not configured. Please add your AllSportsAPI key.');
     }
 
     const targetDate = date || new Date().toISOString().split('T')[0];
