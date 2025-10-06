@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_match_cache: {
+        Row: {
+          api_match_id: string
+          away_score: number | null
+          away_team: string
+          created_at: string | null
+          home_score: number | null
+          home_team: string
+          id: string
+          last_updated: string | null
+          league_name: string
+          match_date: string
+          minute: number | null
+          raw_data: Json
+          sport: Database["public"]["Enums"]["sport_type"]
+          status: string
+        }
+        Insert: {
+          api_match_id: string
+          away_score?: number | null
+          away_team: string
+          created_at?: string | null
+          home_score?: number | null
+          home_team: string
+          id?: string
+          last_updated?: string | null
+          league_name: string
+          match_date: string
+          minute?: number | null
+          raw_data: Json
+          sport: Database["public"]["Enums"]["sport_type"]
+          status: string
+        }
+        Update: {
+          api_match_id?: string
+          away_score?: number | null
+          away_team?: string
+          created_at?: string | null
+          home_score?: number | null
+          home_team?: string
+          id?: string
+          last_updated?: string | null
+          league_name?: string
+          match_date?: string
+          minute?: number | null
+          raw_data?: Json
+          sport?: Database["public"]["Enums"]["sport_type"]
+          status?: string
+        }
+        Relationships: []
+      }
+      api_request_log: {
+        Row: {
+          cached: boolean | null
+          created_at: string | null
+          endpoint: string
+          id: string
+          request_params: Json | null
+          response_status: number | null
+          sport: Database["public"]["Enums"]["sport_type"] | null
+        }
+        Insert: {
+          cached?: boolean | null
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          request_params?: Json | null
+          response_status?: number | null
+          sport?: Database["public"]["Enums"]["sport_type"] | null
+        }
+        Update: {
+          cached?: boolean | null
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          request_params?: Json | null
+          response_status?: number | null
+          sport?: Database["public"]["Enums"]["sport_type"] | null
+        }
+        Relationships: []
+      }
       competition_participants: {
         Row: {
           competition_id: string
@@ -163,6 +244,8 @@ export type Database = {
       }
       leagues: {
         Row: {
+          api_league_id: string | null
+          api_provider: string | null
           country: string
           created_at: string
           id: string
@@ -172,6 +255,8 @@ export type Database = {
           tier: number
         }
         Insert: {
+          api_league_id?: string | null
+          api_provider?: string | null
           country: string
           created_at?: string
           id?: string
@@ -181,6 +266,8 @@ export type Database = {
           tier: number
         }
         Update: {
+          api_league_id?: string | null
+          api_provider?: string | null
           country?: string
           created_at?: string
           id?: string

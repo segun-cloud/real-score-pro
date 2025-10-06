@@ -7,12 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Search, CalendarIcon } from "lucide-react";
+import { Search, CalendarIcon, RefreshCw } from "lucide-react";
 import { Match } from "@/types/sports";
-import { mockMatches, mockUserProfile } from "@/data/mockData";
+import { mockMatches } from "@/data/mockData";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import type { Match as DBMatch } from "@/types/funhub";
+import { useToast } from "@/hooks/use-toast";
 
 interface HomeProps {
   onMatchClick: (match: Match) => void;
@@ -20,16 +20,25 @@ interface HomeProps {
 }
 
 export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
-  const [matches, setMatches] = useState<Match[]>(mockMatches);
-  const [filteredMatches, setFilteredMatches] = useState<Match[]>(mockMatches);
+  const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLiveOnly, setShowLiveOnly] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dbMatches, setDbMatches] = useState<any[]>([]);
+  const [apiMatches, setApiMatches] = useState<Match[]>([]);
+  const [isLoadingApi, setIsLoadingApi] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isCached, setIsCached] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadDbMatches();
+    loadApiMatches();
   }, []);
+
+  useEffect(() => {
+    loadApiMatches();
+  }, [selectedSport, selectedDate]);
 
   const loadDbMatches = async () => {
     try {
@@ -52,11 +61,45 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
     }
   };
 
+  const loadApiMatches = async () => {
+    setIsLoadingApi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-live-matches', {
+        body: {
+          sport: selectedSport.toLowerCase(),
+          date: selectedDate.toISOString().split('T')[0],
+          liveOnly: false,
+        },
+      });
+
+      if (error) throw error;
+
+      setApiMatches(data.matches || []);
+      setIsCached(data.cached || false);
+      setLastUpdated(new Date());
+      
+      if (data.matches && data.matches.length === 0) {
+        toast({
+          title: "No matches found",
+          description: `No ${selectedSport} matches found for the selected date`,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading API matches:', error);
+      toast({
+        title: "Using mock data",
+        description: "Unable to load live matches, showing sample data",
+        variant: "destructive",
+      });
+      // Fallback to mock data on error
+      setApiMatches(mockMatches.filter(m => m.sport === selectedSport.toLowerCase()));
+    } finally {
+      setIsLoadingApi(false);
+    }
+  };
+
   useEffect(() => {
-    let filtered = matches;
-    
-    // Always filter by selected sport (no "all" option anymore)
-    filtered = filtered.filter(match => match.sport === selectedSport);
+    let filtered = apiMatches;
     
     if (searchQuery) {
       filtered = filtered.filter(match => 
@@ -66,22 +109,12 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
       );
     }
 
-    // Filter by selected date
-    if (selectedDate) {
-      const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-      filtered = filtered.filter(match => {
-        const matchDateStr = format(new Date(match.startTime), 'yyyy-MM-dd');
-        return matchDateStr === selectedDateStr;
-      });
-    }
-
-    // Filter by live only if toggle is on
     if (showLiveOnly) {
       filtered = filtered.filter(match => match.status === 'live');
     }
     
     setFilteredMatches(filtered);
-  }, [matches, selectedSport, searchQuery, selectedDate, showLiveOnly]);
+  }, [apiMatches, searchQuery, showLiveOnly]);
 
   // Group matches by league
   const groupMatchesByLeague = (matches: Match[]) => {
@@ -138,6 +171,14 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                 />
               </PopoverContent>
             </Popover>
+            <Button 
+              variant="outline" 
+              size="icon"
+              onClick={loadApiMatches}
+              disabled={isLoadingApi}
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoadingApi ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
           
           {/* Live Toggle */}
@@ -156,102 +197,117 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
               Showing matches for {format(selectedDate, 'PPP')}
             </p>
           )}
+
+          {lastUpdated && (
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              Last updated: {format(lastUpdated, "HH:mm:ss")}
+              {isCached && <span className="text-yellow-500">• Cached</span>}
+            </div>
+          )}
         </div>
 
-        {/* Database Competition Matches */}
-        {dbMatches.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-base font-semibold">Competition Matches</h2>
-              <Badge variant="secondary">Live</Badge>
-            </div>
-            <div className="space-y-3">
-              {dbMatches.map((match: any) => (
-                <div
-                  key={match.id}
-                  className="bg-card border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-muted-foreground">
-                      {match.competition?.name || 'Competition'}
-                    </span>
-                    <Badge variant={match.status === 'completed' ? 'secondary' : 'default'}>
-                      {match.status}
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium">{match.home_team?.team_name || 'Home Team'}</p>
-                    </div>
-                    <div className="flex items-center gap-4 px-4">
-                      <span className="text-2xl font-bold">
-                        {match.home_score ?? '-'}
-                      </span>
-                      <span className="text-muted-foreground">:</span>
-                      <span className="text-2xl font-bold">
-                        {match.away_score ?? '-'}
-                      </span>
-                    </div>
-                    <div className="flex-1 text-right">
-                      <p className="font-medium">{match.away_team?.team_name || 'Away Team'}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Show matches grouped by status or league */}
-        {showLiveOnly ? (
-          /* Live Only Mode */
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-base font-semibold">Live Matches</h2>
-              <Badge variant="destructive" className="bg-live text-live-foreground animate-pulse">
-                LIVE
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {filteredMatches.length > 0 ? (
-                filteredMatches.map((match, index) => (
-                  <div key={match.id}>
-                    <MatchCard match={match} onClick={onMatchClick} />
-                    {(index + 1) % 10 === 0 && <NativeAd />}
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">No live matches currently</p>
-                </div>
-              )}
-            </div>
+        {isLoadingApi ? (
+          <div className="flex items-center justify-center py-12">
+            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          /* All Matches Grouped By League */
-          <div className="space-y-6">
-            {Object.entries(groupMatchesByLeague(filteredMatches)).map(([league, leagueMatches]) => (
-              <div key={league}>
-                <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-                  {getSportEmoji(leagueMatches[0].sport)} {league}
-                </h2>
+          <>
+            {/* Database Competition Matches */}
+            {dbMatches.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <h2 className="text-base font-semibold">Competition Matches</h2>
+                  <Badge variant="secondary">Live</Badge>
+                </div>
                 <div className="space-y-3">
-                  {leagueMatches.map((match, index) => (
-                    <div key={match.id}>
-                      <MatchCard match={match} onClick={onMatchClick} />
-                      {(index + 1) % 10 === 0 && <NativeAd />}
+                  {dbMatches.map((match: any) => (
+                    <div
+                      key={match.id}
+                      className="bg-card border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground">
+                          {match.competition?.name || 'Competition'}
+                        </span>
+                        <Badge variant={match.status === 'completed' ? 'secondary' : 'default'}>
+                          {match.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium">{match.home_team?.team_name || 'Home Team'}</p>
+                        </div>
+                        <div className="flex items-center gap-4 px-4">
+                          <span className="text-2xl font-bold">
+                            {match.home_score ?? '-'}
+                          </span>
+                          <span className="text-muted-foreground">:</span>
+                          <span className="text-2xl font-bold">
+                            {match.away_score ?? '-'}
+                          </span>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <p className="font-medium">{match.away_team?.team_name || 'Away Team'}</p>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
-            ))}
-            
-            {filteredMatches.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No matches found for this date</p>
+            )}
+
+            {/* Show matches grouped by status or league */}
+            {showLiveOnly ? (
+              /* Live Only Mode */
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <h2 className="text-base font-semibold">Live Matches</h2>
+                  <Badge variant="destructive" className="bg-live text-live-foreground animate-pulse">
+                    LIVE
+                  </Badge>
+                </div>
+                <div className="space-y-3">
+                  {filteredMatches.length > 0 ? (
+                    filteredMatches.map((match, index) => (
+                      <div key={match.id}>
+                        <MatchCard match={match} onClick={onMatchClick} />
+                        {(index + 1) % 10 === 0 && <NativeAd />}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No live matches currently</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* All Matches Grouped By League */
+              <div className="space-y-6">
+                {Object.entries(groupMatchesByLeague(filteredMatches)).map(([league, leagueMatches]) => (
+                  <div key={league}>
+                    <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
+                      {getSportEmoji(leagueMatches[0].sport)} {league}
+                    </h2>
+                    <div className="space-y-3">
+                      {leagueMatches.map((match, index) => (
+                        <div key={match.id}>
+                          <MatchCard match={match} onClick={onMatchClick} />
+                          {(index + 1) % 10 === 0 && <NativeAd />}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                
+                {filteredMatches.length === 0 && (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">No matches found for this date</p>
+                  </div>
+                )}
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </div>
