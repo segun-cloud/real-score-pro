@@ -1,24 +1,25 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Coins, Hammer, Zap, Shirt, Palette } from "lucide-react";
+import { Coins } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SportSelector } from "@/components/funhub/SportSelector";
 import { TeamBuilder } from "@/components/funhub/TeamBuilder";
-import { CompetitionCard } from "@/components/funhub/CompetitionCard";
+import { MyTeamsTab } from "@/components/funhub/MyTeamsTab";
+import { CompetitionsTab } from "@/components/funhub/CompetitionsTab";
+import { LeaderboardsTab } from "@/components/funhub/LeaderboardsTab";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { SportType, UserTeam, Competition } from "@/types/funhub";
+import type { SportType, UserTeam } from "@/types/funhub";
 import { SPORT_CONFIG } from "@/types/funhub";
 
 interface FunHubProps {
   userId?: string;
   onCoinsUpdate: () => void;
+  onNavigate: (screen: string, competitionId?: string) => void;
 }
 
-export const FunHub = ({ userId, onCoinsUpdate }: FunHubProps) => {
+export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   const [userCoins, setUserCoins] = useState(1000);
   const [userTeams, setUserTeams] = useState<UserTeam[]>([]);
-  const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [selectedSport, setSelectedSport] = useState<SportType | null>(null);
   const [showTeamBuilder, setShowTeamBuilder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,16 +56,6 @@ export const FunHub = ({ userId, onCoinsUpdate }: FunHubProps) => {
 
       if (teams) {
         setUserTeams(teams);
-      }
-
-      // Load active competitions
-      const { data: comps } = await supabase
-        .from('competitions')
-        .select('*')
-        .eq('status', 'active');
-
-      if (comps) {
-        setCompetitions(comps);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -191,63 +182,45 @@ export const FunHub = ({ userId, onCoinsUpdate }: FunHubProps) => {
         </div>
       </div>
 
-      <div className="p-4 space-y-6">
-        {/* Active Competitions */}
-        {competitions.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              🏆 Active Competitions
-            </h2>
-            {competitions.map((comp) => (
-              <CompetitionCard
-                key={comp.id}
-                competition={comp}
-                onViewStandings={() => toast.info('Standings coming soon!')}
-                onPlayMatch={() => toast.info('Match simulation coming soon!')}
-              />
-            ))}
-          </div>
-        )}
+      <div className="p-4">
+        <Tabs defaultValue="my-teams" className="w-full">
+          <TabsList className="w-full grid grid-cols-3">
+            <TabsTrigger value="my-teams">My Teams</TabsTrigger>
+            <TabsTrigger value="competitions">Competitions</TabsTrigger>
+            <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
+          </TabsList>
 
-        {/* Quick Actions */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold">⭐ Quick Actions</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Card className="cursor-pointer hover:border-primary transition-colors">
-              <CardContent className="p-4 text-center">
-                <Hammer className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="font-medium text-sm">Build Team</p>
-              </CardContent>
-            </Card>
-            <Card className="cursor-pointer hover:border-primary transition-colors opacity-50">
-              <CardContent className="p-4 text-center">
-                <Zap className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="font-medium text-sm">Train Players</p>
-              </CardContent>
-            </Card>
-            <Card className="cursor-pointer hover:border-primary transition-colors opacity-50">
-              <CardContent className="p-4 text-center">
-                <Shirt className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="font-medium text-sm">Customize Kit</p>
-              </CardContent>
-            </Card>
-            <Card className="cursor-pointer hover:border-primary transition-colors opacity-50">
-              <CardContent className="p-4 text-center">
-                <Palette className="h-8 w-8 mx-auto mb-2 text-primary" />
-                <p className="font-medium text-sm">Edit Emblem</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+          <TabsContent value="my-teams" className="mt-4 space-y-4">
+            {userTeams.length === 0 && (
+              <div className="space-y-4 mb-6">
+                <h2 className="text-lg font-bold">🎮 Create Your First Team</h2>
+                <SportSelector
+                  onSelectSport={handleSportSelect}
+                  userTeams={userTeams.map(t => ({ sport: t.sport, division: t.division }))}
+                />
+              </div>
+            )}
+            <MyTeamsTab
+              teams={userTeams}
+              onViewTeam={(id) => toast.info('Team details coming soon!')}
+              onTrainPlayers={(id) => toast.info('Training coming soon!')}
+              onCustomizeKit={(id) => toast.info('Kit customization coming soon!')}
+            />
+          </TabsContent>
 
-        {/* Sport Selection */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-bold">🎮 Select a Sport</h2>
-          <SportSelector
-            onSelectSport={handleSportSelect}
-            userTeams={userTeams.map(t => ({ sport: t.sport, division: t.division }))}
-          />
-        </div>
+          <TabsContent value="competitions" className="mt-4">
+            <CompetitionsTab
+              userTeams={userTeams}
+              userCoins={userCoins}
+              onCoinsUpdate={onCoinsUpdate}
+              onNavigate={onNavigate}
+            />
+          </TabsContent>
+
+          <TabsContent value="leaderboards" className="mt-4">
+            <LeaderboardsTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

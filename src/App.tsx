@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Home } from "./pages/Home";
+import { CompetitionDetails } from "./pages/CompetitionDetails";
 import { MatchDetails } from "./pages/MatchDetails";
 import { Profile } from "./pages/Profile";
 import { Leagues } from "./pages/Leagues";
@@ -21,11 +22,12 @@ import { useToast } from "@/hooks/use-toast";
 
 const queryClient = new QueryClient();
 
-type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'login' | 'signup';
+type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'competition-details' | 'login' | 'signup';
 
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string>('football');
   const [coins, setCoins] = useState(0);
   const [user, setUser] = useState<User | null>(null);
@@ -128,7 +130,7 @@ const App = () => {
     setSelectedMatchId(null);
   };
 
-  const handleNavigate = (screen: string) => {
+  const handleNavigate = (screen: string, competitionId?: string) => {
     // Protect routes - require authentication
     if (!user && screen !== 'login' && screen !== 'signup') {
       toast({
@@ -138,6 +140,10 @@ const App = () => {
       });
       setCurrentScreen('login');
       return;
+    }
+    
+    if (screen === 'competition-details' && competitionId) {
+      setSelectedCompetitionId(competitionId);
     }
     
     setCurrentScreen(screen as Screen);
@@ -227,7 +233,18 @@ const App = () => {
       case 'feeds':
         return <Feeds />;
       case 'fun-hub':
-        return <FunHub userId={user?.id} onCoinsUpdate={updateCoins} />;
+        return <FunHub userId={user?.id} onCoinsUpdate={updateCoins} onNavigate={handleNavigate} />;
+      case 'competition-details':
+        return selectedCompetitionId ? (
+          <div className="min-h-screen bg-background pb-20">
+            <CompetitionDetails 
+              competitionId={selectedCompetitionId} 
+              onBack={() => setCurrentScreen('fun-hub')} 
+            />
+          </div>
+        ) : (
+          <FunHub userId={user?.id} onCoinsUpdate={updateCoins} onNavigate={handleNavigate} />
+        );
       default:
         return (
           <Home 
