@@ -84,6 +84,7 @@ async function saveToCache(matches: any[]) {
 }
 
 async function fetchFootballMatches(date: string) {
+  console.log(`Calling API-Sports Football API for date: ${date}`);
   const response = await fetch(`${API_ENDPOINTS.football}?date=${date}`, {
     headers: {
       'x-rapidapi-key': API_SPORTS_KEY!,
@@ -93,11 +94,22 @@ async function fetchFootballMatches(date: string) {
 
   await logApiRequest('fixtures', 'football', response.status, false);
 
+  console.log(`API Response Status: ${response.status}`);
+  
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`API Error: ${response.status} - ${errorText}`);
+    throw new Error(`API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
+  console.log(`API Response:`, JSON.stringify(data).substring(0, 500));
+  console.log(`Number of fixtures returned: ${data.response?.length || 0}`);
+  
+  if (!data.response || data.response.length === 0) {
+    console.log('No matches found in API response');
+    return [];
+  }
   
   return data.response.map((fixture: any) => ({
     id: `api-football-${fixture.fixture.id}`,
@@ -117,6 +129,7 @@ async function fetchFootballMatches(date: string) {
 }
 
 async function fetchBasketballMatches(date: string) {
+  console.log(`Calling API-Sports Basketball API for date: ${date}`);
   const response = await fetch(`${API_ENDPOINTS.basketball}?date=${date}`, {
     headers: {
       'x-rapidapi-key': API_SPORTS_KEY!,
@@ -126,11 +139,22 @@ async function fetchBasketballMatches(date: string) {
 
   await logApiRequest('games', 'basketball', response.status, false);
 
+  console.log(`API Response Status: ${response.status}`);
+
   if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+    const errorText = await response.text();
+    console.error(`API Error: ${response.status} - ${errorText}`);
+    throw new Error(`API error: ${response.status} - ${errorText}`);
   }
 
   const data = await response.json();
+  console.log(`API Response:`, JSON.stringify(data).substring(0, 500));
+  console.log(`Number of games returned: ${data.response?.length || 0}`);
+  
+  if (!data.response || data.response.length === 0) {
+    console.log('No games found in API response');
+    return [];
+  }
   
   return data.response.map((game: any) => ({
     id: `api-basketball-${game.id}`,
