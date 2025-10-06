@@ -64,7 +64,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const loadApiMatches = async () => {
     setIsLoadingApi(true);
     try {
-      const { data, error } = await supabase.functions.invoke('fetch-live-matches', {
+      const { data, error } = await supabase.functions.invoke('fetch-matches-apisports', {
         body: {
           sport: selectedSport.toLowerCase(),
           date: selectedDate.toISOString().split('T')[0],

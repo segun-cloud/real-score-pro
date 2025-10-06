@@ -33,7 +33,33 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   useEffect(() => {
     const loadMatchDetails = async () => {
       try {
-        if (match) {
+        // Check if this is an API-Sports match (ID starts with 'apisports-')
+        const isApiSportsMatch = matchId.startsWith('apisports-') || (match?.id.startsWith('apisports-'));
+        
+        if (isApiSportsMatch) {
+          // Fetch detailed data from API-Sports
+          const { data, error } = await supabase.functions.invoke('fetch-match-details-apisports', {
+            body: { matchId: match?.id || matchId },
+          });
+
+          if (error) throw error;
+
+          if (data && match) {
+            // Combine basic match info with detailed data
+            const details: MatchDetailsType = {
+              ...match,
+              events: data.events || [],
+              odds: data.odds || { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
+              lineups: data.lineups,
+              statistics: data.statistics || {},
+              commentary: [],
+              media: [],
+            };
+            setMatchDetails(details);
+          } else {
+            throw new Error('No detailed data returned');
+          }
+        } else if (match) {
           // Build match details from the provided match object
           const details: MatchDetailsType = {
             ...match,
@@ -86,7 +112,15 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
         console.error("Failed to load match details:", error);
         // Fallback to mock data
         try {
-          const details = getMockMatchDetails(matchId);
+          const details = match ? { 
+            ...match, 
+            events: [], 
+            odds: { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
+            lineups: undefined,
+            statistics: {},
+            commentary: [],
+            media: [],
+          } : getMockMatchDetails(matchId);
           setMatchDetails(details);
         } catch (e) {
           console.error("Failed to load mock data:", e);
