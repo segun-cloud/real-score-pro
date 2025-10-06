@@ -27,9 +27,8 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   useEffect(() => {
     let filtered = matches;
     
-    if (selectedSport !== "all") {
-      filtered = filtered.filter(match => match.sport === selectedSport);
-    }
+    // Always filter by selected sport (no "all" option anymore)
+    filtered = filtered.filter(match => match.sport === selectedSport);
     
     if (searchQuery) {
       filtered = filtered.filter(match => 
@@ -70,7 +69,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
 
   const getSportEmoji = (sport: string) => {
     const emojis: { [key: string]: string } = {
-      all: "🏆",
       football: "⚽",
       basketball: "🏀",
       tennis: "🎾",

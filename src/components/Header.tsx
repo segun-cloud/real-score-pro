@@ -16,7 +16,6 @@ interface HeaderProps {
 }
 
 const sports = [
-  { id: 'all', name: 'All Sports', emoji: '🏆' },
   { id: 'football', name: 'Football', emoji: '⚽' },
   { id: 'basketball', name: 'Basketball', emoji: '🏀' },
   { id: 'tennis', name: 'Tennis', emoji: '🎾' },

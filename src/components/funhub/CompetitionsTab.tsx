@@ -16,7 +16,7 @@ interface CompetitionsTabProps {
 
 export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigate }: CompetitionsTabProps) => {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
-  const [selectedSport, setSelectedSport] = useState<SportType | "all">("all");
+  const [selectedSport, setSelectedSport] = useState<SportType>('football');
   const [selectedDivision, setSelectedDivision] = useState<string>("all");
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -31,11 +31,8 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
       let query = supabase
         .from('competitions')
         .select('*')
+        .eq('sport', selectedSport)
         .order('start_date', { ascending: true });
-
-      if (selectedSport !== "all") {
-        query = query.eq('sport', selectedSport);
-      }
 
       if (selectedDivision !== "all") {
         query = query.eq('division', parseInt(selectedDivision));
@@ -126,12 +123,11 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
     <div className="space-y-4">
       {/* Filters */}
       <div className="grid grid-cols-2 gap-3">
-        <Select value={selectedSport} onValueChange={(value) => setSelectedSport(value as SportType | "all")}>
+        <Select value={selectedSport} onValueChange={(value) => setSelectedSport(value as SportType)}>
           <SelectTrigger>
             <SelectValue placeholder="Select sport" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Sports</SelectItem>
             {Object.entries(SPORT_CONFIG).map(([key, config]) => (
               <SelectItem key={key} value={key}>
                 {config.icon} {config.name}

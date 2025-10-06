@@ -161,6 +161,36 @@ export type Database = {
         }
         Relationships: []
       }
+      leagues: {
+        Row: {
+          country: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          tier: number
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          sport: Database["public"]["Enums"]["sport_type"]
+          tier: number
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          sport?: Database["public"]["Enums"]["sport_type"]
+          tier?: number
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           away_score: number | null
