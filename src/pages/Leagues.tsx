@@ -28,7 +28,10 @@ const COUNTRY_FLAGS: { [key: string]: string } = {
   'Italy': '🇮🇹',
   'France': '🇫🇷',
   'USA': '🇺🇸',
+  'Europe': '🇪🇺',
   'International': '🌍',
+  'Japan': '🇯🇵',
+  'South Korea': '🇰🇷',
 };
 
 export const Leagues = () => {
@@ -109,7 +112,7 @@ export const Leagues = () => {
             {COUNTRY_FLAGS[selectedLeague.country]} {selectedLeague.name}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {selectedLeague.country} • {SPORT_CONFIG[selectedLeague.sport].name}
+            {selectedLeague.country} • {selectedLeague.sport}
           </p>
         </div>
 
