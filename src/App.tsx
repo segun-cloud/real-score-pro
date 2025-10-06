@@ -27,6 +27,7 @@ type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites'
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string>('football');
   const [coins, setCoins] = useState(0);
@@ -122,12 +123,14 @@ const App = () => {
 
   const handleMatchClick = (match: Match) => {
     setSelectedMatchId(match.id);
+    setSelectedMatch(match);
     setCurrentScreen('match-details');
   };
 
   const handleBack = () => {
     setCurrentScreen('matches');
     setSelectedMatchId(null);
+    setSelectedMatch(null);
   };
 
   const handleNavigate = (screen: string, competitionId?: string) => {
@@ -215,6 +218,7 @@ const App = () => {
         return selectedMatchId ? (
           <MatchDetails 
             matchId={selectedMatchId}
+            match={selectedMatch || undefined}
             onBack={handleBack}
             onProfileClick={handleProfileClick}
           />

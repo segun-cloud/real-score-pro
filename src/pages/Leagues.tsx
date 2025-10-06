@@ -226,7 +226,7 @@ export const Leagues = () => {
             <p className="text-muted-foreground">No leagues found for this sport</p>
           </div>
         ) : (
-          <Accordion type="multiple" className="space-y-3">
+          <Accordion type="multiple" defaultValue={Object.keys(leaguesByCountry)} className="space-y-3">
             {Object.entries(leaguesByCountry).map(([country, countryLeagues]) => (
               <AccordionItem key={country} value={country} className="border rounded-lg">
                 <AccordionTrigger className="px-4 hover:no-underline">

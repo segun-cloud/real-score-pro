@@ -7,19 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { MatchDetails as MatchDetailsType } from "@/types/sports";
+import { MatchDetails as MatchDetailsType, Match } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 import { SportTracker } from "@/components/SportTracker";
 import { FootballPitch } from "@/components/FootballPitch";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MatchDetailsProps {
   matchId: string;
+  match?: Match;
   onBack: () => void;
   onProfileClick: () => void;
 }
 
-export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsProps) => {
+export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDetailsProps) => {
   const [matchDetails, setMatchDetails] = useState<MatchDetailsType | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [userProfile, setUserProfile] = useState(mockUserProfile);
@@ -29,24 +31,82 @@ export const MatchDetails = ({ matchId, onBack, onProfileClick }: MatchDetailsPr
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const details = getMockMatchDetails(matchId);
-      setMatchDetails(details);
-    } catch (error) {
-      console.error("Failed to load match details:", error);
-    }
-  }, [matchId]);
+    const loadMatchDetails = async () => {
+      try {
+        if (match) {
+          // Build match details from the provided match object
+          const details: MatchDetailsType = {
+            ...match,
+            events: [],
+            odds: { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
+            lineups: undefined,
+            statistics: {},
+            commentary: [],
+            media: [],
+          };
+          setMatchDetails(details);
+        } else {
+          // Try to fetch from cache using api_match_id
+          const { data: cachedMatch } = await supabase
+            .from('api_match_cache')
+            .select('*')
+            .eq('api_match_id', matchId)
+            .single();
+          
+          if (cachedMatch) {
+            const rawData = cachedMatch.raw_data as any;
+            const details: MatchDetailsType = {
+              id: cachedMatch.api_match_id,
+              sport: cachedMatch.sport as any,
+              homeTeam: cachedMatch.home_team,
+              awayTeam: cachedMatch.away_team,
+              homeScore: cachedMatch.home_score,
+              awayScore: cachedMatch.away_score,
+              status: cachedMatch.status as any,
+              startTime: cachedMatch.match_date,
+              league: cachedMatch.league_name,
+              minute: cachedMatch.minute,
+              homeTeamLogo: rawData?.homeTeamLogo,
+              awayTeamLogo: rawData?.awayTeamLogo,
+              events: [],
+              odds: { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
+              lineups: undefined,
+              statistics: {},
+              commentary: [],
+              media: [],
+            };
+            setMatchDetails(details);
+          } else {
+            // Fallback to mock data
+            const details = getMockMatchDetails(matchId);
+            setMatchDetails(details);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load match details:", error);
+        // Fallback to mock data
+        try {
+          const details = getMockMatchDetails(matchId);
+          setMatchDetails(details);
+        } catch (e) {
+          console.error("Failed to load mock data:", e);
+        }
+      }
+    };
+    
+    loadMatchDetails();
+  }, [matchId, match]);
+
+  // Filter tabs based on available data
+  const hasLineups = matchDetails?.lineups && (matchDetails.lineups.home.length > 0 || matchDetails.lineups.away.length > 0);
+  const hasOdds = matchDetails?.odds && (matchDetails.odds.homeWin > 0 || matchDetails.odds.awayWin > 0);
+  const hasStats = matchDetails?.statistics && Object.keys(matchDetails.statistics).length > 0;
 
   const tabs = [
     { id: "details", label: "Details" },
-    { id: "odds", label: "Odds" },
-    { id: "lineups", label: "Lineups" },
-    { id: "statistics", label: "Stats" },
-    { id: "commentary", label: "Commentary" },
-    { id: "standings", label: "Standings" },
-    { id: "fixtures", label: "Fixtures" },
-    { id: "media", label: "Media" },
-    { id: "prediction", label: "AI Prediction", icon: <Brain className="h-4 w-4" /> },
+    ...(hasOdds ? [{ id: "odds", label: "Odds" }] : []),
+    ...(hasLineups ? [{ id: "lineups", label: "Lineups" }] : []),
+    ...(hasStats ? [{ id: "statistics", label: "Stats" }] : []),
     { id: "tracker", label: "Live Tracker" },
   ];
 

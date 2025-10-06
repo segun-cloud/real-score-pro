@@ -75,10 +75,14 @@ async function saveToCache(matches: any[]) {
   }
 }
 
-async function fetchFootballMatches(date: string) {
-  console.log(`Calling AllSportsAPI Football for date: ${date}`);
+async function fetchFootballMatches(date: string, liveOnly: boolean = false) {
+  const method = liveOnly ? 'Livescore' : 'Fixtures';
+  console.log(`Calling AllSportsAPI Football ${method} for date: ${date}`);
   
-  const url = `${ALLSPORTS_BASE_URL}/football/?met=Fixtures&APIkey=${ALLSPORTS_API_KEY}&from=${date}&to=${date}`;
+  let url = `${ALLSPORTS_BASE_URL}/football/?met=${method}&APIkey=${ALLSPORTS_API_KEY}`;
+  if (!liveOnly) {
+    url += `&from=${date}&to=${date}`;
+  }
   
   const response = await fetch(url);
 
@@ -126,10 +130,14 @@ async function fetchFootballMatches(date: string) {
   });
 }
 
-async function fetchBasketballMatches(date: string) {
-  console.log(`Calling AllSportsAPI Basketball for date: ${date}`);
+async function fetchBasketballMatches(date: string, liveOnly: boolean = false) {
+  const method = liveOnly ? 'Livescore' : 'Fixtures';
+  console.log(`Calling AllSportsAPI Basketball ${method} for date: ${date}`);
   
-  const url = `${ALLSPORTS_BASE_URL}/basketball/?met=Fixtures&APIkey=${ALLSPORTS_API_KEY}&from=${date}&to=${date}`;
+  let url = `${ALLSPORTS_BASE_URL}/basketball/?met=${method}&APIkey=${ALLSPORTS_API_KEY}`;
+  if (!liveOnly) {
+    url += `&from=${date}&to=${date}`;
+  }
   
   const response = await fetch(url);
 
@@ -221,18 +229,13 @@ serve(async (req) => {
     let matches = [];
     
     if (sport === 'football') {
-      matches = await fetchFootballMatches(targetDate);
+      matches = await fetchFootballMatches(targetDate, liveOnly);
     } else if (sport === 'basketball') {
-      matches = await fetchBasketballMatches(targetDate);
+      matches = await fetchBasketballMatches(targetDate, liveOnly);
     } else {
       // For other sports, return empty array for now
       console.log(`Sport ${sport} not yet implemented`);
       matches = [];
-    }
-
-    // Filter live matches if requested
-    if (liveOnly) {
-      matches = matches.filter((match: any) => match.status === 'live');
     }
 
     // Save to cache

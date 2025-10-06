@@ -68,7 +68,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
         body: {
           sport: selectedSport.toLowerCase(),
           date: selectedDate.toISOString().split('T')[0],
-          liveOnly: false,
+          liveOnly: showLiveOnly,
         },
       });
 
