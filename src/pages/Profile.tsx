@@ -11,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 interface ProfileProps {
   coins: number;
   onBack: () => void;
+  onLogout: () => void;
 }
 
-export const Profile = ({ coins, onBack }: ProfileProps) => {
+export const Profile = ({ coins, onBack, onLogout }: ProfileProps) => {
   const [userProfile, setUserProfile] = useState(mockUserProfile);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -194,6 +195,21 @@ export const Profile = ({ coins, onBack }: ProfileProps) => {
                 <Button variant="ghost" size="sm" className="p-0 h-auto">Support</Button>
               </div>
             </div>
+          </Card>
+
+          {/* Account Section */}
+          <Card className="p-4">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              Account
+            </h3>
+            <Button
+              variant="destructive"
+              className="w-full"
+              onClick={onLogout}
+            >
+              Sign Out
+            </Button>
           </Card>
         </div>
       </div>

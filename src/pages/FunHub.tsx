@@ -10,7 +10,12 @@ import { toast } from "sonner";
 import type { SportType, UserTeam, Competition } from "@/types/funhub";
 import { SPORT_CONFIG } from "@/types/funhub";
 
-export const FunHub = () => {
+interface FunHubProps {
+  userId?: string;
+  onCoinsUpdate: () => void;
+}
+
+export const FunHub = ({ userId, onCoinsUpdate }: FunHubProps) => {
   const [userCoins, setUserCoins] = useState(1000);
   const [userTeams, setUserTeams] = useState<UserTeam[]>([]);
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -20,18 +25,22 @@ export const FunHub = () => {
 
   useEffect(() => {
     loadUserData();
-  }, []);
+  }, [userId]);
 
   const loadUserData = async () => {
+    if (!userId) {
+      toast.error('You must be logged in to access Fun Hub');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
       // Load user profile
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('coins')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (profile) {
@@ -42,7 +51,7 @@ export const FunHub = () => {
       const { data: teams } = await supabase
         .from('user_teams')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', userId);
 
       if (teams) {
         setUserTeams(teams);
@@ -66,11 +75,9 @@ export const FunHub = () => {
   };
 
   const handleCreateTeam = async (teamName: string, emblemId: number, kitId: number) => {
-    if (!selectedSport) return;
+    if (!selectedSport || !userId) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
 
       const sportConfig = SPORT_CONFIG[selectedSport];
       const totalCost = sportConfig.playerCount * 50 + 50;
@@ -79,7 +86,7 @@ export const FunHub = () => {
       const { data: team, error: teamError } = await supabase
         .from('user_teams')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           sport: selectedSport,
           team_name: teamName,
           emblem_id: emblemId,
@@ -114,14 +121,16 @@ export const FunHub = () => {
       const { error: coinsError } = await supabase
         .from('user_profiles')
         .update({ coins: userCoins - totalCost })
-        .eq('id', user.id);
+        .eq('id', userId);
 
       if (coinsError) throw coinsError;
 
       // Reload data
       await loadUserData();
+      onCoinsUpdate(); // Update parent component coins
       setShowTeamBuilder(false);
       setSelectedSport(null);
+      toast.success(`Team "${teamName}" created successfully!`);
     } catch (error) {
       console.error('Error creating team:', error);
       throw error;
