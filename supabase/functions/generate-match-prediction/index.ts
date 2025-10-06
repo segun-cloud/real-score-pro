@@ -31,11 +31,14 @@ serve(async (req) => {
 - Corner kicks: ${match.statistics?.corners?.home} vs ${match.statistics?.corners?.away}`,
 
       'basketball': `Analyze these basketball factors:
-- Points per game trends
-- Shooting percentages and three-point efficiency
-- Rebounds and assists statistics
-- Recent performance and injury reports
-- Home court advantage`,
+- Team pace and possessions per game
+- Offensive/defensive efficiency ratings
+- Three-point shooting percentages and points in paint
+- Fast break points and second-chance points
+- Recent scoring averages and trends (last 5 games)
+- Back-to-back game scheduling factor
+- Key player injury reports and minutes restrictions
+- Home court advantage and crowd impact`,
 
       'tennis': `Analyze these tennis factors:
 - Serve statistics and ace counts
@@ -88,6 +91,7 @@ serve(async (req) => {
     };
 
     const sportSpecificContext = sportPrompts[match.sport] || sportPrompts['football'];
+    const isBasketball = match.sport === 'basketball';
 
     const systemPrompt = `You are an expert sports analyst specializing in ${match.sport}. 
 Provide structured betting market predictions in JSON format only.
@@ -108,7 +112,42 @@ ${match.odds.draw ? `- Draw: ${match.odds.draw}` : ''}
 ${sportSpecificContext}
 
 Return JSON with this exact structure:
-{
+${isBasketball ? `{
+  "match_result": {
+    "home_win": number (0-100),
+    "away_win": number (0-100)
+  },
+  "odd_even": {
+    "odd": number (0-100),
+    "even": number (0-100)
+  },
+  "total_points": {
+    "line": number (e.g., 220.5),
+    "over": number (0-100),
+    "under": number (0-100)
+  },
+  "half_time_over_under": {
+    "line": number (e.g., 110.5),
+    "over": number (0-100),
+    "under": number (0-100)
+  },
+  "first_quarter_over_under": {
+    "line": number (e.g., 55.5),
+    "over": number (0-100),
+    "under": number (0-100)
+  },
+  "half_time_result": {
+    "home_leading": number (0-100),
+    "tied": number (0-100),
+    "away_leading": number (0-100)
+  },
+  "correct_score": {
+    "prediction": "XXX-YYY",
+    "probability": number (0-100)
+  },
+  "key_insights": ["insight1", "insight2", "insight3"],
+  "confidence": "Low" | "Medium" | "High"
+}` : `{
   "match_result": {
     "home_win": number (0-100),
     "draw": number (0-100) or null for sports without draws,
@@ -137,7 +176,7 @@ Return JSON with this exact structure:
   },
   "key_insights": ["insight1", "insight2", "insight3"],
   "confidence": "Low" | "Medium" | "High"
-}`;
+}`}`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -192,16 +231,30 @@ Return JSON with this exact structure:
       prediction = JSON.parse(jsonStr.trim());
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      // Return a fallback structure
-      prediction = {
-        match_result: { home_win: 50, draw: 25, away_win: 25 },
-        btts: { yes: 50, no: 50 },
-        over_under: { over_2_5: 50, under_2_5: 50 },
-        correct_score: { prediction: "1-1", probability: 15, alternatives: [] },
-        half_time_score: { prediction: "0-0", home_leading: 33, draw: 34, away_leading: 33 },
-        key_insights: ["Analysis unavailable"],
-        confidence: "Low"
-      };
+      // Return a fallback structure based on sport
+      if (isBasketball) {
+        prediction = {
+          match_result: { home_win: 50, away_win: 50 },
+          odd_even: { odd: 50, even: 50 },
+          total_points: { line: 220.5, over: 50, under: 50 },
+          half_time_over_under: { line: 110.5, over: 50, under: 50 },
+          first_quarter_over_under: { line: 55.5, over: 50, under: 50 },
+          half_time_result: { home_leading: 33, tied: 34, away_leading: 33 },
+          correct_score: { prediction: "108-110", probability: 10 },
+          key_insights: ["Analysis unavailable"],
+          confidence: "Low"
+        };
+      } else {
+        prediction = {
+          match_result: { home_win: 50, draw: 25, away_win: 25 },
+          btts: { yes: 50, no: 50 },
+          over_under: { over_2_5: 50, under_2_5: 50 },
+          correct_score: { prediction: "1-1", probability: 15, alternatives: [] },
+          half_time_score: { prediction: "0-0", home_leading: 33, draw: 34, away_leading: 33 },
+          key_insights: ["Analysis unavailable"],
+          confidence: "Low"
+        };
+      }
     }
 
     console.log('Successfully generated prediction');

@@ -494,61 +494,179 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
 
             {/* Betting Markets Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* BTTS */}
-              <Card className="p-4 bg-gradient-to-br from-orange-500/5 to-red-500/5">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Target className="w-4 h-4 text-orange-500" />
-                    <h4 className="font-semibold">Both Teams to Score</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className={`p-3 rounded-lg text-center transition-all ${
-                      aiPrediction.btts.yes > aiPrediction.btts.no 
-                        ? 'bg-green-500/20 border-2 border-green-500' 
-                        : 'bg-muted'
-                    }`}>
-                      <div className="text-2xl font-bold">{aiPrediction.btts.yes}%</div>
-                      <div className="text-xs text-muted-foreground">YES</div>
+              {match.sport === 'basketball' ? (
+                <>
+                  {/* Odd/Even */}
+                  <Card className="p-4 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-orange-500" />
+                        <h4 className="font-semibold">Odd/Even Total Points</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).odd_even?.odd > (aiPrediction as any).odd_even?.even 
+                            ? 'bg-green-500/20 border-2 border-green-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).odd_even?.odd}%</div>
+                          <div className="text-xs text-muted-foreground">ODD</div>
+                        </div>
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).odd_even?.even > (aiPrediction as any).odd_even?.odd 
+                            ? 'bg-red-500/20 border-2 border-red-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).odd_even?.even}%</div>
+                          <div className="text-xs text-muted-foreground">EVEN</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className={`p-3 rounded-lg text-center transition-all ${
-                      aiPrediction.btts.no > aiPrediction.btts.yes 
-                        ? 'bg-red-500/20 border-2 border-red-500' 
-                        : 'bg-muted'
-                    }`}>
-                      <div className="text-2xl font-bold">{aiPrediction.btts.no}%</div>
-                      <div className="text-xs text-muted-foreground">NO</div>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+                  </Card>
 
-              {/* Over/Under */}
-              <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-purple-500" />
-                    <h4 className="font-semibold">Over/Under 2.5</h4>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className={`p-3 rounded-lg text-center transition-all ${
-                      aiPrediction.over_under.over_2_5 > aiPrediction.over_under.under_2_5 
-                        ? 'bg-blue-500/20 border-2 border-blue-500' 
-                        : 'bg-muted'
-                    }`}>
-                      <div className="text-2xl font-bold">{aiPrediction.over_under.over_2_5}%</div>
-                      <div className="text-xs text-muted-foreground">OVER</div>
+                  {/* Total Points O/U */}
+                  <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-purple-500" />
+                        <h4 className="font-semibold">Total Points O/U {(aiPrediction as any).total_points?.line}</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).total_points?.over > (aiPrediction as any).total_points?.under 
+                            ? 'bg-blue-500/20 border-2 border-blue-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).total_points?.over}%</div>
+                          <div className="text-xs text-muted-foreground">OVER</div>
+                        </div>
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).total_points?.under > (aiPrediction as any).total_points?.over 
+                            ? 'bg-indigo-500/20 border-2 border-indigo-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).total_points?.under}%</div>
+                          <div className="text-xs text-muted-foreground">UNDER</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className={`p-3 rounded-lg text-center transition-all ${
-                      aiPrediction.over_under.under_2_5 > aiPrediction.over_under.over_2_5 
-                        ? 'bg-indigo-500/20 border-2 border-indigo-500' 
-                        : 'bg-muted'
-                    }`}>
-                      <div className="text-2xl font-bold">{aiPrediction.over_under.under_2_5}%</div>
-                      <div className="text-xs text-muted-foreground">UNDER</div>
+                  </Card>
+
+                  {/* Half-Time O/U */}
+                  <Card className="p-4 bg-gradient-to-br from-cyan-500/5 to-blue-500/5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-cyan-500" />
+                        <h4 className="font-semibold">Half-Time O/U {(aiPrediction as any).half_time_over_under?.line}</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).half_time_over_under?.over > (aiPrediction as any).half_time_over_under?.under 
+                            ? 'bg-blue-500/20 border-2 border-blue-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).half_time_over_under?.over}%</div>
+                          <div className="text-xs text-muted-foreground">OVER</div>
+                        </div>
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).half_time_over_under?.under > (aiPrediction as any).half_time_over_under?.over 
+                            ? 'bg-indigo-500/20 border-2 border-indigo-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).half_time_over_under?.under}%</div>
+                          <div className="text-xs text-muted-foreground">UNDER</div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Card>
+                  </Card>
+
+                  {/* First Quarter O/U */}
+                  <Card className="p-4 bg-gradient-to-br from-teal-500/5 to-emerald-500/5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-teal-500" />
+                        <h4 className="font-semibold">1st Quarter O/U {(aiPrediction as any).first_quarter_over_under?.line}</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).first_quarter_over_under?.over > (aiPrediction as any).first_quarter_over_under?.under 
+                            ? 'bg-blue-500/20 border-2 border-blue-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).first_quarter_over_under?.over}%</div>
+                          <div className="text-xs text-muted-foreground">OVER</div>
+                        </div>
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).first_quarter_over_under?.under > (aiPrediction as any).first_quarter_over_under?.over 
+                            ? 'bg-indigo-500/20 border-2 border-indigo-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).first_quarter_over_under?.under}%</div>
+                          <div className="text-xs text-muted-foreground">UNDER</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </>
+              ) : (
+                <>
+                  {/* BTTS */}
+                  <Card className="p-4 bg-gradient-to-br from-orange-500/5 to-red-500/5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Target className="w-4 h-4 text-orange-500" />
+                        <h4 className="font-semibold">Both Teams to Score</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).btts?.yes > (aiPrediction as any).btts?.no 
+                            ? 'bg-green-500/20 border-2 border-green-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).btts?.yes}%</div>
+                          <div className="text-xs text-muted-foreground">YES</div>
+                        </div>
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).btts?.no > (aiPrediction as any).btts?.yes 
+                            ? 'bg-red-500/20 border-2 border-red-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).btts?.no}%</div>
+                          <div className="text-xs text-muted-foreground">NO</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+
+                  {/* Over/Under */}
+                  <Card className="p-4 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-purple-500" />
+                        <h4 className="font-semibold">Over/Under 2.5</h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).over_under?.over_2_5 > (aiPrediction as any).over_under?.under_2_5 
+                            ? 'bg-blue-500/20 border-2 border-blue-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).over_under?.over_2_5}%</div>
+                          <div className="text-xs text-muted-foreground">OVER</div>
+                        </div>
+                        <div className={`p-3 rounded-lg text-center transition-all ${
+                          (aiPrediction as any).over_under?.under_2_5 > (aiPrediction as any).over_under?.over_2_5 
+                            ? 'bg-indigo-500/20 border-2 border-indigo-500' 
+                            : 'bg-muted'
+                        }`}>
+                          <div className="text-2xl font-bold">{(aiPrediction as any).over_under?.under_2_5}%</div>
+                          <div className="text-xs text-muted-foreground">UNDER</div>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                </>
+              )}
             </div>
 
             {/* Score Predictions */}
@@ -580,33 +698,55 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
                 </div>
               </Card>
 
-              {/* Half-Time Score */}
+              {/* Half-Time Result */}
               <Card className="p-4 bg-gradient-to-br from-teal-500/5 to-green-500/5">
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Half-Time Score</h4>
-                  <div className="text-center p-4 bg-gradient-to-br from-teal-500 to-green-500 rounded-lg">
-                    <div className="text-4xl font-bold text-white mb-1">
-                      {aiPrediction.half_time_score.prediction}
+                  <h4 className="font-semibold">{match.sport === 'basketball' ? 'Half-Time Result' : 'Half-Time Score'}</h4>
+                  {match.sport === 'basketball' ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Home Leading</span>
+                        <span className="font-semibold">{(aiPrediction as any).half_time_result?.home_leading}%</span>
+                      </div>
+                      <Progress value={(aiPrediction as any).half_time_result?.home_leading} className="h-2" />
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Tied</span>
+                        <span className="font-semibold">{(aiPrediction as any).half_time_result?.tied}%</span>
+                      </div>
+                      <Progress value={(aiPrediction as any).half_time_result?.tied} className="h-2" />
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Away Leading</span>
+                        <span className="font-semibold">{(aiPrediction as any).half_time_result?.away_leading}%</span>
+                      </div>
+                      <Progress value={(aiPrediction as any).half_time_result?.away_leading} className="h-2" />
                     </div>
-                    <div className="text-xs text-white/80">Predicted HT Result</div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Home Leading</span>
-                      <span className="font-semibold">{aiPrediction.half_time_score.home_leading}%</span>
-                    </div>
-                    <Progress value={aiPrediction.half_time_score.home_leading} className="h-2" />
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Draw</span>
-                      <span className="font-semibold">{aiPrediction.half_time_score.draw}%</span>
-                    </div>
-                    <Progress value={aiPrediction.half_time_score.draw} className="h-2" />
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Away Leading</span>
-                      <span className="font-semibold">{aiPrediction.half_time_score.away_leading}%</span>
-                    </div>
-                    <Progress value={aiPrediction.half_time_score.away_leading} className="h-2" />
-                  </div>
+                  ) : (
+                    <>
+                      <div className="text-center p-4 bg-gradient-to-br from-teal-500 to-green-500 rounded-lg">
+                        <div className="text-4xl font-bold text-white mb-1">
+                          {(aiPrediction as any).half_time_score?.prediction}
+                        </div>
+                        <div className="text-xs text-white/80">Predicted HT Result</div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">Home Leading</span>
+                          <span className="font-semibold">{(aiPrediction as any).half_time_score?.home_leading}%</span>
+                        </div>
+                        <Progress value={(aiPrediction as any).half_time_score?.home_leading} className="h-2" />
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">Draw</span>
+                          <span className="font-semibold">{(aiPrediction as any).half_time_score?.draw}%</span>
+                        </div>
+                        <Progress value={(aiPrediction as any).half_time_score?.draw} className="h-2" />
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">Away Leading</span>
+                          <span className="font-semibold">{(aiPrediction as any).half_time_score?.away_leading}%</span>
+                        </div>
+                        <Progress value={(aiPrediction as any).half_time_score?.away_leading} className="h-2" />
+                      </div>
+                    </>
+                  )}
                 </div>
               </Card>
             </div>
