@@ -14,7 +14,7 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 // AllSportsAPI base URL
-const ALLSPORTS_BASE_URL = 'https://apiv3.allsportsapi.com';
+const ALLSPORTS_BASE_URL = 'https://apiv2.allsportsapi.com';
 
 // Status mapping from AllSportsAPI to our format
 const mapStatus = (apiStatus: string): string => {
@@ -101,21 +101,29 @@ async function fetchFootballMatches(date: string) {
     return [];
   }
   
-  return data.result.map((match: any) => ({
-    id: `api-football-${match.match_id}`,
-    api_match_id: `football-${match.match_id}`,
-    sport: 'football',
-    homeTeam: match.match_hometeam_name,
-    awayTeam: match.match_awayteam_name,
-    homeScore: parseInt(match.match_hometeam_score) || null,
-    awayScore: parseInt(match.match_awayteam_score) || null,
-    status: mapStatus(match.match_status),
-    startTime: `${match.match_date} ${match.match_time}`,
-    league: match.league_name,
-    homeTeamLogo: match.team_home_badge || match.home_team_logo,
-    awayTeamLogo: match.team_away_badge || match.away_team_logo,
-    minute: match.match_status === '' ? null : parseInt(match.match_status.replace("'", '')) || null,
-  }));
+  return data.result.map((match: any) => {
+    // Parse scores from event_final_result like "2 - 1" or event_ft_result
+    const finalResult = match.event_final_result || match.event_ft_result || '';
+    const scores = finalResult.split(' - ');
+    const homeScore = scores[0] ? parseInt(scores[0].trim()) : null;
+    const awayScore = scores[1] ? parseInt(scores[1].trim()) : null;
+    
+    return {
+      id: `api-football-${match.event_key}`,
+      api_match_id: `football-${match.event_key}`,
+      sport: 'football',
+      homeTeam: match.event_home_team,
+      awayTeam: match.event_away_team,
+      homeScore: homeScore,
+      awayScore: awayScore,
+      status: mapStatus(match.event_status),
+      startTime: `${match.event_date} ${match.event_time}`,
+      league: match.league_name,
+      homeTeamLogo: match.home_team_logo,
+      awayTeamLogo: match.away_team_logo,
+      minute: match.event_status.includes("'") ? parseInt(match.event_status.replace("'", '')) : null,
+    };
+  });
 }
 
 async function fetchBasketballMatches(date: string) {
@@ -144,20 +152,28 @@ async function fetchBasketballMatches(date: string) {
     return [];
   }
   
-  return data.result.map((match: any) => ({
-    id: `api-basketball-${match.match_id}`,
-    api_match_id: `basketball-${match.match_id}`,
-    sport: 'basketball',
-    homeTeam: match.match_hometeam_name,
-    awayTeam: match.match_awayteam_name,
-    homeScore: parseInt(match.match_hometeam_score) || null,
-    awayScore: parseInt(match.match_awayteam_score) || null,
-    status: mapStatus(match.match_status),
-    startTime: `${match.match_date} ${match.match_time}`,
-    league: match.league_name,
-    homeTeamLogo: match.team_home_badge,
-    awayTeamLogo: match.team_away_badge,
-  }));
+  return data.result.map((match: any) => {
+    // Parse scores from event_final_result
+    const finalResult = match.event_final_result || match.event_ft_result || '';
+    const scores = finalResult.split(' - ');
+    const homeScore = scores[0] ? parseInt(scores[0].trim()) : null;
+    const awayScore = scores[1] ? parseInt(scores[1].trim()) : null;
+    
+    return {
+      id: `api-basketball-${match.event_key}`,
+      api_match_id: `basketball-${match.event_key}`,
+      sport: 'basketball',
+      homeTeam: match.event_home_team,
+      awayTeam: match.event_away_team,
+      homeScore: homeScore,
+      awayScore: awayScore,
+      status: mapStatus(match.event_status),
+      startTime: `${match.event_date} ${match.event_time}`,
+      league: match.league_name,
+      homeTeamLogo: match.home_team_logo,
+      awayTeamLogo: match.away_team_logo,
+    };
+  });
 }
 
 serve(async (req) => {
