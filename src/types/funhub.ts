@@ -1,0 +1,179 @@
+export type SportType = 
+  | 'football'
+  | 'basketball'
+  | 'tennis'
+  | 'baseball'
+  | 'boxing'
+  | 'cricket'
+  | 'ice-hockey'
+  | 'rugby'
+  | 'american-football';
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  coins: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserTeam {
+  id: string;
+  user_id: string;
+  sport: SportType;
+  team_name: string;
+  emblem_id: number | null;
+  kit_id: number | null;
+  division: number;
+  points: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  created_at: string;
+}
+
+export interface TeamPlayer {
+  id: string;
+  team_id: string;
+  player_name: string;
+  position: string;
+  jersey_number: number;
+  overall_rating: number;
+  pace: number;
+  shooting: number;
+  passing: number;
+  defending: number;
+  physical: number;
+  training_level: number;
+  created_at: string;
+}
+
+export interface TeamEmblem {
+  id: number;
+  name: string;
+  svg_path: string;
+  unlock_cost: number;
+}
+
+export interface TeamKit {
+  id: number;
+  sport: SportType;
+  name: string;
+  primary_color: string;
+  secondary_color: string;
+  pattern: string;
+  unlock_cost: number;
+}
+
+export interface Competition {
+  id: string;
+  sport: SportType;
+  division: number;
+  name: string;
+  start_date: string;
+  end_date: string;
+  status: 'upcoming' | 'active' | 'completed';
+  prize_coins: number;
+  entry_fee: number;
+  created_at: string;
+}
+
+export interface CompetitionParticipant {
+  id: string;
+  competition_id: string;
+  team_id: string;
+  final_position: number | null;
+  points_earned: number;
+}
+
+export interface Match {
+  id: string;
+  competition_id: string;
+  home_team_id: string;
+  away_team_id: string;
+  home_score: number | null;
+  away_score: number | null;
+  status: 'scheduled' | 'completed';
+  match_date: string;
+  created_at: string;
+}
+
+export const SPORT_CONFIG: Record<SportType, {
+  name: string;
+  icon: string;
+  playerCount: number;
+  positions: string[];
+  kitItems: string[];
+}> = {
+  football: {
+    name: 'Football',
+    icon: '⚽',
+    playerCount: 11,
+    positions: ['GK', 'LB', 'CB', 'CB', 'RB', 'LM', 'CM', 'CM', 'RM', 'ST', 'ST'],
+    kitItems: ['Jersey', 'Shorts', 'Socks']
+  },
+  basketball: {
+    name: 'Basketball',
+    icon: '🏀',
+    playerCount: 5,
+    positions: ['PG', 'SG', 'SF', 'PF', 'C'],
+    kitItems: ['Jersey', 'Shorts']
+  },
+  tennis: {
+    name: 'Tennis',
+    icon: '🎾',
+    playerCount: 1,
+    positions: ['Player'],
+    kitItems: ['Shirt', 'Shorts']
+  },
+  baseball: {
+    name: 'Baseball',
+    icon: '⚾',
+    playerCount: 9,
+    positions: ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'],
+    kitItems: ['Jersey', 'Pants', 'Cap']
+  },
+  boxing: {
+    name: 'Boxing',
+    icon: '🥊',
+    playerCount: 1,
+    positions: ['Fighter'],
+    kitItems: ['Shorts', 'Gloves']
+  },
+  cricket: {
+    name: 'Cricket',
+    icon: '🏏',
+    playerCount: 11,
+    positions: ['BAT', 'BAT', 'BAT', 'BAT', 'BAT', 'BAT', 'BWL', 'BWL', 'BWL', 'BWL', 'WK'],
+    kitItems: ['Jersey', 'Pants']
+  },
+  'ice-hockey': {
+    name: 'Ice Hockey',
+    icon: '🏒',
+    playerCount: 6,
+    positions: ['G', 'LD', 'RD', 'LW', 'C', 'RW'],
+    kitItems: ['Jersey', 'Pants', 'Helmet']
+  },
+  rugby: {
+    name: 'Rugby',
+    icon: '🏉',
+    playerCount: 15,
+    positions: ['PR', 'HK', 'PR', 'LK', 'LK', 'FL', 'FL', 'N8', 'SH', 'FH', 'LW', 'IC', 'OC', 'RW', 'FB'],
+    kitItems: ['Jersey', 'Shorts']
+  },
+  'american-football': {
+    name: 'American Football',
+    icon: '🏈',
+    playerCount: 11,
+    positions: ['QB', 'RB', 'WR', 'WR', 'WR', 'TE', 'LT', 'LG', 'C', 'RG', 'RT'],
+    kitItems: ['Jersey', 'Pants', 'Helmet']
+  }
+};
+
+export const DIVISION_CONFIG = [
+  { level: 5, name: 'Rookie', entryFee: 50, prize: 200 },
+  { level: 4, name: 'Amateur', entryFee: 100, prize: 500 },
+  { level: 3, name: 'Semi-Pro', entryFee: 200, prize: 1000 },
+  { level: 2, name: 'Professional', entryFee: 500, prize: 2500 },
+  { level: 1, name: 'Elite', entryFee: 1000, prize: 5000 }
+];

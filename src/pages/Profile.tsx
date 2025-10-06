@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { ArrowLeft, Coins, Crown, Settings, Moon, Sun, Bell, Info } from "lucide-react";
-import { Header } from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -10,17 +9,17 @@ import { mockUserProfile } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProfileProps {
+  coins: number;
   onBack: () => void;
 }
 
-export const Profile = ({ onBack }: ProfileProps) => {
+export const Profile = ({ coins, onBack }: ProfileProps) => {
   const [userProfile, setUserProfile] = useState(mockUserProfile);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const { toast } = useToast();
 
   const handleWatchRewardedAd = () => {
-    setUserProfile(prev => ({ ...prev, coins: prev.coins + 25 }));
     toast({
       title: "Coins Earned!",
       description: "You earned 25 coins for watching the ad!",
@@ -33,22 +32,17 @@ export const Profile = ({ onBack }: ProfileProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header 
-        coins={userProfile.coins} 
-        onProfileClick={() => {}}
-        selectedSport="all"
-        onSportChange={() => {}}
-      />
-      
-      <div className="p-4">
-        <div className="flex items-center gap-3 mb-6">
+    <div className="min-h-screen bg-background pb-20">
+      <div className="bg-card border-b p-4 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-base font-semibold">Profile</h1>
+          <h1 className="text-xl font-bold">Profile</h1>
         </div>
-
+      </div>
+      
+      <div className="p-4">
         <div className="space-y-4">
           {/* User Info Card */}
           <Card className="p-4">
@@ -68,7 +62,7 @@ export const Profile = ({ onBack }: ProfileProps) => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-4 bg-gradient-coins/10 rounded-lg">
                 <Coins className="h-6 w-6 mx-auto mb-2 text-coins" />
-                <p className="text-lg font-bold">{userProfile.coins.toLocaleString()}</p>
+                <p className="text-lg font-bold">{coins.toLocaleString()}</p>
                 <p className="text-sm text-muted-foreground">Total Coins</p>
               </div>
               <div className="text-center p-4 bg-gradient-primary/10 rounded-lg">

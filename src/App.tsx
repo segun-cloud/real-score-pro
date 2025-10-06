@@ -22,6 +22,7 @@ const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('matches');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string>('all');
+  const [coins, setCoins] = useState(1000);
 
   const handleMatchClick = (match: Match) => {
     setSelectedMatchId(match.id);
@@ -69,7 +70,7 @@ const App = () => {
           />
         );
       case 'profile':
-        return <Profile onBack={handleBack} />;
+        return <Profile onBack={handleBack} coins={coins} />;
       case 'leagues':
         return <Leagues />;
       case 'favourites':
@@ -95,7 +96,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <Header 
-            coins={1000} 
+            coins={coins} 
             onProfileClick={handleProfileClick}
             selectedSport={selectedSport}
             onSportChange={handleSportChange}
