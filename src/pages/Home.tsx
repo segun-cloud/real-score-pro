@@ -11,6 +11,8 @@ import { Search, CalendarIcon } from "lucide-react";
 import { Match } from "@/types/sports";
 import { mockMatches, mockUserProfile } from "@/data/mockData";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import type { Match as DBMatch } from "@/types/funhub";
 
 interface HomeProps {
   onMatchClick: (match: Match) => void;
@@ -23,6 +25,32 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showLiveOnly, setShowLiveOnly] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [dbMatches, setDbMatches] = useState<any[]>([]);
+
+  useEffect(() => {
+    loadDbMatches();
+  }, []);
+
+  const loadDbMatches = async () => {
+    try {
+      const { data } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          competition:competitions(name, sport),
+          home_team:user_teams!matches_home_team_id_fkey(team_name),
+          away_team:user_teams!matches_away_team_id_fkey(team_name)
+        `)
+        .order('match_date', { ascending: false })
+        .limit(10);
+
+      if (data) {
+        setDbMatches(data);
+      }
+    } catch (error) {
+      console.error('Error loading matches:', error);
+    }
+  };
 
   useEffect(() => {
     let filtered = matches;
@@ -129,6 +157,50 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
             </p>
           )}
         </div>
+
+        {/* Database Competition Matches */}
+        {dbMatches.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-base font-semibold">Competition Matches</h2>
+              <Badge variant="secondary">Live</Badge>
+            </div>
+            <div className="space-y-3">
+              {dbMatches.map((match: any) => (
+                <div
+                  key={match.id}
+                  className="bg-card border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-muted-foreground">
+                      {match.competition?.name || 'Competition'}
+                    </span>
+                    <Badge variant={match.status === 'completed' ? 'secondary' : 'default'}>
+                      {match.status}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium">{match.home_team?.team_name || 'Home Team'}</p>
+                    </div>
+                    <div className="flex items-center gap-4 px-4">
+                      <span className="text-2xl font-bold">
+                        {match.home_score ?? '-'}
+                      </span>
+                      <span className="text-muted-foreground">:</span>
+                      <span className="text-2xl font-bold">
+                        {match.away_score ?? '-'}
+                      </span>
+                    </div>
+                    <div className="flex-1 text-right">
+                      <p className="font-medium">{match.away_team?.team_name || 'Away Team'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Show matches grouped by status or league */}
         {showLiveOnly ? (

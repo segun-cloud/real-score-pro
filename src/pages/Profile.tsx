@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { ArrowLeft, Coins, Crown, Settings, Moon, Sun, Bell, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Coins, Crown, Settings, Moon, Sun, Bell, Info, User, Mail, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { mockUserProfile } from "@/data/mockData";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { toast as sonnerToast } from "sonner";
 
 interface ProfileProps {
   coins: number;
@@ -19,6 +22,46 @@ export const Profile = ({ coins, onBack, onLogout }: ProfileProps) => {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const { toast } = useToast();
+  const [profileData, setProfileData] = useState<{
+    username: string;
+    email: string;
+    created_at: string;
+    teams_count: number;
+  } | null>(null);
+
+  useEffect(() => {
+    loadUserProfile();
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('username, created_at')
+        .eq('id', user.id)
+        .single();
+
+      const { count: teamsCount } = await supabase
+        .from('user_teams')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (profile) {
+        setProfileData({
+          username: profile.username,
+          email: user.email || '',
+          created_at: profile.created_at,
+          teams_count: teamsCount || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+      sonnerToast.error('Failed to load profile');
+    }
+  };
 
   const handleWatchRewardedAd = () => {
     toast({
@@ -46,32 +89,57 @@ export const Profile = ({ coins, onBack, onLogout }: ProfileProps) => {
       <div className="p-4">
         <div className="space-y-4">
           {/* User Info Card */}
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="text-lg font-semibold">User Profile</h2>
-                <p className="text-muted-foreground">Manage your account settings</p>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Profile Information
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4 pb-4 border-b">
+                <Avatar className="h-20 w-20">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                    {profileData?.username.substring(0, 2).toUpperCase() || 'JD'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-bold">{profileData?.username || 'Loading...'}</h2>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <Mail className="h-3 w-3" />
+                    {profileData?.email || 'Loading...'}
+                  </p>
+                </div>
               </div>
-              {userProfile.isPremium && (
-                <Badge className="bg-gradient-coins text-coins-foreground">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Premium
-                </Badge>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-gradient-coins/10 rounded-lg">
-                <Coins className="h-6 w-6 mx-auto mb-2 text-coins" />
-                <p className="text-lg font-bold">{coins.toLocaleString()}</p>
-                <p className="text-sm text-muted-foreground">Total Coins</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Username</p>
+                  <p className="font-medium">{profileData?.username || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Teams Created</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    {profileData?.teams_count || 0}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Member Since</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {profileData?.created_at ? new Date(profileData.created_at).toLocaleDateString() : '-'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm text-muted-foreground">Total Coins</p>
+                  <p className="font-medium flex items-center gap-1">
+                    <Coins className="h-4 w-4 text-primary" />
+                    {coins}
+                  </p>
+                </div>
               </div>
-              <div className="text-center p-4 bg-gradient-primary/10 rounded-lg">
-                <Crown className="h-6 w-6 mx-auto mb-2 text-primary" />
-                <p className="text-lg font-bold">{userProfile.isPremium ? 'Active' : 'Free'}</p>
-                <p className="text-sm text-muted-foreground">Subscription</p>
-              </div>
-            </div>
+            </CardContent>
           </Card>
 
           {/* Coins Management */}

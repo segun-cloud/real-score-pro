@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SPORT_CONFIG, type SportType } from "@/types/funhub";
+import { SPORT_CONFIG, type SportType, type Match as DBMatch } from "@/types/funhub";
 import { Trophy, MapPin } from "lucide-react";
 
 interface League {
@@ -36,6 +36,7 @@ export const Leagues = () => {
   const [selectedSport, setSelectedSport] = useState<SportType>('football');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
+  const [leagueMatches, setLeagueMatches] = useState<DBMatch[]>([]);
 
   useEffect(() => {
     loadLeagues();
@@ -70,8 +71,28 @@ export const Leagues = () => {
     return acc;
   }, {} as LeaguesByCountry);
 
-  const handleLeagueClick = (league: League) => {
+  const handleLeagueClick = async (league: League) => {
     setSelectedLeague(league);
+    
+    // Load matches for this league's sport
+    try {
+      const { data } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          competition:competitions(name, sport),
+          home_team:user_teams!matches_home_team_id_fkey(team_name),
+          away_team:user_teams!matches_away_team_id_fkey(team_name)
+        `)
+        .order('match_date', { ascending: false })
+        .limit(5);
+
+      if (data) {
+        setLeagueMatches(data as any);
+      }
+    } catch (error) {
+      console.error('Error loading matches:', error);
+    }
   };
 
   if (selectedLeague) {
@@ -132,9 +153,43 @@ export const Leagues = () => {
               <CardTitle>Featured Matches</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-center text-muted-foreground py-8">
-                Match fixtures coming soon. Stay tuned for upcoming games!
-              </p>
+              {leagueMatches.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No matches available yet. Check back soon!
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {leagueMatches.map((match: any) => (
+                    <div key={match.id} className="border rounded-lg p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground">
+                          {match.competition?.name || 'Competition'}
+                        </span>
+                        <Badge variant={match.status === 'completed' ? 'secondary' : 'default'} className="text-xs">
+                          {match.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{match.home_team?.team_name || 'Home'}</p>
+                        </div>
+                        <div className="flex items-center gap-3 px-3">
+                          <span className="text-xl font-bold">
+                            {match.home_score ?? '-'}
+                          </span>
+                          <span className="text-muted-foreground">:</span>
+                          <span className="text-xl font-bold">
+                            {match.away_score ?? '-'}
+                          </span>
+                        </div>
+                        <div className="flex-1 text-right">
+                          <p className="font-medium text-sm">{match.away_team?.team_name || 'Away'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -199,9 +254,6 @@ export const Leagues = () => {
                             <span className="text-2xl">{SPORT_CONFIG[league.sport].icon}</span>
                             <div>
                               <h4 className="font-medium">{league.name}</h4>
-                              <p className="text-xs text-muted-foreground">
-                                Tier {league.tier}
-                              </p>
                             </div>
                           </div>
                           <Badge variant="outline">View</Badge>
