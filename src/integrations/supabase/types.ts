@@ -20,6 +20,7 @@ export type Database = {
           away_score: number | null
           away_team: string
           created_at: string | null
+          highlight_urls: Json | null
           home_score: number | null
           home_team: string
           id: string
@@ -30,12 +31,14 @@ export type Database = {
           raw_data: Json
           sport: Database["public"]["Enums"]["sport_type"]
           status: string
+          video_url: string | null
         }
         Insert: {
           api_match_id: string
           away_score?: number | null
           away_team: string
           created_at?: string | null
+          highlight_urls?: Json | null
           home_score?: number | null
           home_team: string
           id?: string
@@ -46,12 +49,14 @@ export type Database = {
           raw_data: Json
           sport: Database["public"]["Enums"]["sport_type"]
           status: string
+          video_url?: string | null
         }
         Update: {
           api_match_id?: string
           away_score?: number | null
           away_team?: string
           created_at?: string | null
+          highlight_urls?: Json | null
           home_score?: number | null
           home_team?: string
           id?: string
@@ -62,6 +67,7 @@ export type Database = {
           raw_data?: Json
           sport?: Database["public"]["Enums"]["sport_type"]
           status?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -335,6 +341,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sports_feeds: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          external_url: string | null
+          feed_type: string
+          id: string
+          image_url: string | null
+          match_id: string | null
+          published_at: string
+          source: string | null
+          sport: string
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          external_url?: string | null
+          feed_type: string
+          id?: string
+          image_url?: string | null
+          match_id?: string | null
+          published_at: string
+          source?: string | null
+          sport: string
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          external_url?: string | null
+          feed_type?: string
+          id?: string
+          image_url?: string | null
+          match_id?: string | null
+          published_at?: string
+          source?: string | null
+          sport?: string
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: []
       }
       team_emblems: {
         Row: {
