@@ -6,6 +6,7 @@ import { TeamBuilder } from "@/components/funhub/TeamBuilder";
 import { MyTeamsTab } from "@/components/funhub/MyTeamsTab";
 import { CompetitionsTab } from "@/components/funhub/CompetitionsTab";
 import { LeaderboardsTab } from "@/components/funhub/LeaderboardsTab";
+import { CompetitionAdmin } from "@/components/funhub/CompetitionAdmin";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SportType, UserTeam } from "@/types/funhub";
@@ -195,10 +196,11 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
 
       <div className="p-4">
         <Tabs defaultValue="my-teams" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="my-teams">My Teams</TabsTrigger>
             <TabsTrigger value="competitions">Competitions</TabsTrigger>
             <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
+            <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
 
           <TabsContent value="my-teams" className="mt-4 space-y-4">
@@ -239,6 +241,10 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
 
           <TabsContent value="leaderboards" className="mt-4">
             <LeaderboardsTab />
+          </TabsContent>
+
+          <TabsContent value="admin" className="mt-4">
+            <CompetitionAdmin />
           </TabsContent>
         </Tabs>
       </div>

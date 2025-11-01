@@ -9,8 +9,9 @@ import { formatDistanceToNow } from "date-fns";
 interface CompetitionCardProps {
   competition: Competition;
   participantCount?: number;
-  maxParticipants?: number;
+  maxParticipants?: number | null;
   userTeamId?: string;
+  isEligible?: boolean;
   onJoinCompetition?: () => void;
   onNavigate?: (screen: string, competitionId?: string) => void;
 }
@@ -18,8 +19,9 @@ interface CompetitionCardProps {
 export const CompetitionCard = ({ 
   competition, 
   participantCount = 0,
-  maxParticipants = 8,
+  maxParticipants = null,
   userTeamId,
+  isEligible = true,
   onJoinCompetition,
   onNavigate
 }: CompetitionCardProps) => {
@@ -27,7 +29,8 @@ export const CompetitionCard = ({
   const divisionConfig = DIVISION_CONFIG.find(d => d.level === competition.division);
   
   const isUserParticipating = false; // Will be set by parent component
-  const isFull = participantCount >= maxParticipants;
+  const isFull = maxParticipants ? participantCount >= maxParticipants : false;
+  const capacityText = maxParticipants ? `${participantCount}/${maxParticipants}` : `${participantCount} teams`;
   
   return (
     <Card>
@@ -62,8 +65,9 @@ export const CompetitionCard = ({
         <div className="flex items-center gap-2 text-sm">
           <Users className="h-4 w-4 text-muted-foreground" />
           <span className="text-muted-foreground">Teams:</span>
-          <span className="font-bold">{participantCount}/{maxParticipants}</span>
-          {isFull && <Badge variant="secondary" className="ml-auto">Full</Badge>}
+          <span className="font-bold">{capacityText}</span>
+          {isFull && <Badge variant="destructive" className="ml-auto">Full</Badge>}
+          {!isEligible && <Badge variant="outline" className="ml-auto">Wrong Division</Badge>}
         </div>
         
         {competition.status === 'active' && (
@@ -81,9 +85,14 @@ export const CompetitionCard = ({
           >
             View Details
           </Button>
-          {competition.status === 'upcoming' && !isUserParticipating && !isFull && onJoinCompetition && (
+          {competition.status === 'upcoming' && !isUserParticipating && !isFull && isEligible && onJoinCompetition && (
             <Button onClick={onJoinCompetition} className="flex-1">
               Join ({competition.entry_fee} coins)
+            </Button>
+          )}
+          {competition.status === 'upcoming' && !isUserParticipating && (!isEligible || isFull) && (
+            <Button disabled className="flex-1">
+              {!isEligible ? 'Wrong Division' : 'Full'}
             </Button>
           )}
         </div>

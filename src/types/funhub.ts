@@ -76,6 +76,9 @@ export interface Competition {
   prize_coins: number;
   entry_fee: number;
   created_at: string;
+  season_id: string | null;
+  max_participants: number | null;
+  match_generation_status: string | null;
 }
 
 export interface CompetitionParticipant {

@@ -72,8 +72,23 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
       return;
     }
 
+    // Check division eligibility
+    if (userTeam.division !== competition.division) {
+      const teamDivName = DIVISION_CONFIG.find(d => d.level === userTeam.division)?.name;
+      const compDivName = DIVISION_CONFIG.find(d => d.level === competition.division)?.name;
+      toast.error(`Your team is in ${teamDivName}, but this competition is for ${compDivName}`);
+      return;
+    }
+
     if (userCoins < competition.entry_fee) {
       toast.error('Insufficient coins to join this competition');
+      return;
+    }
+
+    // Check if competition is full
+    const currentCount = participantCounts[competition.id] || 0;
+    if (competition.max_participants && currentCount >= competition.max_participants) {
+      toast.error('This competition is full');
       return;
     }
 
@@ -84,7 +99,7 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
         .select('id')
         .eq('competition_id', competition.id)
         .eq('team_id', userTeam.id)
-        .single();
+        .maybeSingle();
 
       if (existing) {
         toast.info('You are already participating in this competition');
@@ -159,16 +174,23 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
           No competitions found. Try adjusting your filters.
         </div>
       ) : (
-        competitions.map((comp) => (
-          <CompetitionCard
-            key={comp.id}
-            competition={comp}
-            participantCount={participantCounts[comp.id] || 0}
-            maxParticipants={8}
-            onJoinCompetition={() => handleJoinCompetition(comp)}
-            onNavigate={onNavigate}
-          />
-        ))
+        competitions.map((comp) => {
+          const userTeam = userTeams.find(t => t.sport === comp.sport);
+          const isEligible = userTeam?.division === comp.division;
+          
+          return (
+            <CompetitionCard
+              key={comp.id}
+              competition={comp}
+              participantCount={participantCounts[comp.id] || 0}
+              maxParticipants={comp.max_participants}
+              userTeamId={userTeam?.id}
+              isEligible={isEligible}
+              onJoinCompetition={() => handleJoinCompetition(comp)}
+              onNavigate={onNavigate}
+            />
+          );
+        })
       )}
     </div>
   );

@@ -104,24 +104,45 @@ export type Database = {
       competition_participants: {
         Row: {
           competition_id: string
+          draws: number | null
           final_position: number | null
+          goal_difference: number | null
+          goals_against: number | null
+          goals_for: number | null
           id: string
+          losses: number | null
+          matches_played: number | null
           points_earned: number | null
           team_id: string
+          wins: number | null
         }
         Insert: {
           competition_id: string
+          draws?: number | null
           final_position?: number | null
+          goal_difference?: number | null
+          goals_against?: number | null
+          goals_for?: number | null
           id?: string
+          losses?: number | null
+          matches_played?: number | null
           points_earned?: number | null
           team_id: string
+          wins?: number | null
         }
         Update: {
           competition_id?: string
+          draws?: number | null
           final_position?: number | null
+          goal_difference?: number | null
+          goals_against?: number | null
+          goals_for?: number | null
           id?: string
+          losses?: number | null
+          matches_played?: number | null
           points_earned?: number | null
           team_id?: string
+          wins?: number | null
         }
         Relationships: [
           {
@@ -147,8 +168,11 @@ export type Database = {
           end_date: string
           entry_fee: number
           id: string
+          match_generation_status: string | null
+          max_participants: number | null
           name: string
           prize_coins: number
+          season_id: string | null
           sport: Database["public"]["Enums"]["sport_type"]
           start_date: string
           status: Database["public"]["Enums"]["competition_status"] | null
@@ -159,8 +183,11 @@ export type Database = {
           end_date: string
           entry_fee: number
           id?: string
+          match_generation_status?: string | null
+          max_participants?: number | null
           name: string
           prize_coins: number
+          season_id?: string | null
           sport: Database["public"]["Enums"]["sport_type"]
           start_date: string
           status?: Database["public"]["Enums"]["competition_status"] | null
@@ -171,13 +198,24 @@ export type Database = {
           end_date?: string
           entry_fee?: number
           id?: string
+          match_generation_status?: string | null
+          max_participants?: number | null
           name?: string
           prize_coins?: number
+          season_id?: string | null
           sport?: Database["public"]["Enums"]["sport_type"]
           start_date?: string
           status?: Database["public"]["Enums"]["competition_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "competitions_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       custom_emblems: {
         Row: {
@@ -248,6 +286,54 @@ export type Database = {
         }
         Relationships: []
       }
+      division_movements: {
+        Row: {
+          created_at: string | null
+          final_position: number
+          from_division: number
+          id: string
+          movement_type: string
+          season_id: string
+          team_id: string
+          to_division: number
+        }
+        Insert: {
+          created_at?: string | null
+          final_position: number
+          from_division: number
+          id?: string
+          movement_type: string
+          season_id: string
+          team_id: string
+          to_division: number
+        }
+        Update: {
+          created_at?: string | null
+          final_position?: number
+          from_division?: number
+          id?: string
+          movement_type?: string
+          season_id?: string
+          team_id?: string
+          to_division?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "division_movements_season_id_fkey"
+            columns: ["season_id"]
+            isOneToOne: false
+            referencedRelation: "seasons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "division_movements_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "user_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leagues: {
         Row: {
           api_league_id: string | null
@@ -294,6 +380,7 @@ export type Database = {
           home_team_id: string
           id: string
           match_date: string
+          match_day: number | null
           status: Database["public"]["Enums"]["match_status"] | null
         }
         Insert: {
@@ -305,6 +392,7 @@ export type Database = {
           home_team_id: string
           id?: string
           match_date: string
+          match_day?: number | null
           status?: Database["public"]["Enums"]["match_status"] | null
         }
         Update: {
@@ -316,6 +404,7 @@ export type Database = {
           home_team_id?: string
           id?: string
           match_date?: string
+          match_day?: number | null
           status?: Database["public"]["Enums"]["match_status"] | null
         }
         Relationships: [
@@ -341,6 +430,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seasons: {
+        Row: {
+          created_at: string | null
+          end_date: string
+          id: string
+          season_number: number
+          sport: Database["public"]["Enums"]["sport_type"]
+          start_date: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_date: string
+          id?: string
+          season_number: number
+          sport: Database["public"]["Enums"]["sport_type"]
+          start_date: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          season_number?: number
+          sport?: Database["public"]["Enums"]["sport_type"]
+          start_date?: string
+          status?: string | null
+        }
+        Relationships: []
       }
       sports_feeds: {
         Row: {

@@ -39,7 +39,7 @@ export const MyTeamsTab = ({ teams, onViewTeam, onTrainPlayers, onCustomizeKit }
                     <p className="text-sm text-muted-foreground">{sportConfig.name}</p>
                   </div>
                 </div>
-                <Badge variant="secondary">{divisionConfig?.name}</Badge>
+                <Badge variant={`division${team.division}` as any}>{divisionConfig?.name}</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
