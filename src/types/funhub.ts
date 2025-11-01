@@ -171,9 +171,9 @@ export const SPORT_CONFIG: Record<SportType, {
 };
 
 export const DIVISION_CONFIG = [
-  { level: 5, name: 'Rookie', entryFee: 50, prize: 200 },
-  { level: 4, name: 'Amateur', entryFee: 100, prize: 500 },
-  { level: 3, name: 'Semi-Pro', entryFee: 200, prize: 1000 },
-  { level: 2, name: 'Professional', entryFee: 500, prize: 2500 },
-  { level: 1, name: 'Elite', entryFee: 1000, prize: 5000 }
+  { level: 5, name: 'Div 5', entryFee: 50, prize: 200, maxPlayers: null }, // Unlimited
+  { level: 4, name: 'Div 4', entryFee: 100, prize: 500, maxPlayers: 20 },
+  { level: 3, name: 'Div 3', entryFee: 200, prize: 1000, maxPlayers: 20 },
+  { level: 2, name: 'Div 2', entryFee: 500, prize: 2500, maxPlayers: 20 },
+  { level: 1, name: 'Div 1', entryFee: 1000, prize: 5000, maxPlayers: 20 }
 ];
