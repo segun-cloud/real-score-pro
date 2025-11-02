@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.process-season-end]
 verify_jwt = false
+
+[functions.create-notification]
+verify_jwt = false

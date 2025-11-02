@@ -5,8 +5,9 @@ import { SportSelector } from "@/components/funhub/SportSelector";
 import { TeamBuilder } from "@/components/funhub/TeamBuilder";
 import { MyTeamsTab } from "@/components/funhub/MyTeamsTab";
 import { CompetitionsTab } from "@/components/funhub/CompetitionsTab";
-import { LeaderboardsTab } from "@/components/funhub/LeaderboardsTab";
+import { EnhancedLeaderboardsTab } from "@/components/funhub/EnhancedLeaderboardsTab";
 import { CompetitionAdmin } from "@/components/funhub/CompetitionAdmin";
+import { NotificationBell } from "@/components/funhub/NotificationBell";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SportType, UserTeam } from "@/types/funhub";
@@ -187,9 +188,12 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
       <div className="bg-card border-b p-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">Fun Hub</h1>
-          <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full">
-            <Coins className="h-5 w-5 text-primary" />
-            <span className="font-bold">{userCoins}</span>
+          <div className="flex items-center gap-3">
+            {userId && <NotificationBell userId={userId} />}
+            <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full">
+              <Coins className="h-5 w-5 text-primary" />
+              <span className="font-bold">{userCoins}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -240,7 +244,7 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
           </TabsContent>
 
           <TabsContent value="leaderboards" className="mt-4">
-            <LeaderboardsTab />
+            <EnhancedLeaderboardsTab />
           </TabsContent>
 
           <TabsContent value="admin" className="mt-4">

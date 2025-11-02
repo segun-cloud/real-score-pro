@@ -1,10 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, TrendingUp, Calendar } from "lucide-react";
+import { Trophy, Users, TrendingUp, Calendar, History } from "lucide-react";
 import { UserTeam } from "@/types/funhub";
 import { SPORT_CONFIG, DIVISION_CONFIG } from "@/types/funhub";
 import { SeasonSchedule } from "./SeasonSchedule";
+import { DivisionHistory } from "./DivisionHistory";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useState } from "react";
 
 interface MyTeamsTabProps {
@@ -43,7 +45,22 @@ export const MyTeamsTab = ({ teams, onViewTeam, onTrainPlayers, onCustomizeKit }
                     <p className="text-sm text-muted-foreground">{sportConfig.name}</p>
                   </div>
                 </div>
-                <Badge variant={`division${team.division}` as any}>{divisionConfig?.name}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={`division${team.division}` as any}>{divisionConfig?.name}</Badge>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <History className="h-4 w-4" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Division History - {team.team_name}</DialogTitle>
+                      </DialogHeader>
+                      <DivisionHistory teamId={team.id} />
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
