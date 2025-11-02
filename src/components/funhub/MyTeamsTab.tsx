@@ -1,9 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Users, TrendingUp } from "lucide-react";
+import { Trophy, Users, TrendingUp, Calendar } from "lucide-react";
 import { UserTeam } from "@/types/funhub";
 import { SPORT_CONFIG, DIVISION_CONFIG } from "@/types/funhub";
+import { SeasonSchedule } from "./SeasonSchedule";
+import { useState } from "react";
 
 interface MyTeamsTabProps {
   teams: UserTeam[];
@@ -13,6 +15,8 @@ interface MyTeamsTabProps {
 }
 
 export const MyTeamsTab = ({ teams, onViewTeam, onTrainPlayers, onCustomizeKit }: MyTeamsTabProps) => {
+  const [expandedTeamId, setExpandedTeamId] = useState<string | null>(null);
+
   if (teams.length === 0) {
     return (
       <div className="text-center py-12">
@@ -69,7 +73,7 @@ export const MyTeamsTab = ({ teams, onViewTeam, onTrainPlayers, onCustomizeKit }
               </div>
 
               {/* Actions */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -77,7 +81,7 @@ export const MyTeamsTab = ({ teams, onViewTeam, onTrainPlayers, onCustomizeKit }
                   className="flex flex-col h-auto py-2"
                 >
                   <Users className="h-4 w-4 mb-1" />
-                  <span className="text-xs">View Team</span>
+                  <span className="text-xs">View</span>
                 </Button>
                 <Button 
                   variant="outline" 
@@ -95,9 +99,25 @@ export const MyTeamsTab = ({ teams, onViewTeam, onTrainPlayers, onCustomizeKit }
                   className="flex flex-col h-auto py-2"
                 >
                   <span className="text-lg mb-1">👕</span>
-                  <span className="text-xs">Customize</span>
+                  <span className="text-xs">Kit</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setExpandedTeamId(expandedTeamId === team.id ? null : team.id)}
+                  className="flex flex-col h-auto py-2"
+                >
+                  <Calendar className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Fixtures</span>
                 </Button>
               </div>
+
+              {/* Season Schedule - Expandable */}
+              {expandedTeamId === team.id && (
+                <div className="mt-4 pt-4 border-t">
+                  <SeasonSchedule teamId={team.id} />
+                </div>
+              )}
             </CardContent>
           </Card>
         );

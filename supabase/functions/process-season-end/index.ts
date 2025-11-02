@@ -5,6 +5,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DIVISION_CONFIG = [
+  { level: 5, name: 'Div 5' },
+  { level: 4, name: 'Div 4' },
+  { level: 3, name: 'Div 3' },
+  { level: 2, name: 'Div 2' },
+  { level: 1, name: 'Div 1' }
+];
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -54,6 +62,7 @@ Deno.serve(async (req) => {
     const division = competition.division;
     const divisionMovements = [];
     const teamUpdates = [];
+    const divisionConfig = DIVISION_CONFIG.find(d => d.level === division);
 
     // Process each team's final position
     for (let i = 0; i < participants.length; i++) {
@@ -113,10 +122,10 @@ Deno.serve(async (req) => {
       // Award prize coins to top finishers (top 4 get prizes)
       if (finalPosition <= 4) {
         const prizes = [
-          competition.prize_coins,
-          Math.floor(competition.prize_coins * 0.6),
-          Math.floor(competition.prize_coins * 0.4),
-          Math.floor(competition.prize_coins * 0.2)
+          competition.prize_coins,                      // 1st: 100%
+          Math.floor(competition.prize_coins * 0.6),   // 2nd: 60%
+          Math.floor(competition.prize_coins * 0.4),   // 3rd: 40%
+          Math.floor(competition.prize_coins * 0.2)    // 4th: 20%
         ];
         const prizeAmount = prizes[finalPosition - 1] || 0;
 
@@ -135,6 +144,46 @@ Deno.serve(async (req) => {
 
             console.log(`Awarded ${prizeAmount} coins to team ${participant.team.team_name} (position ${finalPosition})`);
           }
+        }
+      // Create notification for each affected team
+      const { data: teamProfile } = await supabase
+        .from('user_teams')
+        .select('user_id')
+        .eq('id', participant.team_id)
+        .single();
+
+      if (teamProfile && (movementType === 'promotion' || movementType === 'relegation' || finalPosition <= 4)) {
+        let notifTitle = '';
+        let notifMessage = '';
+
+        if (movementType === 'promotion') {
+          notifTitle = '🎉 Promoted!';
+          notifMessage = `Congratulations! ${participant.team.team_name} finished ${finalPosition}${finalPosition === 1 ? 'st' : finalPosition === 2 ? 'nd' : finalPosition === 3 ? 'rd' : 'th'} and has been promoted to ${divisionConfig?.name || `Division ${newDivision}`}!`;
+        } else if (movementType === 'relegation') {
+          notifTitle = '⚠️ Relegated';
+          notifMessage = `${participant.team.team_name} finished ${finalPosition}${finalPosition === 17 ? 'th' : finalPosition === 18 ? 'th' : finalPosition === 19 ? 'th' : 'th'} and has been relegated to ${divisionConfig?.name || `Division ${newDivision}`}.`;
+        }
+
+        if (prizeAmount > 0) {
+          notifTitle = finalPosition === 1 ? '🏆 Champion!' : `${notifTitle || '🏅 Prize Awarded'}`;
+          notifMessage = `${participant.team.team_name} finished ${finalPosition}${finalPosition === 1 ? 'st' : finalPosition === 2 ? 'nd' : finalPosition === 3 ? 'rd' : 'th'} and won ${prizeAmount} coins!`;
+        }
+
+        if (notifTitle && notifMessage) {
+          await supabase
+            .from('user_notifications')
+            .insert({
+              user_id: teamProfile.user_id,
+              notification_type: prizeAmount > 0 ? 'prize_awarded' : movementType,
+              title: notifTitle,
+              message: notifMessage,
+              metadata: {
+                team_id: participant.team_id,
+                competition_id: competitionId,
+                final_position: finalPosition,
+                prize_amount: prizeAmount
+              }
+            });
         }
       }
     }

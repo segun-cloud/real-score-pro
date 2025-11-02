@@ -21,10 +21,9 @@ interface Match {
 
 interface SeasonScheduleProps {
   teamId: string;
-  sport: SportType;
 }
 
-export const SeasonSchedule = ({ teamId, sport }: SeasonScheduleProps) => {
+export const SeasonSchedule = ({ teamId }: SeasonScheduleProps) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Trophy, Calendar } from "lucide-react";
 import { SPORT_CONFIG, DIVISION_CONFIG } from "@/types/funhub";
 import type { Competition } from "@/types/funhub";
+import { CompetitionStandings } from "@/components/funhub/CompetitionStandings";
 
 interface Participant {
   id: string;
@@ -189,14 +190,18 @@ export const CompetitionDetails = ({ competitionId, onBack }: CompetitionDetails
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between p-2 bg-primary/10 rounded">
               <span className="font-medium">🥇 1st Place</span>
-              <span className="font-bold text-primary">{Math.floor(competition.prize_coins * 0.5)} coins</span>
+              <span className="font-bold text-primary">{competition.prize_coins} coins</span>
             </div>
             <div className="flex items-center justify-between p-2 bg-muted rounded">
               <span className="font-medium">🥈 2nd Place</span>
-              <span className="font-bold">{Math.floor(competition.prize_coins * 0.3)} coins</span>
+              <span className="font-bold">{Math.floor(competition.prize_coins * 0.6)} coins</span>
             </div>
             <div className="flex items-center justify-between p-2 bg-muted rounded">
               <span className="font-medium">🥉 3rd Place</span>
+              <span className="font-bold">{Math.floor(competition.prize_coins * 0.4)} coins</span>
+            </div>
+            <div className="flex items-center justify-between p-2 bg-muted rounded">
+              <span className="font-medium">4th Place</span>
               <span className="font-bold">{Math.floor(competition.prize_coins * 0.2)} coins</span>
             </div>
           </CardContent>
@@ -210,36 +215,7 @@ export const CompetitionDetails = ({ competitionId, onBack }: CompetitionDetails
           </TabsList>
 
           <TabsContent value="standings">
-            <Card>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">Pos</TableHead>
-                      <TableHead>Team</TableHead>
-                      <TableHead className="text-right">Pts</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {participants.length > 0 ? (
-                      participants.map((participant, index) => (
-                        <TableRow key={participant.id}>
-                          <TableCell className="font-medium">{index + 1}</TableCell>
-                          <TableCell>{participant.team_name}</TableCell>
-                          <TableCell className="text-right font-bold">{participant.points_earned}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground">
-                          No participants yet
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <CompetitionStandings competitionId={competitionId} division={competition.division || 5} />
           </TabsContent>
 
           <TabsContent value="fixtures">
