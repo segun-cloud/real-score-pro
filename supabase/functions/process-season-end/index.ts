@@ -145,6 +145,8 @@ Deno.serve(async (req) => {
             console.log(`Awarded ${prizeAmount} coins to team ${participant.team.team_name} (position ${finalPosition})`);
           }
         }
+      }
+
       // Create notification for each affected team
       const { data: teamProfile } = await supabase
         .from('user_teams')
