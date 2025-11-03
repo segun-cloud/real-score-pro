@@ -25,6 +25,7 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   const [selectedSport, setSelectedSport] = useState<SportType | null>(null);
   const [showTeamBuilder, setShowTeamBuilder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     loadUserData();
@@ -38,6 +39,15 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
     }
 
     try {
+      // Check if user is admin
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .maybeSingle();
+      
+      setIsAdmin(!!roleData);
 
       // Load user profile
       const { data: profile } = await supabase
@@ -72,16 +82,13 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
     emblemId: number | null, 
     kitId: number | null,
     customEmblemId: string | null,
-    customKitId: string | null
+    customKitId: string | null,
+    totalCost: number
   ) => {
     if (!selectedSport || !userId) return;
 
     try {
       const sportConfig = SPORT_CONFIG[selectedSport];
-      const playersCost = sportConfig.playerCount * 50;
-      
-      // Calculate costs (custom emblem/kit costs already deducted during customization)
-      const totalCost = playersCost;
 
       // Create team
       const { data: team, error: teamError } = await supabase
@@ -200,11 +207,11 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
 
       <div className="p-4">
         <Tabs defaultValue="my-teams" className="w-full">
-          <TabsList className="w-full grid grid-cols-4">
+          <TabsList className={`w-full grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
             <TabsTrigger value="my-teams">My Teams</TabsTrigger>
             <TabsTrigger value="competitions">Competitions</TabsTrigger>
             <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
-            <TabsTrigger value="admin">Admin</TabsTrigger>
+            {isAdmin && <TabsTrigger value="admin">Admin</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="my-teams" className="mt-4 space-y-4">
@@ -247,9 +254,11 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
             <EnhancedLeaderboardsTab />
           </TabsContent>
 
-          <TabsContent value="admin" className="mt-4">
-            <CompetitionAdmin />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="admin" className="mt-4">
+              <CompetitionAdmin />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

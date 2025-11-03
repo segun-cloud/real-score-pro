@@ -20,7 +20,8 @@ interface TeamBuilderProps {
     emblemId: number | null, 
     kitId: number | null,
     customEmblemId: string | null,
-    customKitId: string | null
+    customKitId: string | null,
+    totalCost: number
   ) => Promise<void>;
 }
 
@@ -36,7 +37,7 @@ export const TeamBuilder = ({ sport, userId, userCoins, onBack, onCreateTeam }: 
   const [isCreating, setIsCreating] = useState(false);
 
   const sportConfig = SPORT_CONFIG[sport];
-  const baseCost = 50; // Cost per player
+  const baseCost = 20; // Cost per player
   const playersCost = sportConfig.playerCount * baseCost;
   const totalCost = playersCost + emblemCost + kitCost;
 
@@ -62,7 +63,7 @@ export const TeamBuilder = ({ sport, userId, userCoins, onBack, onCreateTeam }: 
 
     setIsCreating(true);
     try {
-      await onCreateTeam(teamName, emblemId, kitId, customEmblemId, customKitId);
+      await onCreateTeam(teamName, emblemId, kitId, customEmblemId, customKitId, totalCost);
       toast.success("Team created successfully!");
     } catch (error) {
       toast.error("Failed to create team");
