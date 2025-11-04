@@ -75,25 +75,132 @@ export const TeamBuilder = ({ sport, userId, userCoins, onBack, onCreateTeam }: 
 
   // Render different steps
   if (step === 'emblem') {
+    const remainingAfterPlayers = userCoins - playersCost;
+    
     return (
-      <EmblemDesigner
-        userId={userId}
-        userCoins={userCoins - playersCost}
-        onSave={handleEmblemSave}
-        onCancel={() => setStep('name')}
-      />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => setStep('name')}>
+            Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-primary" />
+            <span className="font-bold">{userCoins}</span>
+          </div>
+        </div>
+
+        <Card className="bg-muted/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Budget Breakdown:</span>
+            </div>
+            <div className="text-sm space-y-1">
+              <div className="flex justify-between">
+                <span>Your Coins:</span>
+                <span className="font-bold">{userCoins}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Players cost:</span>
+                <span>-{playersCost}</span>
+              </div>
+              <div className="flex justify-between font-medium pt-1 border-t">
+                <span>Available for Emblem + Kit:</span>
+                <span className={remainingAfterPlayers < 0 ? "text-destructive" : "text-primary"}>
+                  {remainingAfterPlayers}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <EmblemDesigner
+          userId={userId}
+          userCoins={userCoins - playersCost}
+          onSave={handleEmblemSave}
+          onCancel={() => setStep('name')}
+        />
+        
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => {
+            setEmblemId(null);
+            setCustomEmblemId(null);
+            setEmblemCost(0);
+            setStep('kit');
+          }}
+        >
+          Skip Emblem (Use Default)
+        </Button>
+      </div>
     );
   }
 
   if (step === 'kit') {
+    const remainingAfterPlayers = userCoins - playersCost;
+    const remainingAfterEmblem = remainingAfterPlayers - emblemCost;
+    
     return (
-      <KitCustomizer
-        sport={sport}
-        userId={userId}
-        userCoins={userCoins - playersCost - emblemCost}
-        onSave={handleKitSave}
-        onCancel={() => setStep('emblem')}
-      />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={() => setStep('emblem')}>
+            Back
+          </Button>
+          <div className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-primary" />
+            <span className="font-bold">{userCoins}</span>
+          </div>
+        </div>
+
+        <Card className="bg-muted/50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Budget Breakdown:</span>
+            </div>
+            <div className="text-sm space-y-1">
+              <div className="flex justify-between">
+                <span>Your Coins:</span>
+                <span className="font-bold">{userCoins}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Players cost:</span>
+                <span>-{playersCost}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Emblem cost:</span>
+                <span>-{emblemCost}</span>
+              </div>
+              <div className="flex justify-between font-medium pt-1 border-t">
+                <span>Available for Kit:</span>
+                <span className={remainingAfterEmblem < 0 ? "text-destructive" : "text-primary"}>
+                  {remainingAfterEmblem}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <KitCustomizer
+          sport={sport}
+          userId={userId}
+          userCoins={userCoins - playersCost - emblemCost}
+          onSave={handleKitSave}
+          onCancel={() => setStep('emblem')}
+        />
+        
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => {
+            setKitId(null);
+            setCustomKitId(null);
+            setKitCost(0);
+            setStep('review');
+          }}
+        >
+          Skip Kit (Use Default)
+        </Button>
+      </div>
     );
   }
 
@@ -195,14 +302,14 @@ export const TeamBuilder = ({ sport, userId, userCoins, onBack, onCreateTeam }: 
                 <div className="space-y-2">
                   <Label>Emblem</Label>
                   <p className="text-sm text-muted-foreground">
-                    {customEmblemId ? 'Custom Emblem' : `Preset Emblem #${emblemId}`}
+                    {customEmblemId ? 'Custom Emblem' : emblemId ? `Preset Emblem #${emblemId}` : 'Default (Free)'}
                   </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label>Kit</Label>
                   <p className="text-sm text-muted-foreground">
-                    {customKitId ? 'Custom Kit' : `Preset Kit #${kitId}`}
+                    {customKitId ? 'Custom Kit' : kitId ? `Preset Kit #${kitId}` : 'Default (Free)'}
                   </p>
                 </div>
               </div>
