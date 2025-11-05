@@ -15,9 +15,10 @@ interface ProfileProps {
   coins: number;
   onBack: () => void;
   onLogout: () => void;
+  onCoinsUpdate: () => void;
 }
 
-export const Profile = ({ coins, onBack, onLogout }: ProfileProps) => {
+export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps) => {
   const [userProfile, setUserProfile] = useState(mockUserProfile);
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -63,11 +64,45 @@ export const Profile = ({ coins, onBack, onLogout }: ProfileProps) => {
     }
   };
 
-  const handleWatchRewardedAd = () => {
-    toast({
-      title: "Coins Earned!",
-      description: "You earned 25 coins for watching the ad!",
-    });
+  const handleWatchRewardedAd = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        sonnerToast.error('Authentication required');
+        return;
+      }
+      
+      // Get current coins
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('coins')
+        .eq('id', user.id)
+        .single();
+      
+      if (!profile) {
+        sonnerToast.error('Profile not found');
+        return;
+      }
+      
+      // Add coins to database
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ coins: profile.coins + 25 })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Update parent component state
+      onCoinsUpdate();
+      
+      toast({
+        title: "Coins Earned!",
+        description: "You earned 25 coins for watching the ad!",
+      });
+    } catch (error) {
+      console.error('Error adding coins:', error);
+      sonnerToast.error('Failed to add coins');
+    }
   };
 
   const toggleDarkMode = () => {
@@ -213,7 +248,15 @@ export const Profile = ({ coins, onBack, onLogout }: ProfileProps) => {
                 </div>
               </div>
               
-              <Button className="w-full bg-gradient-coins hover:opacity-90">
+              <Button 
+                className="w-full bg-gradient-coins hover:opacity-90"
+                onClick={() => {
+                  toast({
+                    title: "Coming Soon",
+                    description: "Premium subscriptions will be available soon!",
+                  });
+                }}
+              >
                 Subscribe for $0.99/month
               </Button>
             </Card>

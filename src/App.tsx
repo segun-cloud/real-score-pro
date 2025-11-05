@@ -229,7 +229,7 @@ const App = () => {
           />
         );
       case 'profile':
-        return <Profile onBack={handleBack} coins={coins} onLogout={handleLogout} />;
+        return <Profile onBack={handleBack} coins={coins} onLogout={handleLogout} onCoinsUpdate={updateCoins} />;
       case 'leagues':
         return <Leagues />;
       case 'favourites':

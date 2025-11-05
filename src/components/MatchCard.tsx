@@ -1,7 +1,11 @@
 import { Match } from "@/types/sports";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, Calendar, Heart } from "lucide-react";
+import { useFavourites } from "@/hooks/useFavourites";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
 
 interface MatchCardProps {
   match: Match;
@@ -9,6 +13,20 @@ interface MatchCardProps {
 }
 
 export const MatchCard = ({ match, onClick }: MatchCardProps) => {
+  const [userId, setUserId] = useState<string | undefined>();
+  const { isFavourited, toggleFavourite } = useFavourites(userId);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUserId(user?.id);
+    });
+  }, []);
+
+  const handleFavouriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleFavourite('match', match.id, match);
+  };
+
   const getStatusBadge = () => {
     switch (match.status) {
       case 'live':
@@ -52,7 +70,19 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
             {match.league}
           </button>
         </div>
-        {getStatusBadge()}
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={handleFavouriteClick}
+          >
+            <Heart 
+              className={`h-3 w-3 ${isFavourited('match', match.id) ? 'fill-primary text-primary' : ''}`}
+            />
+          </Button>
+          {getStatusBadge()}
+        </div>
       </div>
       
       <div className="flex items-center justify-between">

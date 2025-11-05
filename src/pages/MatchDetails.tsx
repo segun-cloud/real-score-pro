@@ -146,42 +146,52 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
 
   const handleUnlockPrediction = async () => {
     if (userProfile.coins >= 20) {
-      setUserProfile(prev => ({ ...prev, coins: prev.coins - 20 }));
-      setAiPredictionUnlocked(true);
-      setActiveTab("prediction");
-      setIsLoadingPrediction(true);
-
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-match-prediction`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({ match: matchDetails }),
-          }
-        );
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to generate prediction');
-        }
-
-        const data = await response.json();
-        setAiPrediction(data.prediction);
+        // Deduct coins from database FIRST
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
         
+        const { error: coinsError } = await supabase
+          .from('user_profiles')
+          .update({ coins: userProfile.coins - 20 })
+          .eq('id', user.id);
+        
+        if (coinsError) throw coinsError;
+        
+        // Update local state
+        setUserProfile(prev => ({ ...prev, coins: prev.coins - 20 }));
+        setAiPredictionUnlocked(true);
+        setActiveTab("prediction");
+        setIsLoadingPrediction(true);
+
+        // Call edge function with Supabase client
+        const { data, error } = await supabase.functions.invoke('generate-match-prediction', {
+          body: { match: matchDetails }
+        });
+        
+        if (error) throw error;
+        
+        setAiPrediction(data.prediction);
         toast.success("AI Prediction Ready!", {
           description: "Your match prediction has been generated.",
         });
       } catch (error) {
         console.error('Error generating prediction:', error);
         toast.error("Prediction Error", {
-          description: error instanceof Error ? error.message : "Failed to generate prediction. Please try again.",
+          description: error instanceof Error ? error.message : "Failed to generate prediction. Your coins have not been deducted.",
         });
-        // Refund coins on error
-        setUserProfile(prev => ({ ...prev, coins: prev.coins + 20 }));
+        // Reload user profile to sync coins
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('coins')
+            .eq('id', user.id)
+            .single();
+          if (profile) {
+            setUserProfile(prev => ({ ...prev, coins: profile.coins }));
+          }
+        }
         setAiPredictionUnlocked(false);
       } finally {
         setIsLoadingPrediction(false);

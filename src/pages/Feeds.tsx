@@ -113,6 +113,13 @@ export const Feeds = () => {
                     onClick={() => {
                       if (feed.videoUrl) {
                         setSelectedVideo({ url: feed.videoUrl, title: feed.title });
+                      } else if ((feed as any).externalUrl) {
+                        window.open((feed as any).externalUrl, '_blank');
+                      } else {
+                        toast({
+                          title: "Content not available",
+                          description: "This feed item doesn't have viewable content yet"
+                        });
                       }
                     }}
                   >
