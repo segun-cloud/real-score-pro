@@ -229,6 +229,23 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                     <div
                       key={match.id}
                       className="bg-card border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
+                      onClick={() => {
+                        const transformedMatch: Match = {
+                          id: match.id,
+                          homeTeam: match.home_team?.team_name || 'Home Team',
+                          awayTeam: match.away_team?.team_name || 'Away Team',
+                          homeScore: match.home_score ?? null,
+                          awayScore: match.away_score ?? null,
+                          homeTeamLogo: '/placeholder.svg',
+                          awayTeamLogo: '/placeholder.svg',
+                          status: match.status,
+                          league: match.competition?.name || 'Competition',
+                          startTime: match.match_date,
+                          sport: match.competition?.sport || 'football',
+                          minute: null
+                        };
+                        onMatchClick(transformedMatch);
+                      }}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs text-muted-foreground">
