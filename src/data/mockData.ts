@@ -337,20 +337,55 @@ export const getMockMatchDetails = (matchId: string): MatchDetails => {
     }
   };
 
+  // Generate events based on sport
+  const getEventsBySport = () => {
+    if (match.sport === 'football') {
+      return [
+        { minute: 12, type: "goal" as const, player: "Forward", team: "home" as const, description: `Goal by ${match.homeTeam}` },
+        { minute: 28, type: "yellow_card" as const, player: "Defender", team: "away" as const, description: `Yellow card for ${match.awayTeam}` },
+        { minute: 45, type: "goal" as const, player: "Midfielder", team: "home" as const, description: `Goal by ${match.homeTeam}` },
+        { minute: 67, type: "goal" as const, player: "Striker", team: "away" as const, description: `Goal by ${match.awayTeam}` },
+        { minute: 82, type: "substitution" as const, player: "Winger", team: "home" as const, description: "Substitution" },
+      ];
+    } else if (match.sport === 'basketball') {
+      return [
+        { minute: 8, type: "goal" as const, player: "Guard", team: "home" as const, description: "3-pointer" },
+        { minute: 15, type: "goal" as const, player: "Forward", team: "away" as const, description: "Dunk" },
+        { minute: 22, type: "goal" as const, player: "Center", team: "home" as const, description: "Layup" },
+      ];
+    }
+    return [];
+  };
+
   return {
     ...match,
-    events: [
-      { minute: 23, type: "goal", player: "Benzema", team: "home", description: "Goal by Benzema" },
-      { minute: 45, type: "yellow_card", player: "Pedri", team: "away", description: "Yellow card for Pedri" },
-      { minute: 67, type: "goal", player: "Lewandowski", team: "away", description: "Goal by Lewandowski" },
-      { minute: 78, type: "goal", player: "Vinicius Jr.", team: "home", description: "Goal by Vinicius Jr." },
-    ],
+    events: getEventsBySport(),
     odds: {
       homeWin: 2.1,
       draw: match.sport === 'tennis' || match.sport === 'baseball' || match.sport === 'boxing' ? undefined : 3.2,
       awayWin: 2.8,
       updated: "2024-01-15T19:45:00Z",
     },
+    h2h: {
+      homeWins: 15,
+      draws: 8,
+      awayWins: 12,
+      recentMeetings: [
+        { date: '2024-10-15', homeScore: 2, awayScore: 1, competition: match.league },
+        { date: '2024-08-22', homeScore: 1, awayScore: 1, competition: match.league },
+        { date: '2024-05-10', homeScore: 0, awayScore: 2, competition: match.league },
+        { date: '2024-02-18', homeScore: 3, awayScore: 2, competition: match.league },
+        { date: '2023-11-25', homeScore: 1, awayScore: 0, competition: match.league },
+      ],
+    },
+    standings: [
+      { position: 1, team: "Liverpool", teamLogo: "/placeholder.svg", played: 15, won: 12, drawn: 2, lost: 1, goalsFor: 38, goalsAgainst: 12, goalDifference: 26, points: 38 },
+      { position: 2, team: match.homeTeam, teamLogo: match.homeTeamLogo, played: 15, won: 10, drawn: 3, lost: 2, goalsFor: 32, goalsAgainst: 15, goalDifference: 17, points: 33 },
+      { position: 3, team: "Arsenal", teamLogo: "/placeholder.svg", played: 15, won: 9, drawn: 4, lost: 2, goalsFor: 28, goalsAgainst: 14, goalDifference: 14, points: 31 },
+      { position: 4, team: match.awayTeam, teamLogo: match.awayTeamLogo, played: 15, won: 8, drawn: 5, lost: 2, goalsFor: 30, goalsAgainst: 18, goalDifference: 12, points: 29 },
+      { position: 5, team: "Chelsea", teamLogo: "/placeholder.svg", played: 15, won: 7, drawn: 5, lost: 3, goalsFor: 25, goalsAgainst: 20, goalDifference: 5, points: 26 },
+      { position: 6, team: "Tottenham", teamLogo: "/placeholder.svg", played: 15, won: 6, drawn: 4, lost: 5, goalsFor: 22, goalsAgainst: 22, goalDifference: 0, points: 22 },
+    ],
     lineups: match.sport === 'football' ? {
       home: [
         // Starting XI
@@ -401,11 +436,23 @@ export const getMockMatchDetails = (matchId: string): MatchDetails => {
     } : undefined,
     statistics: getStatisticsBySport(),
     commentary: [
-      { minute: 78, text: "GOAL! Vinicius Jr. scores a brilliant goal to put Real Madrid ahead!" },
-      { minute: 75, text: "Barcelona pressing for an equalizer, creating several chances." },
-      { minute: 67, text: "GOAL! Lewandowski equalizes for Barcelona with a clinical finish!" },
-      { minute: 45, text: "Yellow card shown to Pedri for a tactical foul." },
-      { minute: 23, text: "GOAL! Benzema opens the scoring for Real Madrid!" },
+      { minute: 82, text: "Substitution made, fresh legs brought on for the final push." },
+      { minute: 67, text: `GOAL! ${match.awayTeam} pulls one back!` },
+      { minute: 45, text: `GOAL! ${match.homeTeam} doubles their lead before halftime!` },
+      { minute: 28, text: "Yellow card shown for a tactical foul." },
+      { minute: 12, text: `GOAL! ${match.homeTeam} opens the scoring!` },
     ],
+    media: {
+      highlights: [
+        "https://example.com/highlight1.mp4",
+        "https://example.com/highlight2.mp4",
+      ],
+      photos: [
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+        "/placeholder.svg",
+      ],
+    },
   };
 };

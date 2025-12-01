@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users, Play, StopCircle } from "lucide-react";
+import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users, Trophy, ImageIcon } from "lucide-react";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -7,13 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MatchDetails as MatchDetailsType, Match } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
 import { toast } from "sonner";
-import { SportTracker } from "@/components/SportTracker";
 import { FootballPitch } from "@/components/FootballPitch";
+import { VideoPlayer } from "@/components/VideoPlayer";
 import { supabase } from "@/integrations/supabase/client";
-import { useMatchSimulation } from "@/hooks/useMatchSimulation";
 
 interface MatchDetailsProps {
   matchId: string;
@@ -29,15 +29,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   const [aiPredictionUnlocked, setAiPredictionUnlocked] = useState(false);
   const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
-
-  // Match simulation hook
-  const simulation = useMatchSimulation({
-    homeTeam: matchDetails?.homeTeam || 'Home',
-    awayTeam: matchDetails?.awayTeam || 'Away',
-    homeStrength: 50,
-    awayStrength: 50,
-    sport: matchDetails?.sport || 'football'
-  });
+  const [selectedVideo, setSelectedVideo] = useState<{ url: string; title: string } | null>(null);
 
   useEffect(() => {
     const loadMatchDetails = async () => {
@@ -62,7 +54,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
               lineups: data.lineups,
               statistics: data.statistics || {},
               commentary: [],
-              media: [],
+              media: { highlights: [], photos: [] },
             };
             setMatchDetails(details);
           } else {
@@ -77,9 +69,9 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
             lineups: undefined,
             statistics: {},
             commentary: [],
-            media: [],
-          };
-          setMatchDetails(details);
+              media: { highlights: [], photos: [] },
+            };
+            setMatchDetails(details);
         } else {
           // Try to fetch from cache using api_match_id
           const { data: cachedMatch } = await supabase
@@ -106,11 +98,11 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
               events: [],
               odds: { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
               lineups: undefined,
-              statistics: {},
-              commentary: [],
-              media: [],
-            };
-            setMatchDetails(details);
+            statistics: {},
+            commentary: [],
+            media: { highlights: [], photos: [] },
+          };
+          setMatchDetails(details);
           } else {
             // Fallback to mock data
             const details = getMockMatchDetails(matchId);
@@ -128,7 +120,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
             lineups: undefined,
             statistics: {},
             commentary: [],
-            media: [],
+            media: { highlights: [], photos: [] },
           } : getMockMatchDetails(matchId);
           setMatchDetails(details);
         } catch (e) {
@@ -147,10 +139,12 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
 
   const tabs = [
     { id: "details", label: "Details" },
+    ...(hasStats ? [{ id: "statistics", label: "Stats" }] : []),
     ...(hasOdds ? [{ id: "odds", label: "Odds" }] : []),
     ...(hasLineups ? [{ id: "lineups", label: "Lineups" }] : []),
-    ...(hasStats ? [{ id: "statistics", label: "Stats" }] : []),
-    { id: "tracker", label: "Live Tracker" },
+    { id: "h2h", label: "H2H" },
+    { id: "standings", label: "Table" },
+    { id: "media", label: "Media" },
     ...(matchDetails?.status !== 'finished' ? [{ id: "prediction", label: "AI Prediction" }] : []),
   ];
 
@@ -236,17 +230,85 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
     switch (activeTab) {
       case "details":
         return (
-          <div className="space-y-3">
-            <Card className="p-3">
-              <h3 className="font-semibold mb-2 text-sm">Match Events</h3>
-              <div className="space-y-2">
-                {matchDetails.events.map((event, index) => (
-                  <div key={index} className="flex items-center gap-2 p-2 bg-secondary/50 rounded text-xs">
-                    <Badge variant="outline" className="text-xs px-1 py-0">{event.minute}'</Badge>
-                    <span className="text-xs">{event.description}</span>
+          <div className="space-y-4">
+            {/* Key Statistics Summary */}
+            {matchDetails.statistics && Object.keys(matchDetails.statistics).length > 0 && (
+              <Card className="p-4">
+                <h3 className="font-semibold mb-3">Key Statistics</h3>
+                <div className="space-y-4">
+                  {/* Possession Bar (Football) */}
+                  {matchDetails.statistics.possession && (
+                    <div>
+                      <div className="flex justify-between items-center text-sm mb-2">
+                        <span className="font-semibold text-primary">{matchDetails.statistics.possession.home}%</span>
+                        <span className="text-muted-foreground">Possession</span>
+                        <span className="font-semibold text-primary">{matchDetails.statistics.possession.away}%</span>
+                      </div>
+                      <Progress value={matchDetails.statistics.possession.home} className="h-3" />
+                    </div>
+                  )}
+                  
+                  {/* Shots Comparison */}
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    {matchDetails.statistics.shots && (
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shots.home}</p>
+                        <p className="text-xs text-muted-foreground">Shots</p>
+                      </div>
+                    )}
+                    {matchDetails.statistics.shotsOnTarget && (
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shotsOnTarget.home}</p>
+                        <p className="text-xs text-muted-foreground">On Target</p>
+                      </div>
+                    )}
+                    {matchDetails.statistics.corners && (
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.corners.home}</p>
+                        <p className="text-xs text-muted-foreground">Corners</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                  
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    {matchDetails.statistics.shots && (
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shots.away}</p>
+                      </div>
+                    )}
+                    {matchDetails.statistics.shotsOnTarget && (
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shotsOnTarget.away}</p>
+                      </div>
+                    )}
+                    {matchDetails.statistics.corners && (
+                      <div>
+                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.corners.away}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            )}
+            
+            {/* Match Events */}
+            <Card className="p-4">
+              <h3 className="font-semibold mb-3">Match Events</h3>
+              {matchDetails.events.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-4">No events recorded yet</p>
+              ) : (
+                <div className="space-y-2">
+                  {matchDetails.events.map((event, index) => (
+                    <div key={index} className="flex items-center gap-3 p-2 bg-secondary/50 rounded">
+                      <Badge variant="outline" className="text-xs px-2 py-1">{event.minute}'</Badge>
+                      <span className="text-sm flex-1">{event.description}</span>
+                      {event.type === 'goal' && <span className="text-lg">⚽</span>}
+                      {event.type === 'yellow_card' && <span className="text-lg">🟨</span>}
+                      {event.type === 'red_card' && <span className="text-lg">🟥</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </Card>
           </div>
         );
@@ -1037,106 +1099,6 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
           </div>
         );
 
-      case 'tracker':
-        return (
-          <div className="space-y-4">
-            {/* Simulation Controls */}
-            <Card className="p-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-semibold">Live Match Simulation</h3>
-                  {simulation.isSimulating && (
-                    <Badge variant="destructive" className="animate-pulse">
-                      SIMULATING
-                    </Badge>
-                  )}
-                </div>
-                
-                {!simulation.isSimulating ? (
-                  <Button 
-                    onClick={simulation.startSimulation} 
-                    size="lg" 
-                    className="w-full"
-                  >
-                    <Play className="mr-2 h-4 w-4" />
-                    Start 30-Second Simulation
-                  </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Progress</span>
-                      <span className="font-medium">
-                        {simulation.currentMinute}' / {simulation.maxMinute}'
-                      </span>
-                    </div>
-                    <Progress value={(simulation.currentMinute / simulation.maxMinute) * 100} />
-                    <Button 
-                      onClick={simulation.stopSimulation}
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                    >
-                      <StopCircle className="mr-2 h-4 w-4" />
-                      Stop Simulation
-                    </Button>
-                  </div>
-                )}
-                
-                {/* Score Display */}
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                  <div className="text-center flex-1">
-                    <div className="text-xs text-muted-foreground mb-1">{matchDetails.homeTeam}</div>
-                    <div className="text-3xl font-bold">{simulation.homeScore}</div>
-                  </div>
-                  <div className="text-2xl font-bold text-muted-foreground">-</div>
-                  <div className="text-center flex-1">
-                    <div className="text-xs text-muted-foreground mb-1">{matchDetails.awayTeam}</div>
-                    <div className="text-3xl font-bold">{simulation.awayScore}</div>
-                  </div>
-                </div>
-
-                {/* Current Event Display */}
-                {simulation.currentEvent && (
-                  <div className="p-3 bg-primary/10 rounded-lg border-2 border-primary animate-fade-in">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="default">{simulation.currentMinute}'</Badge>
-                      <span className="text-sm font-medium">
-                        {simulation.currentEvent.type === 'goal' && '⚽ GOAL!'}
-                        {simulation.currentEvent.type === 'basket' && '🏀 BASKET!'}
-                        {simulation.currentEvent.type === 'point' && '🎾 SET POINT!'}
-                        {simulation.currentEvent.type === 'run' && '⚾ RUN SCORED!'}
-                        {simulation.currentEvent.type === 'punch' && '🥊 PUNCH LANDED!'}
-                        {' '}
-                        by {simulation.currentEvent.team === 'home' ? matchDetails.homeTeam : matchDetails.awayTeam}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-            {/* Live Tracker */}
-            <SportTracker
-              match={{
-                id: matchDetails.id,
-                homeTeam: matchDetails.homeTeam,
-                awayTeam: matchDetails.awayTeam,
-                homeScore: simulation.homeScore,
-                awayScore: simulation.awayScore,
-                homeTeamLogo: matchDetails.homeTeamLogo || '/placeholder.svg',
-                awayTeamLogo: matchDetails.awayTeamLogo || '/placeholder.svg',
-                status: matchDetails.status,
-                startTime: matchDetails.startTime,
-                sport: matchDetails.sport,
-                league: matchDetails.league,
-                minute: simulation.currentMinute || matchDetails.minute || undefined,
-              }}
-              isSimulating={simulation.isSimulating}
-              ballPosition={simulation.ballPosition}
-              currentEvent={simulation.currentEvent}
-            />
-          </div>
-        );
     }
   };
 

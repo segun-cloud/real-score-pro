@@ -13,13 +13,46 @@ export interface Match {
   awayTeamLogo?: string;
 }
 
+export interface H2HRecord {
+  homeWins: number;
+  draws: number;
+  awayWins: number;
+  recentMeetings: {
+    date: string;
+    homeScore: number;
+    awayScore: number;
+    competition?: string;
+  }[];
+}
+
+export interface LeagueStanding {
+  position: number;
+  team: string;
+  teamLogo?: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
+  points: number;
+}
+
+export interface MatchMedia {
+  highlights?: string[];
+  photos?: string[];
+}
+
 export interface MatchDetails extends Match {
   events: MatchEvent[];
   odds: Odds;
   lineups?: Lineups;
   statistics: Statistics;
   commentary: Commentary[];
-  media?: string[];
+  h2h?: H2HRecord;
+  standings?: LeagueStanding[];
+  media?: MatchMedia;
 }
 
 export interface MatchEvent {
