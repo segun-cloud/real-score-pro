@@ -6,9 +6,12 @@ interface FootballTrackerProps {
   minute?: number;
   homeScore?: number;
   awayScore?: number;
+  isSimulating?: boolean;
+  ballPosition?: { x: number; y: number };
+  currentEvent?: { type: string; team: 'home' | 'away' };
 }
 
-export const FootballTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore }: FootballTrackerProps) => {
+export const FootballTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore, isSimulating, ballPosition, currentEvent }: FootballTrackerProps) => {
   return (
     <div className="bg-card p-4 rounded-lg">
       <div className="relative bg-green-600 rounded-lg p-4 h-64 overflow-hidden">
@@ -29,7 +32,23 @@ export const FootballTracker = ({ homeTeam, awayTeam, minute, homeScore, awaySco
           </div>
           
           {/* Ball */}
-          <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 shadow-lg animate-pulse"></div>
+          <div 
+            className="absolute w-3 h-3 bg-white rounded-full shadow-lg transition-all duration-300"
+            style={{
+              left: isSimulating && ballPosition ? `${ballPosition.x}%` : '50%',
+              top: isSimulating && ballPosition ? `${ballPosition.y}%` : '50%',
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+          
+          {/* Goal Animation */}
+          {currentEvent?.type === 'goal' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 animate-fade-in">
+              <div className="text-5xl font-bold text-white animate-bounce">
+                ⚽ GOAL!
+              </div>
+            </div>
+          )}
           
           {/* Players (simplified dots) */}
           <div className="absolute top-8 left-12 w-2 h-2 bg-blue-400 rounded-full"></div>

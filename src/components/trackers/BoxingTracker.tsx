@@ -6,9 +6,11 @@ interface BoxingTrackerProps {
   minute?: number;
   homeScore?: number;
   awayScore?: number;
+  isSimulating?: boolean;
+  currentEvent?: { type: string; team: 'home' | 'away' };
 }
 
-export const BoxingTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore }: BoxingTrackerProps) => {
+export const BoxingTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore, isSimulating, currentEvent }: BoxingTrackerProps) => {
   return (
     <div className="bg-card p-4 rounded-lg">
       <div className="relative bg-blue-900 rounded-lg p-4 h-64 overflow-hidden">
@@ -37,6 +39,15 @@ export const BoxingTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore
           {/* Boxers */}
           <div className="absolute top-1/2 left-1/4 w-4 h-4 bg-red-500 rounded-full transform -translate-x-1/2 -translate-y-1/2"></div>
           <div className="absolute top-1/2 right-1/4 w-4 h-4 bg-blue-500 rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
+          
+          {/* Punch Animation */}
+          {currentEvent?.type === 'punch' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 animate-fade-in">
+              <div className="text-5xl font-bold text-white animate-bounce">
+                🥊 HIT!
+              </div>
+            </div>
+          )}
           
           {/* Boxing gloves (simplified) */}
           <div className="absolute top-1/2 left-1/4 w-2 h-1 bg-red-600 rounded transform -translate-y-2"></div>

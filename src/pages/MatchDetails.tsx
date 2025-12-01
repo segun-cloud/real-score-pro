@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users } from "lucide-react";
+import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users, Play, StopCircle } from "lucide-react";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { SportTracker } from "@/components/SportTracker";
 import { FootballPitch } from "@/components/FootballPitch";
 import { supabase } from "@/integrations/supabase/client";
+import { useMatchSimulation } from "@/hooks/useMatchSimulation";
 
 interface MatchDetailsProps {
   matchId: string;
@@ -28,6 +29,15 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   const [aiPredictionUnlocked, setAiPredictionUnlocked] = useState(false);
   const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
+
+  // Match simulation hook
+  const simulation = useMatchSimulation({
+    homeTeam: matchDetails?.homeTeam || 'Home',
+    awayTeam: matchDetails?.awayTeam || 'Away',
+    homeStrength: 50,
+    awayStrength: 50,
+    sport: matchDetails?.sport || 'football'
+  });
 
   useEffect(() => {
     const loadMatchDetails = async () => {
@@ -1029,20 +1039,101 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
 
       case 'tracker':
         return (
-          <SportTracker
-            match={{
-              id: matchDetails.id,
-              homeTeam: matchDetails.homeTeam,
-              awayTeam: matchDetails.awayTeam,
-              homeScore: matchDetails.homeScore,
-              awayScore: matchDetails.awayScore,
-              status: matchDetails.status,
-              startTime: matchDetails.startTime,
-              sport: matchDetails.sport,
-              league: matchDetails.league,
-              minute: matchDetails.minute,
-            }}
-          />
+          <div className="space-y-4">
+            {/* Simulation Controls */}
+            <Card className="p-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Live Match Simulation</h3>
+                  {simulation.isSimulating && (
+                    <Badge variant="destructive" className="animate-pulse">
+                      SIMULATING
+                    </Badge>
+                  )}
+                </div>
+                
+                {!simulation.isSimulating ? (
+                  <Button 
+                    onClick={simulation.startSimulation} 
+                    size="lg" 
+                    className="w-full"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Start 30-Second Simulation
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Progress</span>
+                      <span className="font-medium">
+                        {simulation.currentMinute}' / {simulation.maxMinute}'
+                      </span>
+                    </div>
+                    <Progress value={(simulation.currentMinute / simulation.maxMinute) * 100} />
+                    <Button 
+                      onClick={simulation.stopSimulation}
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                    >
+                      <StopCircle className="mr-2 h-4 w-4" />
+                      Stop Simulation
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Score Display */}
+                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                  <div className="text-center flex-1">
+                    <div className="text-xs text-muted-foreground mb-1">{matchDetails.homeTeam}</div>
+                    <div className="text-3xl font-bold">{simulation.homeScore}</div>
+                  </div>
+                  <div className="text-2xl font-bold text-muted-foreground">-</div>
+                  <div className="text-center flex-1">
+                    <div className="text-xs text-muted-foreground mb-1">{matchDetails.awayTeam}</div>
+                    <div className="text-3xl font-bold">{simulation.awayScore}</div>
+                  </div>
+                </div>
+
+                {/* Current Event Display */}
+                {simulation.currentEvent && (
+                  <div className="p-3 bg-primary/10 rounded-lg border-2 border-primary animate-fade-in">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default">{simulation.currentMinute}'</Badge>
+                      <span className="text-sm font-medium">
+                        {simulation.currentEvent.type === 'goal' && '⚽ GOAL!'}
+                        {simulation.currentEvent.type === 'basket' && '🏀 BASKET!'}
+                        {simulation.currentEvent.type === 'point' && '🎾 SET POINT!'}
+                        {simulation.currentEvent.type === 'run' && '⚾ RUN SCORED!'}
+                        {simulation.currentEvent.type === 'punch' && '🥊 PUNCH LANDED!'}
+                        {' '}
+                        by {simulation.currentEvent.team === 'home' ? matchDetails.homeTeam : matchDetails.awayTeam}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+
+            {/* Live Tracker */}
+            <SportTracker
+              match={{
+                id: matchDetails.id,
+                homeTeam: matchDetails.homeTeam,
+                awayTeam: matchDetails.awayTeam,
+                homeScore: simulation.homeScore,
+                awayScore: simulation.awayScore,
+                status: matchDetails.status,
+                startTime: matchDetails.startTime,
+                sport: matchDetails.sport,
+                league: matchDetails.league,
+                minute: simulation.currentMinute || matchDetails.minute,
+              }}
+              isSimulating={simulation.isSimulating}
+              ballPosition={simulation.ballPosition}
+              currentEvent={simulation.currentEvent}
+            />
+          </div>
         );
     }
   };

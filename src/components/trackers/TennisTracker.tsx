@@ -6,9 +6,12 @@ interface TennisTrackerProps {
   minute?: number;
   homeScore?: number;
   awayScore?: number;
+  isSimulating?: boolean;
+  ballPosition?: { x: number; y: number };
+  currentEvent?: { type: string; team: 'home' | 'away' };
 }
 
-export const TennisTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore }: TennisTrackerProps) => {
+export const TennisTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore, isSimulating, ballPosition, currentEvent }: TennisTrackerProps) => {
   return (
     <div className="bg-card p-4 rounded-lg">
       <div className="relative bg-green-400 rounded-lg p-4 h-64 overflow-hidden">
@@ -29,7 +32,23 @@ export const TennisTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore
           </div>
           
           {/* Tennis ball */}
-          <div className="absolute top-1/4 left-2/3 w-2 h-2 bg-yellow-300 rounded-full shadow-lg animate-pulse"></div>
+          <div 
+            className="absolute w-2 h-2 bg-yellow-300 rounded-full shadow-lg transition-all duration-300"
+            style={{
+              left: isSimulating && ballPosition ? `${ballPosition.x}%` : '66%',
+              top: isSimulating && ballPosition ? `${ballPosition.y}%` : '25%',
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+          
+          {/* Point Animation */}
+          {currentEvent?.type === 'point' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 animate-fade-in">
+              <div className="text-5xl font-bold text-white animate-bounce">
+                🎾 SET!
+              </div>
+            </div>
+          )}
           
           {/* Players */}
           <div className="absolute bottom-12 left-1/3 w-3 h-3 bg-blue-500 rounded-full"></div>

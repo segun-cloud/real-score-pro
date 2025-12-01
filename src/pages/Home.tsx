@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Search, CalendarIcon, RefreshCw } from "lucide-react";
+import { Search, CalendarIcon, RefreshCw, Play } from "lucide-react";
 import { Match } from "@/types/sports";
 import { mockMatches } from "@/data/mockData";
 import { format } from "date-fns";
@@ -272,6 +272,39 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                           <p className="font-medium">{match.away_team?.team_name || 'Away Team'}</p>
                         </div>
                       </div>
+                      
+                      {/* Simulate Button */}
+                      {match.status === 'scheduled' && (
+                        <div className="mt-3 pt-3 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const transformedMatch: Match = {
+                                id: match.id,
+                                homeTeam: match.home_team?.team_name || 'Home Team',
+                                awayTeam: match.away_team?.team_name || 'Away Team',
+                                homeScore: match.home_score ?? null,
+                                awayScore: match.away_score ?? null,
+                                homeTeamLogo: '/placeholder.svg',
+                                awayTeamLogo: '/placeholder.svg',
+                                status: match.status,
+                                league: match.competition?.name || 'Competition',
+                                startTime: match.match_date,
+                                sport: match.competition?.sport || 'football',
+                                minute: null
+                              };
+                              onMatchClick(transformedMatch);
+                              // User will manually start simulation in tracker tab
+                            }}
+                          >
+                            <Play className="mr-2 h-4 w-4" />
+                            Simulate Match
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
