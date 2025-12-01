@@ -1123,11 +1123,13 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
                 awayTeam: matchDetails.awayTeam,
                 homeScore: simulation.homeScore,
                 awayScore: simulation.awayScore,
+                homeTeamLogo: matchDetails.homeTeamLogo || '/placeholder.svg',
+                awayTeamLogo: matchDetails.awayTeamLogo || '/placeholder.svg',
                 status: matchDetails.status,
                 startTime: matchDetails.startTime,
                 sport: matchDetails.sport,
                 league: matchDetails.league,
-                minute: simulation.currentMinute || matchDetails.minute,
+                minute: simulation.currentMinute || matchDetails.minute || undefined,
               }}
               isSimulating={simulation.isSimulating}
               ballPosition={simulation.ballPosition}

@@ -9,7 +9,11 @@ interface SportTrackerProps {
   match: Match;
   isSimulating?: boolean;
   ballPosition?: { x: number; y: number };
-  currentEvent?: { type: string; team: 'home' | 'away' };
+  currentEvent?: { 
+    type: 'goal' | 'basket' | 'point' | 'run' | 'punch'; 
+    team: 'home' | 'away';
+    minute?: number;
+  } | null;
 }
 
 export const SportTracker = ({ match, isSimulating, ballPosition, currentEvent }: SportTrackerProps) => {
