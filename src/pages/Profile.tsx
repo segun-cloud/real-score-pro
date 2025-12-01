@@ -221,6 +221,37 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
             </div>
           </Card>
 
+          {/* Testing Mode */}
+          <Card className="p-4 bg-primary/5 border-primary/20 border-dashed border-2">
+            <h3 className="font-semibold mb-2 flex items-center gap-2">
+              <Settings className="h-4 w-4 text-primary" />
+              Testing Mode
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Setup dummy competitions, teams, and fixtures for testing
+            </p>
+            <Button 
+              onClick={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke('setup-dummy-data', {
+                    method: 'POST',
+                  });
+
+                  if (error) throw error;
+
+                  sonnerToast.success("Dummy data created successfully! Check competitions and your teams.");
+                  console.log('Setup result:', data);
+                } catch (error: any) {
+                  console.error("Error setting up dummy data:", error);
+                  sonnerToast.error(error.message || "Failed to setup dummy data");
+                }
+              }}
+              className="w-full"
+            >
+              Setup Dummy Data
+            </Button>
+          </Card>
+
           {/* Premium Subscription */}
           {!userProfile.isPremium && (
             <Card className="p-4 bg-gradient-coins/5 border-coins/20">
