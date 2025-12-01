@@ -79,15 +79,24 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
 
       if (error) throw error;
 
-      setApiMatches(data.matches || []);
-      setIsCached(data.cached || false);
-      setLastUpdated(new Date());
+      const fetchedMatches = data.matches || [];
       
-      if (data.matches && data.matches.length === 0) {
+      if (fetchedMatches.length === 0) {
+        // Fall back to mock data when no real matches found
+        const mockForSport = mockMatches.filter(m => 
+          m.sport === selectedSport.toLowerCase()
+        );
+        setApiMatches(mockForSport);
+        setIsCached(false);
+        setLastUpdated(new Date());
         toast({
-          title: "No matches found",
-          description: `No ${selectedSport} matches found for the selected date`,
+          title: "Showing sample matches",
+          description: `No live ${selectedSport} matches found. Displaying sample data for testing.`,
         });
+      } else {
+        setApiMatches(fetchedMatches);
+        setIsCached(data.cached || false);
+        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error('Error loading API matches:', error);
