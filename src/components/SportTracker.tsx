@@ -7,9 +7,12 @@ import { BoxingTracker } from "./trackers/BoxingTracker";
 
 interface SportTrackerProps {
   match: Match;
+  isSimulating?: boolean;
+  ballPosition?: { x: number; y: number };
+  currentEvent?: { type: string; team: 'home' | 'away' };
 }
 
-export const SportTracker = ({ match }: SportTrackerProps) => {
+export const SportTracker = ({ match, isSimulating, ballPosition, currentEvent }: SportTrackerProps) => {
   switch (match.sport) {
     case 'football':
       return (
@@ -19,6 +22,9 @@ export const SportTracker = ({ match }: SportTrackerProps) => {
           minute={match.minute}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
+          isSimulating={isSimulating}
+          ballPosition={ballPosition}
+          currentEvent={currentEvent}
         />
       );
     case 'basketball':
@@ -29,6 +35,9 @@ export const SportTracker = ({ match }: SportTrackerProps) => {
           minute={match.minute}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
+          isSimulating={isSimulating}
+          ballPosition={ballPosition}
+          currentEvent={currentEvent}
         />
       );
     case 'tennis':
@@ -39,6 +48,9 @@ export const SportTracker = ({ match }: SportTrackerProps) => {
           minute={match.minute}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
+          isSimulating={isSimulating}
+          ballPosition={ballPosition}
+          currentEvent={currentEvent}
         />
       );
     case 'baseball':
@@ -49,6 +61,9 @@ export const SportTracker = ({ match }: SportTrackerProps) => {
           minute={match.minute}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
+          isSimulating={isSimulating}
+          ballPosition={ballPosition}
+          currentEvent={currentEvent}
         />
       );
     case 'boxing':
@@ -59,6 +74,8 @@ export const SportTracker = ({ match }: SportTrackerProps) => {
           minute={match.minute}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
+          isSimulating={isSimulating}
+          currentEvent={currentEvent}
         />
       );
     default:
@@ -69,6 +86,9 @@ export const SportTracker = ({ match }: SportTrackerProps) => {
           minute={match.minute}
           homeScore={match.homeScore}
           awayScore={match.awayScore}
+          isSimulating={isSimulating}
+          ballPosition={ballPosition}
+          currentEvent={currentEvent}
         />
       );
   }

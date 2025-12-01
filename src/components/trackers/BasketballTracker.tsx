@@ -6,9 +6,12 @@ interface BasketballTrackerProps {
   minute?: number;
   homeScore?: number;
   awayScore?: number;
+  isSimulating?: boolean;
+  ballPosition?: { x: number; y: number };
+  currentEvent?: { type: string; team: 'home' | 'away' };
 }
 
-export const BasketballTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore }: BasketballTrackerProps) => {
+export const BasketballTracker = ({ homeTeam, awayTeam, minute, homeScore, awayScore, isSimulating, ballPosition, currentEvent }: BasketballTrackerProps) => {
   return (
     <div className="bg-card p-4 rounded-lg">
       <div className="relative bg-orange-200 rounded-lg p-4 h-64 overflow-hidden">
@@ -35,7 +38,23 @@ export const BasketballTracker = ({ homeTeam, awayTeam, minute, homeScore, awayS
           <div className="absolute right-2 top-1/2 w-4 h-1 bg-orange-600 rounded transform -translate-y-1/2"></div>
           
           {/* Ball */}
-          <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-orange-600 rounded-full shadow-lg animate-bounce"></div>
+          <div 
+            className="absolute w-3 h-3 bg-orange-600 rounded-full shadow-lg transition-all duration-300"
+            style={{
+              left: isSimulating && ballPosition ? `${ballPosition.x}%` : '66%',
+              top: isSimulating && ballPosition ? `${ballPosition.y}%` : '33%',
+              transform: 'translate(-50%, -50%)'
+            }}
+          />
+          
+          {/* Basket Animation */}
+          {currentEvent?.type === 'basket' && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 animate-fade-in">
+              <div className="text-5xl font-bold text-white animate-bounce">
+                🏀 SCORE!
+              </div>
+            </div>
+          )}
           
           {/* Players */}
           <div className="absolute top-12 left-16 w-2 h-2 bg-purple-500 rounded-full"></div>
