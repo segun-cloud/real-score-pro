@@ -677,21 +677,33 @@ export type Database = {
         Row: {
           coins: number
           created_at: string
+          favourite_players: Json | null
+          favourite_sports: string[] | null
+          favourite_teams: Json | null
           id: string
+          onboarding_completed: boolean | null
           updated_at: string
           username: string
         }
         Insert: {
           coins?: number
           created_at?: string
+          favourite_players?: Json | null
+          favourite_sports?: string[] | null
+          favourite_teams?: Json | null
           id: string
+          onboarding_completed?: boolean | null
           updated_at?: string
           username: string
         }
         Update: {
           coins?: number
           created_at?: string
+          favourite_players?: Json | null
+          favourite_sports?: string[] | null
+          favourite_teams?: Json | null
           id?: string
+          onboarding_completed?: boolean | null
           updated_at?: string
           username?: string
         }

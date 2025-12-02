@@ -13,6 +13,7 @@ import { Feeds } from "./pages/Feeds";
 import { FunHub } from "./pages/FunHub";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
+import { Onboarding } from "./pages/Onboarding";
 import { Match } from "./types/sports";
 import { BottomNavigation } from "./components/BottomNavigation";
 import { Header } from "./components/Header";
@@ -20,7 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 const queryClient = new QueryClient();
-type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'competition-details' | 'login' | 'signup';
+type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'competition-details' | 'login' | 'signup' | 'onboarding';
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -46,22 +47,35 @@ const App = () => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Fetch user profile to get coins
+        // Fetch user profile to get coins and onboarding status
         setTimeout(async () => {
           try {
             const {
               data: profile
-            } = await supabase.from('user_profiles').select('coins').eq('id', session.user.id).single();
+            } = await supabase.from('user_profiles').select('coins, onboarding_completed').eq('id', session.user.id).single();
             if (profile) {
               setCoins(profile.coins);
+              // Check if onboarding is needed
+              if (currentScreen === 'login' || currentScreen === 'signup') {
+                if (!profile.onboarding_completed) {
+                  setCurrentScreen('onboarding');
+                } else {
+                  setCurrentScreen('matches');
+                }
+              }
+            } else {
+              // New user without profile yet
+              if (currentScreen === 'login' || currentScreen === 'signup') {
+                setCurrentScreen('onboarding');
+              }
             }
           } catch (error) {
             console.error('Error fetching profile:', error);
+            if (currentScreen === 'login' || currentScreen === 'signup') {
+              setCurrentScreen('onboarding');
+            }
           }
         }, 0);
-        if (currentScreen === 'login' || currentScreen === 'signup') {
-          setCurrentScreen('matches');
-        }
       } else {
         setCoins(0);
         if (currentScreen !== 'login' && currentScreen !== 'signup') {
@@ -80,14 +94,22 @@ const App = () => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        // Fetch user profile
-        supabase.from('user_profiles').select('coins').eq('id', session.user.id).single().then(({
+        // Fetch user profile including onboarding status
+        supabase.from('user_profiles').select('coins, onboarding_completed').eq('id', session.user.id).single().then(({
           data: profile
         }) => {
           if (profile) {
             setCoins(profile.coins);
+            // Check if onboarding is needed
+            if (!profile.onboarding_completed) {
+              setCurrentScreen('onboarding');
+            } else {
+              setCurrentScreen('matches');
+            }
+          } else {
+            // Profile doesn't exist yet (new user), show onboarding
+            setCurrentScreen('onboarding');
           }
-          setCurrentScreen('matches');
           setIsLoadingAuth(false);
         });
       } else {
@@ -173,9 +195,13 @@ const App = () => {
         }} />;
       case 'signup':
         return <Signup onNavigateToLogin={() => setCurrentScreen('login')} onSignupSuccess={() => {
+          // Will be handled by onAuthStateChange which checks onboarding status
+        }} />;
+      case 'onboarding':
+        return user ? <Onboarding userId={user.id} onComplete={() => {
           setCurrentScreen('matches');
           updateCoins();
-        }} />;
+        }} /> : <Login onNavigateToSignup={() => setCurrentScreen('signup')} onLoginSuccess={() => {}} />;
       case 'matches':
         return <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
       case 'match-details':
@@ -203,13 +229,13 @@ const App = () => {
         <div className="min-h-screen w-full overflow-x-hidden bg-[#f4f4f4]">
           <Toaster />
           <Sonner />
-          {user && currentScreen !== 'login' && currentScreen !== 'signup' && <>
+          {user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' && <>
               <Header coins={coins} onProfileClick={handleProfileClick} selectedSport={selectedSport} onSportChange={handleSportChange} />
             </>}
-          <div className={`mx-auto w-full max-w-[480px] ${user && currentScreen !== 'login' && currentScreen !== 'signup' ? 'pb-16' : ''}`}>
+          <div className={`mx-auto w-full max-w-[480px] ${user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' ? 'pb-16' : ''}`}>
             {renderScreen()}
           </div>
-          {user && currentScreen !== 'login' && currentScreen !== 'signup' && <BottomNavigation activeScreen={currentScreen === 'match-details' ? 'matches' : currentScreen} onNavigate={handleNavigate} />}
+          {user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' && <BottomNavigation activeScreen={currentScreen === 'match-details' ? 'matches' : currentScreen} onNavigate={handleNavigate} />}
         </div>
       </TooltipProvider>
     </QueryClientProvider>;
