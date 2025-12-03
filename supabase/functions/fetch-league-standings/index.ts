@@ -5,6 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -12,31 +14,48 @@ serve(async (req) => {
 
   try {
     const { leagueId, season } = await req.json();
-    const apiKey = Deno.env.get('APISPORTS_KEY');
 
-    if (!apiKey) {
-      throw new Error('APISPORTS_KEY not configured');
+    if (!SPORTMONKS_API_KEY) {
+      throw new Error('SPORTMONKS_API_KEY not configured');
     }
 
     console.log(`Fetching standings for league: ${leagueId}, season: ${season || 'current'}`);
 
-    // Fetch standings from API-Sports
-    const url = `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${season || new Date().getFullYear()}`;
+    // Fetch standings from SportMonks
+    const currentSeason = season || new Date().getFullYear();
+    const url = `https://api.sportmonks.com/v3/football/standings/seasons/${leagueId}?api_token=${SPORTMONKS_API_KEY}&include=participant`;
     
-    const response = await fetch(url, {
-      headers: {
-        'x-apisports-key': apiKey,
-      },
-    });
-
+    const response = await fetch(url);
     const apiData = await response.json();
 
-    if (!response.ok || apiData.errors?.length > 0) {
-      console.error('API-Sports error:', apiData.errors);
-      throw new Error('Failed to fetch standings from API-Sports');
+    console.log('SportMonks standings response:', JSON.stringify(apiData).substring(0, 500));
+
+    if (!response.ok) {
+      console.error('SportMonks error:', apiData);
+      throw new Error('Failed to fetch standings from SportMonks');
     }
 
-    const standings = apiData.response[0]?.league?.standings[0] || [];
+    // Transform SportMonks data to our format
+    const standings = (apiData.data || []).map((entry: any) => ({
+      rank: entry.position,
+      team: {
+        id: entry.participant_id,
+        name: entry.participant?.name || 'Unknown',
+        logo: entry.participant?.image_path || '',
+      },
+      points: entry.points,
+      all: {
+        played: entry.details?.find((d: any) => d.type_id === 129)?.value || 0, // Games played
+        win: entry.details?.find((d: any) => d.type_id === 130)?.value || 0, // Wins
+        draw: entry.details?.find((d: any) => d.type_id === 131)?.value || 0, // Draws
+        lose: entry.details?.find((d: any) => d.type_id === 132)?.value || 0, // Losses
+        goals: {
+          for: entry.details?.find((d: any) => d.type_id === 133)?.value || 0, // Goals for
+          against: entry.details?.find((d: any) => d.type_id === 134)?.value || 0, // Goals against
+        },
+      },
+      goalsDiff: entry.details?.find((d: any) => d.type_id === 179)?.value || 0, // Goal difference
+    }));
 
     console.log(`Successfully fetched ${standings.length} standings entries`);
 
