@@ -69,7 +69,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
       
       console.log('Fetching matches for date:', formattedDate, 'sport:', selectedSport);
       
-      const { data, error } = await supabase.functions.invoke('fetch-matches-apisports', {
+      const { data, error } = await supabase.functions.invoke('fetch-live-matches', {
         body: {
           sport: selectedSport.toLowerCase(),
           date: formattedDate,
