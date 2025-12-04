@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.fetch-match-details-apisports]
 verify_jwt = false
 
+[functions.fetch-match-details-sportmonks]
+verify_jwt = false
+
 [functions.fetch-highlights]
 verify_jwt = false
 
@@ -35,3 +38,12 @@ verify_jwt = true
 
 [functions.setup-dummy-data]
 verify_jwt = true
+
+[functions.fetch-league-standings]
+verify_jwt = false
+
+[functions.fetch-league-fixtures]
+verify_jwt = false
+
+[functions.fetch-league-top-scorers]
+verify_jwt = false

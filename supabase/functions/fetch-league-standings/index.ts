@@ -21,9 +21,10 @@ serve(async (req) => {
 
     console.log(`Fetching standings for league: ${leagueId}, season: ${season || 'current'}`);
 
-    // Fetch standings from SportMonks
-    const currentSeason = season || new Date().getFullYear();
-    const url = `https://api.sportmonks.com/v3/football/standings/seasons/${leagueId}?api_token=${SPORTMONKS_API_KEY}&include=participant`;
+    // Use the correct SportMonks endpoint - standings by league ID
+    const url = `https://api.sportmonks.com/v3/football/standings/live/leagues/${leagueId}?api_token=${SPORTMONKS_API_KEY}&include=participant`;
+    
+    console.log(`Calling SportMonks URL: ${url.replace(SPORTMONKS_API_KEY, 'HIDDEN')}`);
     
     const response = await fetch(url);
     const apiData = await response.json();
@@ -45,16 +46,16 @@ serve(async (req) => {
       },
       points: entry.points,
       all: {
-        played: entry.details?.find((d: any) => d.type_id === 129)?.value || 0, // Games played
-        win: entry.details?.find((d: any) => d.type_id === 130)?.value || 0, // Wins
-        draw: entry.details?.find((d: any) => d.type_id === 131)?.value || 0, // Draws
-        lose: entry.details?.find((d: any) => d.type_id === 132)?.value || 0, // Losses
+        played: entry.details?.find((d: any) => d.type_id === 129)?.value || 0,
+        win: entry.details?.find((d: any) => d.type_id === 130)?.value || 0,
+        draw: entry.details?.find((d: any) => d.type_id === 131)?.value || 0,
+        lose: entry.details?.find((d: any) => d.type_id === 132)?.value || 0,
         goals: {
-          for: entry.details?.find((d: any) => d.type_id === 133)?.value || 0, // Goals for
-          against: entry.details?.find((d: any) => d.type_id === 134)?.value || 0, // Goals against
+          for: entry.details?.find((d: any) => d.type_id === 133)?.value || 0,
+          against: entry.details?.find((d: any) => d.type_id === 134)?.value || 0,
         },
       },
-      goalsDiff: entry.details?.find((d: any) => d.type_id === 179)?.value || 0, // Goal difference
+      goalsDiff: entry.details?.find((d: any) => d.type_id === 179)?.value || 0,
     }));
 
     console.log(`Successfully fetched ${standings.length} standings entries`);
