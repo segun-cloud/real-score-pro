@@ -5,45 +5,66 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { leagueId, season } = await req.json();
-    const apiKey = Deno.env.get('APISPORTS_KEY');
+    const { leagueId, seasonId } = await req.json();
 
-    if (!apiKey) {
-      throw new Error('APISPORTS_KEY not configured');
+    if (!SPORTMONKS_API_KEY) {
+      throw new Error('SPORTMONKS_API_KEY not configured');
     }
 
-    console.log(`Fetching top scorers for league: ${leagueId}, season: ${season || 'current'}`);
+    console.log(`Fetching top scorers for league: ${leagueId}, seasonId: ${seasonId || 'current'}`);
 
-    // Fetch top scorers from API-Sports
-    const url = `https://v3.football.api-sports.io/players/topscorers?league=${leagueId}&season=${season || new Date().getFullYear()}`;
+    // First, get the current season for this league if not provided
+    let currentSeasonId = seasonId;
     
-    const response = await fetch(url, {
-      headers: {
-        'x-apisports-key': apiKey,
-      },
-    });
+    if (!currentSeasonId) {
+      const leagueUrl = `https://api.sportmonks.com/v3/football/leagues/${leagueId}?api_token=${SPORTMONKS_API_KEY}&include=currentSeason`;
+      const leagueResponse = await fetch(leagueUrl);
+      const leagueData = await leagueResponse.json();
+      
+      console.log('League data:', JSON.stringify(leagueData).substring(0, 300));
+      
+      currentSeasonId = leagueData.data?.current_season_id;
+      
+      if (!currentSeasonId) {
+        console.log('No current season found for league');
+        return new Response(
+          JSON.stringify({ topScorers: [] }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
+    // Fetch top scorers from SportMonks
+    const url = `https://api.sportmonks.com/v3/football/topscorers/seasons/${currentSeasonId}?api_token=${SPORTMONKS_API_KEY}&include=player;participant`;
+    
+    console.log(`Calling SportMonks URL: ${url.replace(SPORTMONKS_API_KEY, 'HIDDEN')}`);
+    
+    const response = await fetch(url);
     const apiData = await response.json();
 
-    if (!response.ok || apiData.errors?.length > 0) {
-      console.error('API-Sports error:', apiData.errors);
-      throw new Error('Failed to fetch top scorers from API-Sports');
+    console.log('SportMonks top scorers response:', JSON.stringify(apiData).substring(0, 500));
+
+    if (!response.ok) {
+      console.error('SportMonks error:', apiData);
+      throw new Error('Failed to fetch top scorers from SportMonks');
     }
 
-    const topScorers = apiData.response?.slice(0, 20).map((player: any) => ({
-      name: player.player.name,
-      team: player.statistics[0].team.name,
-      goals: player.statistics[0].goals.total,
-      assists: player.statistics[0].goals.assists,
-      appearances: player.statistics[0].games.appearences,
-      photo: player.player.photo,
-    })) || [];
+    const topScorers = (apiData.data || []).slice(0, 20).map((entry: any) => ({
+      name: entry.player?.display_name || entry.player?.name || 'Unknown',
+      team: entry.participant?.name || 'Unknown',
+      goals: entry.total || 0,
+      assists: entry.assists || 0,
+      appearances: entry.appearances || 0,
+      photo: entry.player?.image_path || '',
+    }));
 
     console.log(`Successfully fetched ${topScorers.length} top scorers`);
 

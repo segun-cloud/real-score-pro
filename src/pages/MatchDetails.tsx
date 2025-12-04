@@ -34,19 +34,53 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   useEffect(() => {
     const loadMatchDetails = async () => {
       try {
-        // Check if this is an API-Sports match (ID starts with 'apisports-')
-        const isApiSportsMatch = matchId.startsWith('apisports-') || (match?.id.startsWith('apisports-'));
+        const currentMatchId = match?.id || matchId;
         
-        if (isApiSportsMatch) {
-          // Fetch detailed data from API-Sports
-          const { data, error } = await supabase.functions.invoke('fetch-match-details-apisports', {
-            body: { matchId: match?.id || matchId },
+        // Check if this is a SportMonks or API-Football match
+        const isSportMonksMatch = currentMatchId.startsWith('sportmonks-') || currentMatchId.startsWith('api-football-');
+        const isApiSportsMatch = currentMatchId.startsWith('apisports-');
+        
+        if (isSportMonksMatch) {
+          // Fetch detailed data from SportMonks
+          const { data, error } = await supabase.functions.invoke('fetch-match-details-sportmonks', {
+            body: { matchId: currentMatchId },
           });
 
           if (error) throw error;
 
           if (data && match) {
-            // Combine basic match info with detailed data
+            const details: MatchDetailsType = {
+              ...match,
+              events: data.events || [],
+              odds: data.odds || { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
+              lineups: data.lineups,
+              statistics: data.statistics || {},
+              commentary: [],
+              media: { highlights: [], photos: [] },
+            };
+            setMatchDetails(details);
+          } else if (match) {
+            // If no detailed data but we have match, use match with empty details
+            const details: MatchDetailsType = {
+              ...match,
+              events: data?.events || [],
+              odds: data?.odds || { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
+              lineups: data?.lineups,
+              statistics: data?.statistics || {},
+              commentary: [],
+              media: { highlights: [], photos: [] },
+            };
+            setMatchDetails(details);
+          }
+        } else if (isApiSportsMatch) {
+          // Fetch detailed data from API-Sports (legacy)
+          const { data, error } = await supabase.functions.invoke('fetch-match-details-apisports', {
+            body: { matchId: currentMatchId },
+          });
+
+          if (error) throw error;
+
+          if (data && match) {
             const details: MatchDetailsType = {
               ...match,
               events: data.events || [],
