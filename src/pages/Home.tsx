@@ -64,8 +64,11 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const loadApiMatches = async () => {
     setIsLoadingApi(true);
     try {
-      // Format date as YYYY-MM-DD
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+      // Format date as YYYY-MM-DD in local timezone (not UTC)
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
       
       console.log('Fetching matches for date:', formattedDate, 'sport:', selectedSport);
       
