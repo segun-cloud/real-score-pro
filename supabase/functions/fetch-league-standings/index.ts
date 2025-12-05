@@ -38,24 +38,20 @@ serve(async (req) => {
 
     // Transform SportMonks data to our format
     const standings = (apiData.data || []).map((entry: any) => ({
-      rank: entry.position,
-      team: {
-        id: entry.participant_id,
-        name: entry.participant?.name || 'Unknown',
-        logo: entry.participant?.image_path || '',
-      },
-      points: entry.points,
-      all: {
-        played: entry.details?.find((d: any) => d.type_id === 129)?.value || 0,
-        win: entry.details?.find((d: any) => d.type_id === 130)?.value || 0,
-        draw: entry.details?.find((d: any) => d.type_id === 131)?.value || 0,
-        lose: entry.details?.find((d: any) => d.type_id === 132)?.value || 0,
-        goals: {
-          for: entry.details?.find((d: any) => d.type_id === 133)?.value || 0,
-          against: entry.details?.find((d: any) => d.type_id === 134)?.value || 0,
-        },
-      },
-      goalsDiff: entry.details?.find((d: any) => d.type_id === 179)?.value || 0,
+      position: entry.position,
+      team_name: entry.participant?.name || 'Unknown',
+      team_logo: entry.participant?.image_path || '',
+      team_id: entry.participant_id,
+      points: entry.points || 0,
+      played: entry.details?.find((d: any) => d.type_id === 129)?.value || 0,
+      won: entry.details?.find((d: any) => d.type_id === 130)?.value || 0,
+      drawn: entry.details?.find((d: any) => d.type_id === 131)?.value || 0,
+      lost: entry.details?.find((d: any) => d.type_id === 132)?.value || 0,
+      goals_for: entry.details?.find((d: any) => d.type_id === 133)?.value || 0,
+      goals_against: entry.details?.find((d: any) => d.type_id === 134)?.value || 0,
+      goal_difference: entry.details?.find((d: any) => d.type_id === 179)?.value || 
+        ((entry.details?.find((d: any) => d.type_id === 133)?.value || 0) - 
+         (entry.details?.find((d: any) => d.type_id === 134)?.value || 0)),
     }));
 
     console.log(`Successfully fetched ${standings.length} standings entries`);

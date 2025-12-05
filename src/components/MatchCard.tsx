@@ -2,7 +2,7 @@ import { Match } from "@/types/sports";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Calendar, Heart } from "lucide-react";
+import { Clock, Heart } from "lucide-react";
 import { useFavourites } from "@/hooks/useFavourites";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
@@ -54,77 +54,42 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
 
   return (
     <Card 
-      className="p-2 hover:shadow-medium transition-all duration-200 cursor-pointer active:scale-[0.98] bg-card border-border"
+      className="p-1.5 hover:shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.99] bg-card border-border"
       onClick={() => onClick(match)}
     >
-      <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1 flex-1 min-w-0">
-          <span className="text-xs">{getSportIcon()}</span>
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              // This will be implemented to navigate to league details
-            }}
-            className="text-[10px] text-muted-foreground font-medium hover:text-primary transition-colors truncate"
-          >
-            {match.league}
-          </button>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={handleFavouriteClick}
-          >
-            <Heart 
-              className={`h-3 w-3 ${isFavourited('match', match.id) ? 'fill-primary text-primary' : ''}`}
-            />
-          </Button>
-          {getStatusBadge()}
-        </div>
-      </div>
-      
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-1 mb-0.5">
-            <div className="w-4 h-4 bg-primary/10 rounded-full flex items-center justify-center text-primary text-[8px] font-semibold">
-              {match.homeTeam.substring(0, 2).toUpperCase()}
-            </div>
-            <span className="text-xs font-medium">{match.homeTeam}</span>
+      <div className="flex items-center gap-2">
+        {/* Teams and scores in a row */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="font-medium truncate flex-1">{match.homeTeam}</span>
+            <span className="font-bold w-5 text-center">{match.status === 'live' || match.status === 'finished' ? (match.homeScore ?? 0) : '-'}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 bg-secondary/50 rounded-full flex items-center justify-center text-secondary-foreground text-[8px] font-semibold">
-              {match.awayTeam.substring(0, 2).toUpperCase()}
-            </div>
-            <span className="text-xs font-medium">{match.awayTeam}</span>
+          <div className="flex items-center justify-between text-[11px]">
+            <span className="font-medium truncate flex-1">{match.awayTeam}</span>
+            <span className="font-bold w-5 text-center">{match.status === 'live' || match.status === 'finished' ? (match.awayScore ?? 0) : '-'}</span>
           </div>
         </div>
         
-        <div className="text-right">
-          {match.status === 'live' || match.status === 'finished' ? (
-            <div className="text-sm font-bold">
-              <div>{match.homeScore ?? 0}</div>
-              <div>{match.awayScore ?? 0}</div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <Calendar className="h-3 w-3 text-muted-foreground mx-auto mb-0.5" />
-              <div className="text-[10px] text-muted-foreground">
-                {new Date(match.startTime).toLocaleDateString()}
-              </div>
-            </div>
+        {/* Status */}
+        <div className="flex flex-col items-center gap-0.5">
+          {getStatusBadge()}
+          {match.status === 'live' && match.minute && (
+            <span className="text-[9px] text-live font-semibold">{match.minute}'</span>
           )}
         </div>
+        
+        {/* Favourite */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-5 w-5 p-0"
+          onClick={handleFavouriteClick}
+        >
+          <Heart 
+            className={`h-3 w-3 ${isFavourited('match', match.id) ? 'fill-primary text-primary' : 'text-muted-foreground'}`}
+          />
+        </Button>
       </div>
-      
-      {match.status === 'live' && match.minute && (
-        <div className="mt-1 text-center">
-          <Badge variant="outline" className="bg-live/10 text-live border-live/20 text-[10px] px-1 py-0">
-            {match.minute}'
-          </Badge>
-        </div>
-      )}
     </Card>
   );
 };

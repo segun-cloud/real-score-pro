@@ -30,6 +30,9 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<{ url: string; title: string } | null>(null);
+  const [standings, setStandings] = useState<any[]>([]);
+  const [isLoadingStandings, setIsLoadingStandings] = useState(false);
+  const [isCupCompetition, setIsCupCompetition] = useState(false);
 
   useEffect(() => {
     const loadMatchDetails = async () => {
@@ -165,6 +168,47 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
     
     loadMatchDetails();
   }, [matchId, match]);
+
+  // Load standings when tab changes to standings
+  useEffect(() => {
+    const loadStandings = async () => {
+      if (activeTab !== 'standings' || !matchDetails?.league) return;
+      
+      // Check if it's a cup competition
+      const cupKeywords = ['cup', 'copa', 'coupe', 'pokal', 'coppa', 'fa cup', 'league cup', 'super cup', 'champions league', 'europa league', 'conference league'];
+      const leagueLower = matchDetails.league.toLowerCase();
+      const isCup = cupKeywords.some(keyword => leagueLower.includes(keyword));
+      setIsCupCompetition(isCup);
+      
+      if (isCup) return; // Don't fetch standings for cup competitions
+      
+      setIsLoadingStandings(true);
+      try {
+        // Find league ID from database
+        const { data: league } = await supabase
+          .from('leagues')
+          .select('api_league_id')
+          .ilike('name', `%${matchDetails.league.split(' ').slice(0, 2).join(' ')}%`)
+          .single();
+        
+        if (league?.api_league_id) {
+          const { data, error } = await supabase.functions.invoke('fetch-league-standings', {
+            body: { leagueId: league.api_league_id }
+          });
+          
+          if (!error && data?.standings) {
+            setStandings(data.standings);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading standings:', error);
+      } finally {
+        setIsLoadingStandings(false);
+      }
+    };
+    
+    loadStandings();
+  }, [activeTab, matchDetails?.league]);
 
   // Filter tabs based on available data
   const hasLineups = matchDetails?.lineups && (matchDetails.lineups.home.length > 0 || matchDetails.lineups.away.length > 0);
@@ -992,52 +1036,71 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
         );
 
       case 'standings':
+        if (isCupCompetition) {
+          return (
+            <Card className="p-6 text-center">
+              <Trophy className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+              <h3 className="font-semibold mb-2">Cup Competition</h3>
+              <p className="text-sm text-muted-foreground">
+                {matchDetails.league} is a knockout competition without league standings.
+              </p>
+            </Card>
+          );
+        }
+        
+        if (isLoadingStandings) {
+          return (
+            <div className="space-y-2">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-8 w-full" />
+              ))}
+            </div>
+          );
+        }
+        
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">{matchDetails.league} Standings</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 px-1">#</th>
-                    <th className="text-left py-2 px-2">Team</th>
-                    <th className="text-center py-2 px-1">P</th>
-                    <th className="text-center py-2 px-1">W</th>
-                    <th className="text-center py-2 px-1">D</th>
-                    <th className="text-center py-2 px-1">L</th>
-                    <th className="text-center py-2 px-1">GF</th>
-                    <th className="text-center py-2 px-1">GA</th>
-                    <th className="text-center py-2 px-1">GD</th>
-                    <th className="text-center py-2 px-1">Pts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    { pos: 1, team: "Real Madrid", p: 20, w: 15, d: 3, l: 2, gf: 45, ga: 18, pts: 48 },
-                    { pos: 2, team: "Barcelona", p: 20, w: 14, d: 4, l: 2, gf: 42, ga: 15, pts: 46 },
-                    { pos: 3, team: "Atletico Madrid", p: 20, w: 12, d: 5, l: 3, gf: 38, ga: 22, pts: 41 },
-                    { pos: 4, team: "Real Sociedad", p: 20, w: 11, d: 4, l: 5, gf: 35, ga: 25, pts: 37 },
-                    { pos: 5, team: "Villarreal", p: 20, w: 10, d: 4, l: 6, gf: 32, ga: 28, pts: 34 }
-                  ].map((team) => (
-                    <tr key={team.pos} className={`border-b hover:bg-muted/50 ${
-                      team.team === matchDetails.homeTeam || team.team === matchDetails.awayTeam 
-                        ? 'bg-primary/10' : ''
-                    }`}>
-                      <td className="py-2 px-1 font-medium">{team.pos}</td>
-                      <td className="py-2 px-2 font-medium">{team.team}</td>
-                      <td className="text-center py-2 px-1">{team.p}</td>
-                      <td className="text-center py-2 px-1">{team.w}</td>
-                      <td className="text-center py-2 px-1">{team.d}</td>
-                      <td className="text-center py-2 px-1">{team.l}</td>
-                      <td className="text-center py-2 px-1">{team.gf}</td>
-                      <td className="text-center py-2 px-1">{team.ga}</td>
-                      <td className="text-center py-2 px-1">{team.gf - team.ga}</td>
-                      <td className="text-center py-2 px-1 font-bold">{team.pts}</td>
+            {standings.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 px-1">#</th>
+                      <th className="text-left py-2 px-2">Team</th>
+                      <th className="text-center py-2 px-1">P</th>
+                      <th className="text-center py-2 px-1">W</th>
+                      <th className="text-center py-2 px-1">D</th>
+                      <th className="text-center py-2 px-1">L</th>
+                      <th className="text-center py-2 px-1">GD</th>
+                      <th className="text-center py-2 px-1">Pts</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {standings.map((team: any) => (
+                      <tr key={team.position} className={`border-b hover:bg-muted/50 ${
+                        team.team_name?.toLowerCase().includes(matchDetails.homeTeam.toLowerCase().split(' ')[0]) ||
+                        team.team_name?.toLowerCase().includes(matchDetails.awayTeam.toLowerCase().split(' ')[0])
+                          ? 'bg-primary/10' : ''
+                      }`}>
+                        <td className="py-2 px-1 font-medium">{team.position}</td>
+                        <td className="py-2 px-2 font-medium truncate max-w-[100px]">{team.team_name}</td>
+                        <td className="text-center py-2 px-1">{team.played}</td>
+                        <td className="text-center py-2 px-1">{team.won}</td>
+                        <td className="text-center py-2 px-1">{team.drawn}</td>
+                        <td className="text-center py-2 px-1">{team.lost}</td>
+                        <td className="text-center py-2 px-1">{team.goal_difference}</td>
+                        <td className="text-center py-2 px-1 font-bold">{team.points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <Card className="p-4 text-center">
+                <p className="text-sm text-muted-foreground">Standings not available for this competition</p>
+              </Card>
+            )}
           </div>
         );
 
@@ -1174,12 +1237,16 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
             <div className="text-center flex-1">
               <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-lg font-bold text-primary mt-1">{matchDetails.homeScore}</div>
+                <div className="text-lg font-bold text-primary mt-1">{matchDetails.homeScore ?? 0}</div>
               )}
             </div>
             
             <div className="mx-3 text-center">
-              <div className="text-sm font-bold text-muted-foreground">VS</div>
+              {matchDetails.status === 'live' || matchDetails.status === 'finished' ? (
+                <div className="text-lg font-bold text-muted-foreground">-</div>
+              ) : (
+                <div className="text-sm font-bold text-muted-foreground">VS</div>
+              )}
               {matchDetails.status === 'live' && matchDetails.minute && (
                 <div className="text-xs text-live font-semibold">{matchDetails.minute}'</div>
               )}
@@ -1188,7 +1255,7 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
             <div className="text-center flex-1">
               <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
               {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-lg font-bold text-primary mt-1">{matchDetails.awayScore}</div>
+                <div className="text-lg font-bold text-primary mt-1">{matchDetails.awayScore ?? 0}</div>
               )}
             </div>
           </div>

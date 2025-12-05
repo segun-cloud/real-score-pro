@@ -81,36 +81,40 @@ function parseScores(fixture: any) {
   let homeScore = null;
   let awayScore = null;
   
-  // Try to get scores from the scores array
-  if (fixture.scores && Array.isArray(fixture.scores)) {
-    const currentScore = fixture.scores.find((s: any) => 
-      s.description === 'CURRENT' || s.description === '2ND_HALF' || s.description === 'FT'
-    );
-    if (currentScore) {
-      homeScore = currentScore.score?.participant === 'home' ? currentScore.score?.goals : null;
-      awayScore = currentScore.score?.participant === 'away' ? currentScore.score?.goals : null;
-    }
-    
-    // Alternative: sum up goals from participants
-    if (homeScore === null && fixture.scores.length > 0) {
-      fixture.scores.forEach((s: any) => {
-        if (s.participant === 'home' && s.description !== '1ST_HALF') {
-          homeScore = s.score?.goals ?? homeScore;
-        }
-        if (s.participant === 'away' && s.description !== '1ST_HALF') {
-          awayScore = s.score?.goals ?? awayScore;
-        }
-      });
+  // Method 1: Get scores from the scores array (newest format)
+  if (fixture.scores && Array.isArray(fixture.scores) && fixture.scores.length > 0) {
+    // Look for CURRENT or FT scores
+    for (const s of fixture.scores) {
+      if (s.participant === 'home' && (s.description === 'CURRENT' || s.description === 'FT' || s.description === '2ND_HALF')) {
+        homeScore = s.score?.goals ?? null;
+      }
+      if (s.participant === 'away' && (s.description === 'CURRENT' || s.description === 'FT' || s.description === '2ND_HALF')) {
+        awayScore = s.score?.goals ?? null;
+      }
     }
   }
   
-  // Try participants array for scores
+  // Method 2: Try participants array meta (backup)
   if ((homeScore === null || awayScore === null) && fixture.participants) {
     const homeTeam = fixture.participants.find((p: any) => p.meta?.location === 'home');
     const awayTeam = fixture.participants.find((p: any) => p.meta?.location === 'away');
     
-    if (homeTeam?.meta?.winner !== undefined || awayTeam?.meta?.winner !== undefined) {
-      // Match is finished, try to extract from other data
+    // Some responses have score directly on participant
+    if (homeTeam?.meta?.winner !== undefined) {
+      // Try to calculate from aggregate score if available
+      const homeAgg = fixture.aggregate?.home_score;
+      const awayAgg = fixture.aggregate?.away_score;
+      if (homeAgg !== undefined) homeScore = homeAgg;
+      if (awayAgg !== undefined) awayScore = awayAgg;
+    }
+  }
+  
+  // Method 3: Try result_info parsing for finished matches (last resort)
+  if ((homeScore === null || awayScore === null) && fixture.result_info) {
+    const resultMatch = fixture.result_info.match(/(\d+)-(\d+)/);
+    if (resultMatch) {
+      homeScore = parseInt(resultMatch[1]);
+      awayScore = parseInt(resultMatch[2]);
     }
   }
   
