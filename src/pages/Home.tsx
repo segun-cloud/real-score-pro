@@ -41,13 +41,13 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
     loadApiMatches();
   }, [selectedSport, selectedDate]);
 
-  // Auto-refresh every 60 seconds for live matches
+  // Auto-refresh every 60 seconds for live matches and check for goals
   useEffect(() => {
     if (!autoRefresh) return;
     
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
       console.log('Auto-refreshing matches...');
-      loadApiMatches();
+      await loadApiMatches(true); // Pass true to check for goals
     }, 60000); // 60 seconds
 
     return () => clearInterval(interval);
@@ -74,7 +74,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
     }
   };
 
-  const loadApiMatches = async () => {
+  const loadApiMatches = async (checkGoals = false) => {
     setIsLoadingApi(true);
     try {
       // Format date as YYYY-MM-DD in local timezone (not UTC)
@@ -96,6 +96,24 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
       if (error) throw error;
 
       const fetchedMatches = data.matches || [];
+      
+      // Check for goals if this is an auto-refresh
+      if (checkGoals && fetchedMatches.length > 0) {
+        const liveMatches = fetchedMatches.filter((m: Match) => m.status === 'live');
+        if (liveMatches.length > 0) {
+          const matchUpdates = liveMatches.map((m: Match) => ({
+            matchId: m.id,
+            homeTeam: m.homeTeam,
+            awayTeam: m.awayTeam,
+            homeScore: m.homeScore ?? 0,
+            awayScore: m.awayScore ?? 0
+          }));
+          
+          supabase.functions.invoke('check-goal-updates', {
+            body: { matches: matchUpdates }
+          }).catch(err => console.error('Goal check failed:', err));
+        }
+      }
       
       if (fetchedMatches.length === 0) {
         // Fall back to mock data when no real matches found
@@ -204,7 +222,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
             <Button 
               variant="outline" 
               size="icon"
-              onClick={loadApiMatches}
+              onClick={() => loadApiMatches(false)}
               disabled={isLoadingApi}
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingApi ? 'animate-spin' : ''}`} />

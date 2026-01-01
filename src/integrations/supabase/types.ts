@@ -370,6 +370,36 @@ export type Database = {
         }
         Relationships: []
       }
+      match_score_cache: {
+        Row: {
+          away_score: number
+          away_team: string
+          home_score: number
+          home_team: string
+          id: string
+          last_checked: string
+          match_id: string
+        }
+        Insert: {
+          away_score?: number
+          away_team: string
+          home_score?: number
+          home_team: string
+          id?: string
+          last_checked?: string
+          match_id: string
+        }
+        Update: {
+          away_score?: number
+          away_team?: string
+          home_score?: number
+          home_team?: string
+          id?: string
+          last_checked?: string
+          match_id?: string
+        }
+        Relationships: []
+      }
       matches: {
         Row: {
           away_score: number | null
@@ -430,6 +460,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       seasons: {
         Row: {

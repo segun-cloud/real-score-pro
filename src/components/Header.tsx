@@ -7,12 +7,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { NotificationToggle } from "./NotificationToggle";
 
 interface HeaderProps {
   coins: number;
   onProfileClick?: () => void;
   selectedSport: string;
   onSportChange: (sport: string) => void;
+  userId?: string;
 }
 
 const sports = [
@@ -26,7 +28,7 @@ const sports = [
   { id: 'american-football', name: 'American Football', emoji: '🏈' },
 ];
 
-export const Header = ({ coins, onProfileClick, selectedSport, onSportChange }: HeaderProps) => {
+export const Header = ({ coins, onProfileClick, selectedSport, onSportChange, userId }: HeaderProps) => {
   return (
     <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
       <div className="flex items-center justify-between p-3">
@@ -55,6 +57,8 @@ export const Header = ({ coins, onProfileClick, selectedSport, onSportChange }: 
             <Coins className="h-3 w-3 text-coins-foreground" />
             <span className="text-xs font-semibold text-coins-foreground">{coins.toLocaleString()}</span>
           </div>
+          
+          <NotificationToggle userId={userId} />
           
           <Button 
             variant="ghost" 
