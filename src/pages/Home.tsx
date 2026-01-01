@@ -29,6 +29,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const [isLoadingApi, setIsLoadingApi] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isCached, setIsCached] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -39,6 +40,18 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   useEffect(() => {
     loadApiMatches();
   }, [selectedSport, selectedDate]);
+
+  // Auto-refresh every 60 seconds for live matches
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing matches...');
+      loadApiMatches();
+    }, 60000); // 60 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, selectedSport, selectedDate, showLiveOnly]);
 
   const loadDbMatches = async () => {
     try {
@@ -215,12 +228,22 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
             </p>
           )}
 
-          {lastUpdated && (
-            <div className="text-xs text-muted-foreground flex items-center gap-2">
-              Last updated: {format(lastUpdated, "HH:mm:ss")}
-              {isCached && <span className="text-yellow-500">• Cached</span>}
+          <div className="flex items-center justify-between">
+            {lastUpdated && (
+              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                Last updated: {format(lastUpdated, "HH:mm:ss")}
+                {isCached && <span className="text-yellow-500">• Cached</span>}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Auto-refresh</span>
+              <Switch 
+                checked={autoRefresh} 
+                onCheckedChange={setAutoRefresh}
+                className="scale-75"
+              />
             </div>
-          )}
+          </div>
         </div>
 
         {isLoadingApi ? (
