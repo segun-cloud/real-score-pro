@@ -230,7 +230,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           {user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' && <>
-              <Header coins={coins} onProfileClick={handleProfileClick} selectedSport={selectedSport} onSportChange={handleSportChange} />
+              <Header coins={coins} onProfileClick={handleProfileClick} selectedSport={selectedSport} onSportChange={handleSportChange} userId={user?.id} />
             </>}
           <div className={`mx-auto w-full max-w-[480px] ${user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' ? 'pb-16' : ''}`}>
             {renderScreen()}
