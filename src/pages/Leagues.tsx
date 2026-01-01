@@ -135,9 +135,14 @@ export const Leagues = () => {
           >
             ← Back to Leagues
           </button>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            {COUNTRY_FLAGS[selectedLeague.country]} {selectedLeague.name}
-          </h1>
+          <div className="flex items-center gap-3">
+            {selectedLeague.logo_url ? (
+              <img src={selectedLeague.logo_url} alt="" className="w-10 h-10 object-contain" />
+            ) : (
+              <span className="text-2xl">{COUNTRY_FLAGS[selectedLeague.country]}</span>
+            )}
+            <h1 className="text-xl font-bold">{selectedLeague.name}</h1>
+          </div>
           <p className="text-sm text-muted-foreground">
             {selectedLeague.country} • {selectedLeague.sport}
           </p>
@@ -184,18 +189,22 @@ export const Leagues = () => {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {standings.map((team: any) => (
-                              <TableRow key={team.rank}>
-                                <TableCell className="font-medium">{team.rank}</TableCell>
+                            {standings.map((team: any, index: number) => (
+                              <TableRow key={team.position || team.rank || index}>
+                                <TableCell className="font-medium">{team.position || team.rank || index + 1}</TableCell>
                                 <TableCell className="flex items-center gap-2">
-                                  <img src={team.team.logo} alt="" className="w-5 h-5" />
-                                  <span className="text-sm">{team.team.name}</span>
+                                  {(team.team_logo || team.team?.logo) ? (
+                                    <img src={team.team_logo || team.team?.logo} alt="" className="w-5 h-5 object-contain" />
+                                  ) : (
+                                    <div className="w-5 h-5 bg-muted rounded-full" />
+                                  )}
+                                  <span className="text-sm truncate">{team.team_name || team.team?.name || 'Unknown'}</span>
                                 </TableCell>
-                                <TableCell className="text-center">{team.all.played}</TableCell>
-                                <TableCell className="text-center">{team.all.win}</TableCell>
-                                <TableCell className="text-center">{team.all.draw}</TableCell>
-                                <TableCell className="text-center">{team.all.lose}</TableCell>
-                                <TableCell className="text-center font-bold">{team.points}</TableCell>
+                                <TableCell className="text-center">{team.played ?? team.all?.played ?? 0}</TableCell>
+                                <TableCell className="text-center">{team.won ?? team.all?.win ?? 0}</TableCell>
+                                <TableCell className="text-center">{team.drawn ?? team.all?.draw ?? 0}</TableCell>
+                                <TableCell className="text-center">{team.lost ?? team.all?.lose ?? 0}</TableCell>
+                                <TableCell className="text-center font-bold">{team.points ?? 0}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -366,12 +375,14 @@ export const Leagues = () => {
                         className="cursor-pointer hover:border-primary transition-colors"
                         onClick={() => handleLeagueClick(league)}
                       >
-                        <CardContent className="p-4 flex items-center justify-between">
+                        <CardContent className="p-3 flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            <span className="text-2xl">{SPORT_CONFIG[league.sport].icon}</span>
-                            <div>
-                              <h4 className="font-medium">{league.name}</h4>
-                            </div>
+                            {league.logo_url ? (
+                              <img src={league.logo_url} alt="" className="w-8 h-8 object-contain" />
+                            ) : (
+                              <span className="text-2xl">{SPORT_CONFIG[league.sport].icon}</span>
+                            )}
+                            <h4 className="font-medium">{league.name}</h4>
                           </div>
                           <Badge variant="outline">View</Badge>
                         </CardContent>

@@ -61,12 +61,26 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
         {/* Teams and scores in a row */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-medium truncate flex-1">{match.homeTeam}</span>
-            <span className="font-bold w-5 text-center">{match.status === 'live' || match.status === 'finished' ? (match.homeScore ?? 0) : '-'}</span>
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {match.homeTeamLogo ? (
+                <img src={match.homeTeamLogo} alt="" className="w-4 h-4 object-contain flex-shrink-0" />
+              ) : (
+                <div className="w-4 h-4 bg-muted rounded-full flex-shrink-0" />
+              )}
+              <span className="font-medium truncate">{match.homeTeam}</span>
+            </div>
+            <span className="font-bold w-5 text-center flex-shrink-0">{match.status === 'live' || match.status === 'finished' ? (match.homeScore ?? 0) : '-'}</span>
           </div>
           <div className="flex items-center justify-between text-[11px]">
-            <span className="font-medium truncate flex-1">{match.awayTeam}</span>
-            <span className="font-bold w-5 text-center">{match.status === 'live' || match.status === 'finished' ? (match.awayScore ?? 0) : '-'}</span>
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {match.awayTeamLogo ? (
+                <img src={match.awayTeamLogo} alt="" className="w-4 h-4 object-contain flex-shrink-0" />
+              ) : (
+                <div className="w-4 h-4 bg-muted rounded-full flex-shrink-0" />
+              )}
+              <span className="font-medium truncate">{match.awayTeam}</span>
+            </div>
+            <span className="font-bold w-5 text-center flex-shrink-0">{match.status === 'live' || match.status === 'finished' ? (match.awayScore ?? 0) : '-'}</span>
           </div>
         </div>
         
