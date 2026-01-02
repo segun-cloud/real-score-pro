@@ -45,6 +45,77 @@ serve(async (req) => {
     const homeTeam = fixture.participants?.find((p: any) => p.meta?.location === 'home');
     const awayTeam = fixture.participants?.find((p: any) => p.meta?.location === 'away');
 
+    // Fetch H2H data separately
+    let h2h = null;
+    if (homeTeam?.id && awayTeam?.id) {
+      try {
+        const h2hUrl = `https://api.sportmonks.com/v3/football/fixtures/head-to-head/${homeTeam.id}/${awayTeam.id}?api_token=${SPORTMONKS_API_KEY}`;
+        console.log('Fetching H2H data...');
+        const h2hResponse = await fetch(h2hUrl);
+        const h2hData = await h2hResponse.json();
+        
+        if (h2hResponse.ok && h2hData.data && h2hData.data.length > 0) {
+          const meetings = h2hData.data;
+          let homeWins = 0;
+          let awayWins = 0;
+          let draws = 0;
+          
+          const recentMeetings = meetings.slice(0, 5).map((m: any) => {
+            const mHomeTeam = m.participants?.find((p: any) => p.meta?.location === 'home');
+            const mAwayTeam = m.participants?.find((p: any) => p.meta?.location === 'away');
+            const homeScore = mHomeTeam?.meta?.winner ? (mAwayTeam?.meta?.winner ? 0 : 1) : 0;
+            const awayScore = mAwayTeam?.meta?.winner ? 1 : 0;
+            
+            // Get actual scores from scores array
+            const scores = m.scores || [];
+            const ftScore = scores.find((s: any) => s.description === 'CURRENT' || s.type_id === 1);
+            const hScore = ftScore?.score?.participant === 'home' ? ftScore.score.goals : 
+                          (scores.find((s: any) => s.participant_id === mHomeTeam?.id)?.score?.goals || 0);
+            const aScore = ftScore?.score?.participant === 'away' ? ftScore.score.goals :
+                          (scores.find((s: any) => s.participant_id === mAwayTeam?.id)?.score?.goals || 0);
+            
+            return {
+              date: m.starting_at || m.date,
+              homeScore: hScore,
+              awayScore: aScore,
+              competition: m.league?.name || '',
+            };
+          });
+          
+          // Count wins/draws from all meetings
+          meetings.forEach((m: any) => {
+            const mHomeTeam = m.participants?.find((p: any) => p.meta?.location === 'home');
+            const mAwayTeam = m.participants?.find((p: any) => p.meta?.location === 'away');
+            
+            // Check if this match's home team is our fixture's home team
+            const isHomeTeamHome = mHomeTeam?.id === homeTeam.id;
+            
+            if (mHomeTeam?.meta?.winner && !mAwayTeam?.meta?.winner) {
+              if (isHomeTeamHome) homeWins++;
+              else awayWins++;
+            } else if (mAwayTeam?.meta?.winner && !mHomeTeam?.meta?.winner) {
+              if (isHomeTeamHome) awayWins++;
+              else homeWins++;
+            } else {
+              draws++;
+            }
+          });
+          
+          h2h = {
+            homeWins,
+            draws,
+            awayWins,
+            recentMeetings,
+          };
+          console.log(`H2H data: ${homeWins} wins, ${draws} draws, ${awayWins} losses`);
+        }
+      } catch (h2hError) {
+        console.error('Error fetching H2H:', h2hError);
+      }
+    }
+    const homeTeam = fixture.participants?.find((p: any) => p.meta?.location === 'home');
+    const awayTeam = fixture.participants?.find((p: any) => p.meta?.location === 'away');
+
     // Map events
     const events = (fixture.events || []).map((event: any) => ({
       minute: event.minute || 0,
@@ -141,13 +212,14 @@ serve(async (req) => {
       }
     }
 
-    console.log(`Successfully fetched match details - Events: ${events.length}, Lineups: ${lineups ? 'yes' : 'no'}, Stats: ${Object.keys(statistics).length}`);
+    console.log(`Successfully fetched match details - Events: ${events.length}, Lineups: ${lineups ? 'yes' : 'no'}, Stats: ${Object.keys(statistics).length}, H2H: ${h2h ? 'yes' : 'no'}`);
 
     return new Response(JSON.stringify({
       events,
       lineups,
       statistics,
       odds,
+      h2h,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -159,6 +231,7 @@ serve(async (req) => {
       lineups: null,
       statistics: {},
       odds: null,
+      h2h: null,
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
