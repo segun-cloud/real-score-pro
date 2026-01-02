@@ -370,6 +370,60 @@ export type Database = {
         }
         Relationships: []
       }
+      live_scores: {
+        Row: {
+          away_score: number | null
+          away_team: string
+          away_team_logo: string | null
+          created_at: string
+          home_score: number | null
+          home_team: string
+          home_team_logo: string | null
+          id: string
+          last_updated: string
+          league_name: string
+          match_date: string | null
+          match_id: string
+          minute: number | null
+          sport: string
+          status: string
+        }
+        Insert: {
+          away_score?: number | null
+          away_team: string
+          away_team_logo?: string | null
+          created_at?: string
+          home_score?: number | null
+          home_team: string
+          home_team_logo?: string | null
+          id?: string
+          last_updated?: string
+          league_name: string
+          match_date?: string | null
+          match_id: string
+          minute?: number | null
+          sport?: string
+          status?: string
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string
+          away_team_logo?: string | null
+          created_at?: string
+          home_score?: number | null
+          home_team?: string
+          home_team_logo?: string | null
+          id?: string
+          last_updated?: string
+          league_name?: string
+          match_date?: string | null
+          match_id?: string
+          minute?: number | null
+          sport?: string
+          status?: string
+        }
+        Relationships: []
+      }
       match_score_cache: {
         Row: {
           away_score: number

@@ -47,3 +47,12 @@ verify_jwt = false
 
 [functions.fetch-league-top-scorers]
 verify_jwt = false
+
+[functions.check-goal-updates]
+verify_jwt = false
+
+[functions.send-goal-notification]
+verify_jwt = false
+
+[functions.update-live-scores]
+verify_jwt = false
