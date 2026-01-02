@@ -8,11 +8,12 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MatchDetails as MatchDetailsType, Match } from "@/types/sports";
+import { MatchDetails as MatchDetailsType, Match, H2HRecord } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
 import { toast } from "sonner";
 import { FootballPitch } from "@/components/FootballPitch";
 import { VideoPlayer } from "@/components/VideoPlayer";
+import { HeadToHead } from "@/components/HeadToHead";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MatchDetailsProps {
@@ -33,6 +34,8 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
   const [standings, setStandings] = useState<any[]>([]);
   const [isLoadingStandings, setIsLoadingStandings] = useState(false);
   const [isCupCompetition, setIsCupCompetition] = useState(false);
+  const [h2hData, setH2hData] = useState<H2HRecord | null>(null);
+  const [isLoadingH2h, setIsLoadingH2h] = useState(false);
 
   useEffect(() => {
     const loadMatchDetails = async () => {
@@ -60,8 +63,10 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
               statistics: data.statistics || {},
               commentary: [],
               media: { highlights: [], photos: [] },
+              h2h: data.h2h,
             };
             setMatchDetails(details);
+            if (data.h2h) setH2hData(data.h2h);
           } else if (match) {
             // If no detailed data but we have match, use match with empty details
             const details: MatchDetailsType = {
@@ -72,8 +77,10 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
               statistics: data?.statistics || {},
               commentary: [],
               media: { highlights: [], photos: [] },
+              h2h: data?.h2h,
             };
             setMatchDetails(details);
+            if (data?.h2h) setH2hData(data.h2h);
           }
         } else if (isApiSportsMatch) {
           // Fetch detailed data from API-Sports (legacy)
@@ -1033,6 +1040,16 @@ export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDe
               </div>
             </div>
           </div>
+        );
+
+      case 'h2h':
+        return (
+          <HeadToHead 
+            h2h={h2hData || matchDetails.h2h || null}
+            homeTeam={matchDetails.homeTeam}
+            awayTeam={matchDetails.awayTeam}
+            isLoading={isLoadingH2h}
+          />
         );
 
       case 'standings':
