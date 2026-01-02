@@ -6,13 +6,16 @@ import { Clock, Heart } from "lucide-react";
 import { useFavourites } from "@/hooks/useFavourites";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface MatchCardProps {
   match: Match;
   onClick: (match: Match) => void;
+  hasHomeScoreChange?: boolean;
+  hasAwayScoreChange?: boolean;
 }
 
-export const MatchCard = ({ match, onClick }: MatchCardProps) => {
+export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChange }: MatchCardProps) => {
   const [userId, setUserId] = useState<string | undefined>();
   const { isFavourited, toggleFavourite } = useFavourites(userId);
 
@@ -69,7 +72,14 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
               )}
               <span className="font-medium truncate">{match.homeTeam}</span>
             </div>
-            <span className="font-bold w-5 text-center flex-shrink-0">{match.status === 'live' || match.status === 'finished' ? (match.homeScore ?? 0) : '-'}</span>
+            <span 
+              className={cn(
+                "font-bold w-5 text-center flex-shrink-0 transition-all duration-300",
+                hasHomeScoreChange && "text-green-500 scale-125 animate-pulse"
+              )}
+            >
+              {match.status === 'live' || match.status === 'finished' ? (match.homeScore ?? 0) : '-'}
+            </span>
           </div>
           <div className="flex items-center justify-between text-[11px]">
             <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -80,7 +90,14 @@ export const MatchCard = ({ match, onClick }: MatchCardProps) => {
               )}
               <span className="font-medium truncate">{match.awayTeam}</span>
             </div>
-            <span className="font-bold w-5 text-center flex-shrink-0">{match.status === 'live' || match.status === 'finished' ? (match.awayScore ?? 0) : '-'}</span>
+            <span 
+              className={cn(
+                "font-bold w-5 text-center flex-shrink-0 transition-all duration-300",
+                hasAwayScoreChange && "text-green-500 scale-125 animate-pulse"
+              )}
+            >
+              {match.status === 'live' || match.status === 'finished' ? (match.awayScore ?? 0) : '-'}
+            </span>
           </div>
         </div>
         

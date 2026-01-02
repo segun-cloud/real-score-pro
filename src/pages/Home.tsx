@@ -7,12 +7,13 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Search, CalendarIcon, RefreshCw, Play } from "lucide-react";
+import { Search, CalendarIcon, RefreshCw, Play, Wifi, WifiOff } from "lucide-react";
 import { Match } from "@/types/sports";
 import { mockMatches } from "@/data/mockData";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLiveScores } from "@/hooks/useLiveScores";
 
 interface HomeProps {
   onMatchClick: (match: Match) => void;
@@ -27,10 +28,11 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   const [dbMatches, setDbMatches] = useState<any[]>([]);
   const [apiMatches, setApiMatches] = useState<Match[]>([]);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isCached, setIsCached] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const { toast } = useToast();
+  
+  // Real-time score updates
+  const { liveScores, isConnected, lastUpdate, getMatchScore, hasRecentScoreChange } = useLiveScores();
 
   useEffect(() => {
     loadDbMatches();
@@ -40,18 +42,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   useEffect(() => {
     loadApiMatches();
   }, [selectedSport, selectedDate]);
-
-  // Auto-refresh every 60 seconds for live matches and check for goals
-  useEffect(() => {
-    if (!autoRefresh) return;
-    
-    const interval = setInterval(async () => {
-      console.log('Auto-refreshing matches...');
-      await loadApiMatches(true); // Pass true to check for goals
-    }, 60000); // 60 seconds
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, selectedSport, selectedDate, showLiveOnly]);
 
   const loadDbMatches = async () => {
     try {
@@ -74,10 +64,9 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
     }
   };
 
-  const loadApiMatches = async (checkGoals = false) => {
+  const loadApiMatches = async () => {
     setIsLoadingApi(true);
     try {
-      // Format date as YYYY-MM-DD in local timezone (not UTC)
       const year = selectedDate.getFullYear();
       const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedDate.getDate()).padStart(2, '0');
@@ -97,32 +86,12 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
 
       const fetchedMatches = data.matches || [];
       
-      // Check for goals if this is an auto-refresh
-      if (checkGoals && fetchedMatches.length > 0) {
-        const liveMatches = fetchedMatches.filter((m: Match) => m.status === 'live');
-        if (liveMatches.length > 0) {
-          const matchUpdates = liveMatches.map((m: Match) => ({
-            matchId: m.id,
-            homeTeam: m.homeTeam,
-            awayTeam: m.awayTeam,
-            homeScore: m.homeScore ?? 0,
-            awayScore: m.awayScore ?? 0
-          }));
-          
-          supabase.functions.invoke('check-goal-updates', {
-            body: { matches: matchUpdates }
-          }).catch(err => console.error('Goal check failed:', err));
-        }
-      }
-      
       if (fetchedMatches.length === 0) {
-        // Fall back to mock data when no real matches found
         const mockForSport = mockMatches.filter(m => 
           m.sport === selectedSport.toLowerCase()
         );
         setApiMatches(mockForSport);
         setIsCached(false);
-        setLastUpdated(new Date());
         toast({
           title: "Showing sample matches",
           description: `No live ${selectedSport} matches found. Displaying sample data for testing.`,
@@ -130,7 +99,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
       } else {
         setApiMatches(fetchedMatches);
         setIsCached(data.cached || false);
-        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error('Error loading API matches:', error);
@@ -139,15 +107,31 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
         description: "Unable to load live matches, showing sample data",
         variant: "destructive",
       });
-      // Fallback to mock data on error
       setApiMatches(mockMatches.filter(m => m.sport === selectedSport.toLowerCase()));
     } finally {
       setIsLoadingApi(false);
     }
   };
 
+  // Merge API matches with real-time scores
+  const getMergedMatches = (): Match[] => {
+    return apiMatches.map(match => {
+      const liveScore = getMatchScore(match.id);
+      if (liveScore) {
+        return {
+          ...match,
+          homeScore: liveScore.home_score,
+          awayScore: liveScore.away_score,
+          status: liveScore.status as Match['status'],
+          minute: liveScore.minute,
+        };
+      }
+      return match;
+    });
+  };
+
   useEffect(() => {
-    let filtered = apiMatches;
+    let filtered = getMergedMatches();
     
     if (searchQuery) {
       filtered = filtered.filter(match => 
@@ -162,9 +146,8 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
     }
     
     setFilteredMatches(filtered);
-  }, [apiMatches, searchQuery, showLiveOnly]);
+  }, [apiMatches, searchQuery, showLiveOnly, liveScores]);
 
-  // Group matches by league
   const groupMatchesByLeague = (matches: Match[]) => {
     const grouped: { [league: string]: Match[] } = {};
     matches.forEach(match => {
@@ -222,7 +205,7 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
             <Button 
               variant="outline" 
               size="icon"
-              onClick={() => loadApiMatches(false)}
+              onClick={() => loadApiMatches()}
               disabled={isLoadingApi}
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingApi ? 'animate-spin' : ''}`} />
@@ -246,20 +229,24 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
             </p>
           )}
 
+          {/* Real-time connection status */}
           <div className="flex items-center justify-between">
-            {lastUpdated && (
-              <div className="text-xs text-muted-foreground flex items-center gap-2">
-                Last updated: {format(lastUpdated, "HH:mm:ss")}
-                {isCached && <span className="text-yellow-500">• Cached</span>}
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Auto-refresh</span>
-              <Switch 
-                checked={autoRefresh} 
-                onCheckedChange={setAutoRefresh}
-                className="scale-75"
-              />
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              {isConnected ? (
+                <>
+                  <Wifi className="h-3 w-3 text-green-500" />
+                  <span className="text-green-500">Real-time connected</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3 text-yellow-500" />
+                  <span className="text-yellow-500">Connecting...</span>
+                </>
+              )}
+              {lastUpdate && (
+                <span>• Updated {formatDistanceToNow(lastUpdate, { addSuffix: true })}</span>
+              )}
+              {isCached && <span className="text-yellow-500">• Cached</span>}
             </div>
           </div>
         </div>
@@ -326,7 +313,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                         </div>
                       </div>
                       
-                      {/* Simulate Button */}
                       {match.status === 'scheduled' && (
                         <div className="mt-3 pt-3 border-t">
                           <Button
@@ -350,7 +336,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                                 minute: null
                               };
                               onMatchClick(transformedMatch);
-                              // User will manually start simulation in tracker tab
                             }}
                           >
                             <Play className="mr-2 h-4 w-4" />
@@ -366,7 +351,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
 
             {/* Show matches grouped by status or league */}
             {showLiveOnly ? (
-              /* Live Only Mode */
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <h2 className="text-base font-semibold">Live Matches</h2>
@@ -378,7 +362,12 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                   {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
                       <div key={match.id}>
-                        <MatchCard match={match} onClick={onMatchClick} />
+                        <MatchCard 
+                          match={match} 
+                          onClick={onMatchClick}
+                          hasHomeScoreChange={hasRecentScoreChange(match.id, 'home')}
+                          hasAwayScoreChange={hasRecentScoreChange(match.id, 'away')}
+                        />
                         {(index + 1) % 10 === 0 && <NativeAd />}
                       </div>
                     ))
@@ -390,7 +379,6 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                 </div>
               </div>
             ) : (
-              /* All Matches Grouped By League */
               <div className="space-y-6">
                 {Object.entries(groupMatchesByLeague(filteredMatches)).map(([league, leagueMatches]) => (
                   <div key={league}>
@@ -400,7 +388,12 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
                     <div className="space-y-3">
                       {leagueMatches.map((match, index) => (
                         <div key={match.id}>
-                          <MatchCard match={match} onClick={onMatchClick} />
+                          <MatchCard 
+                            match={match} 
+                            onClick={onMatchClick}
+                            hasHomeScoreChange={hasRecentScoreChange(match.id, 'home')}
+                            hasAwayScoreChange={hasRecentScoreChange(match.id, 'away')}
+                          />
                           {(index + 1) % 10 === 0 && <NativeAd />}
                         </div>
                       ))}
