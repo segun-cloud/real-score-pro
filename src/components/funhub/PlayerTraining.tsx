@@ -241,9 +241,15 @@ export const PlayerTraining = ({ teamId, userId, userCoins, onBack, onCoinsUpdat
                 <CardTitle className="text-lg">{selectedPlayer.player_name}</CardTitle>
                 <p className="text-sm text-muted-foreground">{selectedPlayer.position}</p>
               </div>
-              <Badge className={getRatingColor(selectedPlayer.overall_rating)}>
-                OVR {selectedPlayer.overall_rating}
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Badge className={getRatingColor(selectedPlayer.overall_rating)}>
+                  OVR {selectedPlayer.overall_rating}
+                </Badge>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>Lvl {selectedPlayer.training_level}/10</span>
+                </div>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
