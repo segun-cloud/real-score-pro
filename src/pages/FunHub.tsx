@@ -8,6 +8,9 @@ import { CompetitionsTab } from "@/components/funhub/CompetitionsTab";
 import { EnhancedLeaderboardsTab } from "@/components/funhub/EnhancedLeaderboardsTab";
 import { CompetitionAdmin } from "@/components/funhub/CompetitionAdmin";
 import { NotificationBell } from "@/components/funhub/NotificationBell";
+import { TeamDetails } from "@/components/funhub/TeamDetails";
+import { PlayerTraining } from "@/components/funhub/PlayerTraining";
+import { TeamKitManager } from "@/components/funhub/TeamKitManager";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SportType, UserTeam } from "@/types/funhub";
@@ -19,6 +22,8 @@ interface FunHubProps {
   onNavigate: (screen: string, competitionId?: string) => void;
 }
 
+type ActiveView = 'list' | 'teamDetails' | 'training' | 'kitManager';
+
 export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   const [userCoins, setUserCoins] = useState(1000);
   const [userTeams, setUserTeams] = useState<UserTeam[]>([]);
@@ -26,6 +31,8 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   const [showTeamBuilder, setShowTeamBuilder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [activeView, setActiveView] = useState<ActiveView>('list');
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUserData();
@@ -190,6 +197,49 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
     );
   }
 
+  // Handle sub-views for team management
+  if (activeView !== 'list' && selectedTeamId && userId) {
+    const handleBackToList = async () => {
+      setActiveView('list');
+      setSelectedTeamId(null);
+      await loadUserData(); // Refresh data when returning
+    };
+
+    return (
+      <div className="min-h-screen bg-background pb-20">
+        <div className="p-4">
+          {activeView === 'teamDetails' && (
+            <TeamDetails teamId={selectedTeamId} onBack={handleBackToList} />
+          )}
+          {activeView === 'training' && (
+            <PlayerTraining
+              teamId={selectedTeamId}
+              userId={userId}
+              userCoins={userCoins}
+              onBack={handleBackToList}
+              onCoinsUpdate={() => {
+                loadUserData();
+                onCoinsUpdate();
+              }}
+            />
+          )}
+          {activeView === 'kitManager' && (
+            <TeamKitManager
+              teamId={selectedTeamId}
+              userId={userId}
+              userCoins={userCoins}
+              onBack={handleBackToList}
+              onCoinsUpdate={() => {
+                loadUserData();
+                onCoinsUpdate();
+              }}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="bg-card border-b p-4 sticky top-0 z-10">
@@ -217,9 +267,18 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
           <TabsContent value="my-teams" className="mt-4 space-y-4">
             <MyTeamsTab
               teams={userTeams}
-              onViewTeam={(id) => toast.info('Team details coming soon!')}
-              onTrainPlayers={(id) => toast.info('Training coming soon!')}
-              onCustomizeKit={(id) => toast.info('Kit customization coming soon!')}
+              onViewTeam={(id) => {
+                setSelectedTeamId(id);
+                setActiveView('teamDetails');
+              }}
+              onTrainPlayers={(id) => {
+                setSelectedTeamId(id);
+                setActiveView('training');
+              }}
+              onCustomizeKit={(id) => {
+                setSelectedTeamId(id);
+                setActiveView('kitManager');
+              }}
             />
             {userTeams.length === 0 && (
               <div className="space-y-4">
