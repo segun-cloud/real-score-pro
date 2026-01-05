@@ -31,9 +31,13 @@ serve(async (req) => {
 
     console.log('SportMonks standings response:', JSON.stringify(apiData).substring(0, 500));
 
-    if (!response.ok) {
-      console.error('SportMonks error:', apiData);
-      throw new Error('Failed to fetch standings from SportMonks');
+    // Handle API access/permission errors gracefully
+    if (!response.ok || apiData.code === 5007 || apiData.message?.includes('do not have access')) {
+      console.warn('SportMonks access error or no data:', apiData.message || 'Unknown error');
+      return new Response(
+        JSON.stringify({ standings: [], message: 'Standings not available for this league' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // Transform SportMonks data to our format
