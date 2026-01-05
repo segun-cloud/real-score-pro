@@ -72,7 +72,9 @@ export const CompetitionStandings = ({ competitionId, userTeamId, division }: Co
         .order('goals_for', { ascending: false });
 
       if (data) {
-        setStandings(data as any);
+        // Filter out entries where team is null (deleted teams)
+        const validStandings = data.filter((entry: any) => entry.team !== null);
+        setStandings(validStandings as any);
       }
     } catch (error) {
       console.error('Error loading standings:', error);
