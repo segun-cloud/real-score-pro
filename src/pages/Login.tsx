@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 
 interface LoginProps {
   onNavigateToSignup: () => void;
@@ -18,6 +18,8 @@ export const Login = ({ onNavigateToSignup, onLoginSuccess }: LoginProps) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isResetLoading, setIsResetLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { toast } = useToast();
 
   const handleGoogleSignIn = async () => {
@@ -91,6 +93,90 @@ export const Login = ({ onNavigateToSignup, onLoginSuccess }: LoginProps) => {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResetLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        toast({
+          title: "Reset failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Check your email",
+          description: "We've sent you a password reset link",
+        });
+        setShowForgotPassword(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <button
+              onClick={() => setShowForgotPassword(false)}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to login
+            </button>
+            <CardTitle className="text-2xl">Reset Password</CardTitle>
+            <CardDescription>Enter your email to receive a reset link</CardDescription>
+          </CardHeader>
+          <form onSubmit={handleForgotPassword}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isResetLoading}
+                />
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" className="w-full" disabled={isResetLoading}>
+                {isResetLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send Reset Link
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <Card className="w-full max-w-md">
@@ -112,7 +198,16 @@ export const Login = ({ onNavigateToSignup, onLoginSuccess }: LoginProps) => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
               <Input
                 id="password"
                 type="password"
