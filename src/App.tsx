@@ -14,6 +14,7 @@ import { FunHub } from "./pages/FunHub";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
 import { Onboarding } from "./pages/Onboarding";
+import { UpdatePassword } from "./pages/UpdatePassword";
 import { Match } from "./types/sports";
 import { BottomNavigation } from "./components/BottomNavigation";
 import { Header } from "./components/Header";
@@ -21,7 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 const queryClient = new QueryClient();
-type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'competition-details' | 'login' | 'signup' | 'onboarding';
+type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'competition-details' | 'login' | 'signup' | 'onboarding' | 'update-password';
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('login');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -46,7 +47,21 @@ const App = () => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // Handle password recovery event
+      if (event === 'PASSWORD_RECOVERY') {
+        setCurrentScreen('update-password');
+        setIsLoadingAuth(false);
+        return;
+      }
+      
       if (session?.user) {
+        // Don't redirect if updating password
+        if (currentScreen === 'update-password') {
+          setIsLoadingAuth(false);
+          return;
+        }
+        
         // Fetch user profile to get coins and onboarding status
         setTimeout(async () => {
           try {
@@ -78,7 +93,7 @@ const App = () => {
         }, 0);
       } else {
         setCoins(0);
-        if (currentScreen !== 'login' && currentScreen !== 'signup') {
+        if (currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'update-password') {
           setCurrentScreen('login');
         }
       }
@@ -196,6 +211,11 @@ const App = () => {
       case 'signup':
         return <Signup onNavigateToLogin={() => setCurrentScreen('login')} onSignupSuccess={() => {
           // Will be handled by onAuthStateChange which checks onboarding status
+        }} />;
+      case 'update-password':
+        return <UpdatePassword onSuccess={() => {
+          setCurrentScreen('matches');
+          updateCoins();
         }} />;
       case 'onboarding':
         return user ? <Onboarding userId={user.id} onComplete={() => {
