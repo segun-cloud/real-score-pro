@@ -167,11 +167,14 @@ export type Database = {
           division: number | null
           end_date: string
           entry_fee: number
+          format: string | null
           id: string
           match_generation_status: string | null
           max_participants: number | null
+          min_participants: number | null
           name: string
           prize_coins: number
+          registration_deadline: string | null
           season_id: string | null
           sport: Database["public"]["Enums"]["sport_type"]
           start_date: string
@@ -182,11 +185,14 @@ export type Database = {
           division?: number | null
           end_date: string
           entry_fee: number
+          format?: string | null
           id?: string
           match_generation_status?: string | null
           max_participants?: number | null
+          min_participants?: number | null
           name: string
           prize_coins: number
+          registration_deadline?: string | null
           season_id?: string | null
           sport: Database["public"]["Enums"]["sport_type"]
           start_date: string
@@ -197,11 +203,14 @@ export type Database = {
           division?: number | null
           end_date?: string
           entry_fee?: number
+          format?: string | null
           id?: string
           match_generation_status?: string | null
           max_participants?: number | null
+          min_participants?: number | null
           name?: string
           prize_coins?: number
+          registration_deadline?: string | null
           season_id?: string | null
           sport?: Database["public"]["Enums"]["sport_type"]
           start_date?: string

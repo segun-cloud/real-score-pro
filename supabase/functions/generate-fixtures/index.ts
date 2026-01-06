@@ -6,7 +6,7 @@ const corsHeaders = {
 };
 
 // Round-robin algorithm for generating fixtures
-function generateRoundRobinFixtures(teamIds: string[]) {
+function generateRoundRobinFixtures(teamIds: string[], doubleRoundRobin: boolean = false) {
   const fixtures: Array<{ home: string; away: string; matchDay: number }> = [];
   const teams = [...teamIds];
   
@@ -19,6 +19,7 @@ function generateRoundRobinFixtures(teamIds: string[]) {
   const numRounds = numTeams - 1;
   const matchesPerRound = numTeams / 2;
 
+  // First half (or only half for single round-robin)
   for (let round = 0; round < numRounds; round++) {
     for (let match = 0; match < matchesPerRound; match++) {
       const home = teams[match];
@@ -38,6 +39,18 @@ function generateRoundRobinFixtures(teamIds: string[]) {
     teams.splice(1, 0, teams.pop()!);
   }
 
+  // Second half for double round-robin (home and away reversed)
+  if (doubleRoundRobin) {
+    const firstHalfLength = fixtures.length;
+    for (let i = 0; i < firstHalfLength; i++) {
+      fixtures.push({
+        home: fixtures[i].away,
+        away: fixtures[i].home,
+        matchDay: fixtures[i].matchDay + numRounds
+      });
+    }
+  }
+
   return fixtures;
 }
 
@@ -55,6 +68,7 @@ Deno.serve(async (req) => {
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
+      console.error('No authorization header provided');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -65,6 +79,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      console.error('Auth error:', authError);
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -80,6 +95,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) {
+      console.error('User is not admin:', user.id);
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -87,6 +103,7 @@ Deno.serve(async (req) => {
     }
 
     const { competitionId } = await req.json();
+    console.log('Generating fixtures for competition:', competitionId);
 
     // Get competition details
     const { data: competition, error: compError } = await supabase
@@ -95,7 +112,25 @@ Deno.serve(async (req) => {
       .eq('id', competitionId)
       .single();
 
-    if (compError) throw compError;
+    if (compError) {
+      console.error('Competition error:', compError);
+      throw compError;
+    }
+
+    // Validate registration deadline has passed (if set)
+    if (competition.registration_deadline) {
+      const deadline = new Date(competition.registration_deadline);
+      const now = new Date();
+      if (now < deadline) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Registration deadline has not passed yet',
+            deadline: competition.registration_deadline
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
 
     // Get all participants
     const { data: participants, error: partError } = await supabase
@@ -103,28 +138,40 @@ Deno.serve(async (req) => {
       .select('team_id')
       .eq('competition_id', competitionId);
 
-    if (partError) throw partError;
+    if (partError) {
+      console.error('Participants error:', partError);
+      throw partError;
+    }
 
-    if (!participants || participants.length < 2) {
+    // Check minimum participants
+    const minParticipants = competition.min_participants || 4;
+    if (!participants || participants.length < minParticipants) {
       return new Response(
-        JSON.stringify({ error: 'Not enough participants to generate fixtures' }),
+        JSON.stringify({ 
+          error: `Not enough participants. Need at least ${minParticipants}, have ${participants?.length || 0}`,
+          required: minParticipants,
+          current: participants?.length || 0
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const teamIds = participants.map(p => p.team_id);
     
+    // Determine if double round-robin
+    const isDoubleRoundRobin = competition.format === 'double_round_robin';
+    
     // Generate round-robin fixtures
-    const fixtures = generateRoundRobinFixtures(teamIds);
+    const fixtures = generateRoundRobinFixtures(teamIds, isDoubleRoundRobin);
 
-    console.log(`Generated ${fixtures.length} fixtures for competition ${competitionId}`);
+    console.log(`Generated ${fixtures.length} fixtures for competition ${competitionId} (format: ${competition.format || 'single_round_robin'})`);
 
     // Calculate match dates (distribute across season duration)
     const startDate = new Date(competition.start_date);
     const endDate = new Date(competition.end_date);
     const seasonDuration = endDate.getTime() - startDate.getTime();
     const numMatchDays = Math.max(...fixtures.map(f => f.matchDay));
-    const daysBetweenMatches = Math.floor(seasonDuration / (1000 * 60 * 60 * 24) / numMatchDays);
+    const daysBetweenMatches = Math.max(1, Math.floor(seasonDuration / (1000 * 60 * 60 * 24) / numMatchDays));
 
     // Insert matches
     const matches = fixtures.map(fixture => {
@@ -147,10 +194,13 @@ Deno.serve(async (req) => {
       .from('matches')
       .insert(matches);
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('Insert error:', insertError);
+      throw insertError;
+    }
 
     // Update competition status
-    await supabase
+    const { error: updateError } = await supabase
       .from('competitions')
       .update({ 
         match_generation_status: 'completed',
@@ -158,13 +208,37 @@ Deno.serve(async (req) => {
       })
       .eq('id', competitionId);
 
-    console.log(`Successfully generated ${matches.length} matches`);
+    if (updateError) {
+      console.error('Update error:', updateError);
+    }
+
+    // Send notifications to all participants
+    const { data: teamOwners } = await supabase
+      .from('user_teams')
+      .select('user_id, team_name')
+      .in('id', teamIds);
+
+    if (teamOwners && teamOwners.length > 0) {
+      const notifications = teamOwners.map(owner => ({
+        user_id: owner.user_id,
+        title: 'Competition Started!',
+        message: `Fixtures have been generated for ${competition.name}. Your first match is coming up!`,
+        notification_type: 'competition_start',
+        metadata: { competition_id: competitionId }
+      }));
+
+      await supabase.from('user_notifications').insert(notifications);
+      console.log(`Sent notifications to ${notifications.length} team owners`);
+    }
+
+    console.log(`Successfully generated ${matches.length} matches with ${numMatchDays} match days`);
 
     return new Response(
       JSON.stringify({
         success: true,
         matchesGenerated: matches.length,
-        matchDays: numMatchDays
+        matchDays: numMatchDays,
+        format: competition.format || 'single_round_robin'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

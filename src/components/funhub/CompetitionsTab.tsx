@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CompetitionCard } from "./CompetitionCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Competition, SportType, UserTeam } from "@/types/funhub";
 import { SPORT_CONFIG, DIVISION_CONFIG } from "@/types/funhub";
+import { isPast } from "date-fns";
 
 interface CompetitionsTabProps {
   userTeams: UserTeam[];
@@ -19,11 +19,12 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
   const [selectedSport, setSelectedSport] = useState<SportType>('football');
   const [selectedDivision, setSelectedDivision] = useState<string>("all");
   const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
+  const [userParticipations, setUserParticipations] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadCompetitions();
-  }, [selectedSport, selectedDivision]);
+  }, [selectedSport, selectedDivision, userTeams]);
 
   const loadCompetitions = async () => {
     setIsLoading(true);
@@ -41,19 +42,39 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
       const { data: comps } = await query;
 
       if (comps) {
-        setCompetitions(comps);
+        // Cast to Competition type with new fields
+        const typedComps = comps.map(comp => ({
+          ...comp,
+          registration_deadline: comp.registration_deadline || null,
+          min_participants: comp.min_participants || 4,
+          format: (comp.format as 'single_round_robin' | 'double_round_robin') || 'single_round_robin'
+        })) as Competition[];
+        
+        setCompetitions(typedComps);
         
         // Load participant counts for each competition
         const counts: Record<string, number> = {};
-        for (const comp of comps) {
-          const { count } = await supabase
+        const userTeamIds = userTeams.map(t => t.id);
+        const participatingCompIds = new Set<string>();
+        
+        for (const comp of typedComps) {
+          const { data: participants, count } = await supabase
             .from('competition_participants')
-            .select('*', { count: 'exact', head: true })
+            .select('team_id', { count: 'exact' })
             .eq('competition_id', comp.id);
           
           counts[comp.id] = count || 0;
+          
+          // Check if user is participating
+          if (participants) {
+            const userParticipating = participants.some(p => userTeamIds.includes(p.team_id));
+            if (userParticipating) {
+              participatingCompIds.add(comp.id);
+            }
+          }
         }
         setParticipantCounts(counts);
+        setUserParticipations(participatingCompIds);
       }
     } catch (error) {
       console.error('Error loading competitions:', error);
@@ -64,6 +85,12 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
   };
 
   const handleJoinCompetition = async (competition: Competition) => {
+    // Check registration deadline
+    if (competition.registration_deadline && isPast(new Date(competition.registration_deadline))) {
+      toast.error('Registration for this competition has closed');
+      return;
+    }
+    
     // Find user's team for this sport
     const userTeam = userTeams.find(t => t.sport === competition.sport);
     
@@ -177,6 +204,7 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
         competitions.map((comp) => {
           const userTeam = userTeams.find(t => t.sport === comp.sport);
           const isEligible = userTeam?.division === comp.division;
+          const isUserParticipating = userParticipations.has(comp.id);
           
           return (
             <CompetitionCard
@@ -186,6 +214,7 @@ export const CompetitionsTab = ({ userTeams, userCoins, onCoinsUpdate, onNavigat
               maxParticipants={comp.max_participants}
               userTeamId={userTeam?.id}
               isEligible={isEligible}
+              isUserParticipating={isUserParticipating}
               onJoinCompetition={() => handleJoinCompetition(comp)}
               onNavigate={onNavigate}
             />

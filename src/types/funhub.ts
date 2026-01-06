@@ -79,6 +79,9 @@ export interface Competition {
   season_id: string | null;
   max_participants: number | null;
   match_generation_status: string | null;
+  registration_deadline: string | null;
+  min_participants: number;
+  format: 'single_round_robin' | 'double_round_robin';
 }
 
 export interface CompetitionParticipant {
