@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SportSelector } from "@/components/funhub/SportSelector";
 import { TeamBuilder } from "@/components/funhub/TeamBuilder";
 import { MyTeamsTab } from "@/components/funhub/MyTeamsTab";
+import { MyMatches } from "@/components/funhub/MyMatches";
 import { CompetitionsTab } from "@/components/funhub/CompetitionsTab";
 import { EnhancedLeaderboardsTab } from "@/components/funhub/EnhancedLeaderboardsTab";
 import { CompetitionAdmin } from "@/components/funhub/CompetitionAdmin";
@@ -257,10 +258,11 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
 
       <div className="p-4">
         <Tabs defaultValue="my-teams" className="w-full">
-          <TabsList className={`w-full grid ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
-            <TabsTrigger value="my-teams">My Teams</TabsTrigger>
-            <TabsTrigger value="competitions">Competitions</TabsTrigger>
-            <TabsTrigger value="leaderboards">Leaderboards</TabsTrigger>
+          <TabsList className={`w-full grid ${isAdmin ? 'grid-cols-5' : 'grid-cols-4'}`}>
+            <TabsTrigger value="my-teams">Teams</TabsTrigger>
+            <TabsTrigger value="matches">Matches</TabsTrigger>
+            <TabsTrigger value="competitions">Join</TabsTrigger>
+            <TabsTrigger value="leaderboards">Ranks</TabsTrigger>
             {isAdmin && <TabsTrigger value="admin">Admin</TabsTrigger>}
           </TabsList>
 
@@ -298,6 +300,13 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
                 />
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="matches" className="mt-4">
+            <MyMatches 
+              userTeams={userTeams}
+              onNavigate={onNavigate}
+            />
           </TabsContent>
 
           <TabsContent value="competitions" className="mt-4">

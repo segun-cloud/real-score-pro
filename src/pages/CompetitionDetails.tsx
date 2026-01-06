@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Trophy, Calendar } from "lucide-react";
+import { ArrowLeft, Trophy, Calendar, Clock, Users, AlertCircle } from "lucide-react";
 import { SPORT_CONFIG, DIVISION_CONFIG } from "@/types/funhub";
 import type { Competition } from "@/types/funhub";
 import { CompetitionStandings } from "@/components/funhub/CompetitionStandings";
+import { formatDistanceToNow, isPast, format } from "date-fns";
 
 interface Participant {
   id: string;
@@ -57,7 +58,12 @@ export const CompetitionDetails = ({ competitionId, onBack }: CompetitionDetails
         .single();
 
       if (comp) {
-        setCompetition(comp);
+        setCompetition({
+          ...comp,
+          registration_deadline: comp.registration_deadline || null,
+          min_participants: comp.min_participants || 4,
+          format: (comp.format as 'single_round_robin' | 'double_round_robin') || 'single_round_robin'
+        });
       }
 
       // Load participants with team names
@@ -159,7 +165,7 @@ export const CompetitionDetails = ({ competitionId, onBack }: CompetitionDetails
       <div className="p-4 space-y-4">
         {/* Competition Info */}
         <Card>
-          <CardContent className="p-4 space-y-2">
+          <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Prize Pool</span>
               <span className="font-bold text-primary">{competition.prize_coins} coins</span>
@@ -170,11 +176,56 @@ export const CompetitionDetails = ({ competitionId, onBack }: CompetitionDetails
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Participants</span>
-              <span className="font-medium">{participants.length} teams</span>
+              <span className="font-medium">
+                {participants.length}
+                {competition.max_participants && ` / ${competition.max_participants}`} teams
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Format</span>
+              <Badge variant="outline">
+                {competition.format === 'double_round_robin' ? 'Home & Away' : 'Single Round'}
+              </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
-              <span className="font-medium capitalize">{competition.status}</span>
+              <Badge variant={competition.status === 'active' ? 'default' : 'secondary'}>
+                {competition.status}
+              </Badge>
+            </div>
+            
+            {/* Registration deadline info */}
+            {competition.status === 'upcoming' && competition.registration_deadline && (
+              <div className={`flex items-center gap-2 text-sm pt-2 border-t ${
+                isPast(new Date(competition.registration_deadline)) ? 'text-destructive' : 'text-muted-foreground'
+              }`}>
+                <Clock className="h-4 w-4" />
+                {isPast(new Date(competition.registration_deadline)) ? (
+                  <span>Registration closed</span>
+                ) : (
+                  <span>
+                    Registration closes {formatDistanceToNow(new Date(competition.registration_deadline), { addSuffix: true })}
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Min participants warning */}
+            {competition.status === 'upcoming' && participants.length < (competition.min_participants || 4) && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+                <AlertCircle className="h-4 w-4" />
+                <span>
+                  {(competition.min_participants || 4) - participants.length} more team(s) needed to start
+                </span>
+              </div>
+            )}
+            
+            {/* Season dates */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {format(new Date(competition.start_date), 'MMM d')} - {format(new Date(competition.end_date), 'MMM d, yyyy')}
+              </span>
             </div>
           </CardContent>
         </Card>
