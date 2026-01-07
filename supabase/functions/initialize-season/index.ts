@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { sport, format = 'single_round_robin' } = await req.json();
+    const { sport, format = 'single_round_robin', registrationDeadline: customDeadline } = await req.json();
     
     // Validate format
     const validFormats = ['single_round_robin', 'double_round_robin'];
@@ -104,9 +104,14 @@ Deno.serve(async (req) => {
 
     console.log(`Created season ${newSeasonNumber} for ${sport} with ${format} format`);
 
-    // Calculate registration deadline (2 days before start)
-    const registrationDeadline = new Date(startDate);
-    registrationDeadline.setDate(registrationDeadline.getDate() - 2);
+    // Use custom registration deadline if provided, otherwise default to 2 days before start
+    let registrationDeadline: Date;
+    if (customDeadline) {
+      registrationDeadline = new Date(customDeadline);
+    } else {
+      registrationDeadline = new Date(startDate);
+      registrationDeadline.setDate(registrationDeadline.getDate() - 2);
+    }
 
     // Create competitions for each division
     const competitions = [];
