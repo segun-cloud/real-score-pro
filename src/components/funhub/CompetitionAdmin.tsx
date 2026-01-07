@@ -238,6 +238,27 @@ export const CompetitionAdmin = () => {
           </p>
         </div>
 
+        {/* Season Preview Summary */}
+        <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
+          <h4 className="font-semibold text-sm">📋 Season Preview</h4>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <span className="text-muted-foreground">Sport:</span>
+            <span className="font-medium">{SPORT_CONFIG[selectedSport].icon} {SPORT_CONFIG[selectedSport].name}</span>
+            
+            <span className="text-muted-foreground">Format:</span>
+            <span className="font-medium">{selectedFormat === 'single_round_robin' ? 'Single Round-Robin' : 'Double Round-Robin'}</span>
+            
+            <span className="text-muted-foreground">Divisions:</span>
+            <span className="font-medium">5 divisions</span>
+            
+            <span className="text-muted-foreground">Registration Closes:</span>
+            <span className="font-medium">{format(registrationDeadline, "PPP")}</span>
+            
+            <span className="text-muted-foreground">Season Duration:</span>
+            <span className="font-medium">{selectedFormat === 'single_round_robin' ? '4 weeks' : '6 weeks'}</span>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Button 
             onClick={handleInitializeSeason} 
@@ -246,9 +267,6 @@ export const CompetitionAdmin = () => {
           >
             1. Initialize New Season
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Creates a new season with competitions for all 5 divisions using {selectedFormat.replace(/_/g, ' ')} format
-          </p>
         </div>
 
         <div className="space-y-2">
