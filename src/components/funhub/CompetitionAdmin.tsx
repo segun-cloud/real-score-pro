@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -260,13 +271,34 @@ export const CompetitionAdmin = () => {
         </div>
 
         <div className="space-y-2">
-          <Button 
-            onClick={handleInitializeSeason} 
-            disabled={isLoading}
-            className="w-full"
-          >
-            1. Initialize New Season
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={isLoading} className="w-full">
+                1. Initialize New Season
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Initialize New Season?</AlertDialogTitle>
+                <AlertDialogDescription className="space-y-2">
+                  <p>You are about to create a new season with the following settings:</p>
+                  <ul className="list-disc list-inside text-sm space-y-1 mt-2">
+                    <li><strong>Sport:</strong> {SPORT_CONFIG[selectedSport].name}</li>
+                    <li><strong>Format:</strong> {selectedFormat === 'single_round_robin' ? 'Single Round-Robin' : 'Double Round-Robin'}</li>
+                    <li><strong>Divisions:</strong> 5</li>
+                    <li><strong>Registration Deadline:</strong> {format(registrationDeadline, "PPP")}</li>
+                  </ul>
+                  <p className="mt-2">This action cannot be undone.</p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleInitializeSeason} disabled={isLoading}>
+                  {isLoading ? "Initializing..." : "Confirm & Initialize"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         <div className="space-y-2">
