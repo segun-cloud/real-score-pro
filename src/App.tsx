@@ -225,7 +225,7 @@ const App = () => {
       case 'matches':
         return <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
       case 'match-details':
-        return selectedMatchId ? <MatchDetails matchId={selectedMatchId} match={selectedMatch || undefined} onBack={handleBack} onProfileClick={handleFunHubClick} /> : <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
+        return selectedMatchId ? <MatchDetails matchId={selectedMatchId} match={selectedMatch || undefined} onBack={handleBack} onFunHubClick={handleFunHubClick} /> : <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
       case 'profile':
         return <Profile onBack={handleBack} coins={coins} onLogout={handleLogout} onCoinsUpdate={updateCoins} />;
       case 'leagues':

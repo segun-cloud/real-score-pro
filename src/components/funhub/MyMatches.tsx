@@ -66,14 +66,19 @@ export const MyMatches = ({ userTeams, onNavigate }: MyMatchesProps) => {
       if (error) throw error;
 
       if (matchData) {
-        setMatches(matchData.map((m: any) => ({
+        // Filter out matches with deleted teams (null team references)
+        const validMatches = matchData.filter((m: any) => 
+          m.home_team?.team_name && m.away_team?.team_name
+        );
+        
+        setMatches(validMatches.map((m: any) => ({
           id: m.id,
           competition_id: m.competition_id,
           competition_name: m.competitions?.name || 'Unknown Competition',
           home_team_id: m.home_team_id,
           away_team_id: m.away_team_id,
-          home_team_name: m.home_team?.team_name || 'Unknown',
-          away_team_name: m.away_team?.team_name || 'Unknown',
+          home_team_name: m.home_team.team_name,
+          away_team_name: m.away_team.team_name,
           home_score: m.home_score,
           away_score: m.away_score,
           status: m.status,

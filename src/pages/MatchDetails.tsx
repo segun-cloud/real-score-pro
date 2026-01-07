@@ -20,10 +20,10 @@ interface MatchDetailsProps {
   matchId: string;
   match?: Match;
   onBack: () => void;
-  onProfileClick: () => void;
+  onFunHubClick: () => void;
 }
 
-export const MatchDetails = ({ matchId, match, onBack, onProfileClick }: MatchDetailsProps) => {
+export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDetailsProps) => {
   const [matchDetails, setMatchDetails] = useState<MatchDetailsType | null>(null);
   const [activeTab, setActiveTab] = useState("details");
   const [userProfile, setUserProfile] = useState(mockUserProfile);
