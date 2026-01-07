@@ -100,9 +100,12 @@ export const EnhancedLeaderboardsTab = ({ selectedSport }: EnhancedLeaderboardsT
               .order('goals_for', { ascending: false });
 
             if (participants) {
-              const entries: LeaderboardEntry[] = participants.map((p: any, idx: number) => ({
+              // Filter out entries with deleted teams
+              const validParticipants = participants.filter((p: any) => p.user_teams?.team_name);
+              
+              const entries: LeaderboardEntry[] = validParticipants.map((p: any, idx: number) => ({
                 team_id: p.team_id,
-                team_name: p.user_teams?.team_name || 'Unknown Team',
+                team_name: p.user_teams.team_name,
                 wins: p.wins || 0,
                 draws: p.draws || 0,
                 losses: p.losses || 0,
