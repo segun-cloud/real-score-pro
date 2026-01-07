@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { MatchDetails as MatchDetailsType, Match, H2HRecord } from "@/types/sports";
 import { getMockMatchDetails, mockUserProfile } from "@/data/mockData";
@@ -537,9 +538,31 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
               </div>
               
               {userProfile.coins >= 20 ? (
-                <Button onClick={handleUnlockPrediction} className="w-full mb-3" disabled={isLoadingPrediction}>
-                  {isLoadingPrediction ? "Generating..." : "Unlock for 20 Coins"}
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button className="w-full mb-3" disabled={isLoadingPrediction}>
+                      {isLoadingPrediction ? "Generating..." : "Unlock for 20 Coins"}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="flex items-center gap-2">
+                        <Brain className="h-5 w-5 text-primary" />
+                        Unlock AI Prediction
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will spend <span className="font-semibold text-coins">20 coins</span> from your balance to generate an AI-powered match prediction. You currently have <span className="font-semibold">{userProfile.coins} coins</span>.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleUnlockPrediction}>
+                        <Coins className="h-4 w-4 mr-2" />
+                        Spend 20 Coins
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-destructive">Insufficient coins</p>
