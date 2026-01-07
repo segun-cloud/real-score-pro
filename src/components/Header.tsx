@@ -1,4 +1,4 @@
-import { Coins, Settings } from "lucide-react";
+import { Coins, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -11,7 +11,7 @@ import { NotificationToggle } from "./NotificationToggle";
 
 interface HeaderProps {
   coins: number;
-  onProfileClick?: () => void;
+  onFunHubClick?: () => void;
   selectedSport: string;
   onSportChange: (sport: string) => void;
   userId?: string;
@@ -28,7 +28,7 @@ const sports = [
   { id: 'american-football', name: 'American Football', emoji: '🏈' },
 ];
 
-export const Header = ({ coins, onProfileClick, selectedSport, onSportChange, userId }: HeaderProps) => {
+export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, userId }: HeaderProps) => {
   return (
     <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
       <div className="flex items-center justify-between p-3">
@@ -64,9 +64,9 @@ export const Header = ({ coins, onProfileClick, selectedSport, onSportChange, us
             variant="ghost" 
             size="icon"
             className="h-8 w-8"
-            onClick={onProfileClick}
+            onClick={onFunHubClick}
           >
-            <Settings className="h-3 w-3" />
+            <Gamepad2 className="h-4 w-4" />
           </Button>
         </div>
       </div>
