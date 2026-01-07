@@ -7,20 +7,23 @@ import { toast } from "sonner";
 import type { SportType } from "@/types/funhub";
 import { SPORT_CONFIG } from "@/types/funhub";
 
+type CompetitionFormat = 'single_round_robin' | 'double_round_robin';
+
 export const CompetitionAdmin = () => {
   const [selectedSport, setSelectedSport] = useState<SportType>('football');
+  const [selectedFormat, setSelectedFormat] = useState<CompetitionFormat>('single_round_robin');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInitializeSeason = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('initialize-season', {
-        body: { sport: selectedSport }
+        body: { sport: selectedSport, format: selectedFormat }
       });
 
       if (error) throw error;
 
-      toast.success(`Season initialized for ${selectedSport}! Created ${data.competitions.length} competitions.`);
+      toast.success(`Season initialized for ${selectedSport}! Created ${data.competitions.length} competitions with ${selectedFormat.replace('_', ' ')} format.`);
     } catch (error) {
       console.error('Error initializing season:', error);
       toast.error('Failed to initialize season');
@@ -178,6 +181,19 @@ export const CompetitionAdmin = () => {
                 </SelectItem>
               ))}
             </SelectContent>
+        </Select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium mb-2 block">Competition Format</label>
+          <Select value={selectedFormat} onValueChange={(value) => setSelectedFormat(value as CompetitionFormat)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="single_round_robin">Single Round-Robin (each team plays once)</SelectItem>
+              <SelectItem value="double_round_robin">Double Round-Robin (home & away)</SelectItem>
+            </SelectContent>
           </Select>
         </div>
 
@@ -190,7 +206,7 @@ export const CompetitionAdmin = () => {
             1. Initialize New Season
           </Button>
           <p className="text-xs text-muted-foreground">
-            Creates a new season with competitions for all 5 divisions
+            Creates a new season with competitions for all 5 divisions using {selectedFormat.replace(/_/g, ' ')} format
           </p>
         </div>
 
