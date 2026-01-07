@@ -1,4 +1,4 @@
-import { Home, Trophy, Heart, Rss, User, Gamepad2 } from "lucide-react";
+import { Home, Trophy, Heart, Rss, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type NavigationItem = {
@@ -13,7 +13,6 @@ const navigationItems: NavigationItem[] = [
   { id: 'favourites', label: 'Favourites', icon: Heart },
   { id: 'feeds', label: 'Feeds', icon: Rss },
   { id: 'profile', label: 'Profile', icon: User },
-  { id: 'fun-hub', label: 'Fun Hub', icon: Gamepad2 },
 ];
 
 interface BottomNavigationProps {
