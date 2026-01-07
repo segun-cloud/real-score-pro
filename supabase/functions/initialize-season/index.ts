@@ -60,7 +60,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { sport } = await req.json();
+    const { sport, format = 'single_round_robin' } = await req.json();
+    
+    // Validate format
+    const validFormats = ['single_round_robin', 'double_round_robin'];
+    if (!validFormats.includes(format)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid format. Must be single_round_robin or double_round_robin' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
     
     // Get the latest season number for this sport
     const { data: lastSeason } = await supabase
@@ -73,11 +82,11 @@ Deno.serve(async (req) => {
 
     const newSeasonNumber = (lastSeason?.season_number || 0) + 1;
 
-    // Create new season (4 weeks duration)
+    // Create new season (4 weeks for single, 6 weeks for double round-robin)
     const startDate = new Date();
     startDate.setDate(startDate.getDate() + 2); // Start in 2 days
     const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 28); // 4 weeks
+    endDate.setDate(endDate.getDate() + (format === 'double_round_robin' ? 42 : 28)); // 6 weeks for double, 4 for single
 
     const { data: newSeason, error: seasonError } = await supabase
       .from('seasons')
@@ -93,7 +102,11 @@ Deno.serve(async (req) => {
 
     if (seasonError) throw seasonError;
 
-    console.log(`Created season ${newSeasonNumber} for ${sport}`);
+    console.log(`Created season ${newSeasonNumber} for ${sport} with ${format} format`);
+
+    // Calculate registration deadline (2 days before start)
+    const registrationDeadline = new Date(startDate);
+    registrationDeadline.setDate(registrationDeadline.getDate() - 2);
 
     // Create competitions for each division
     const competitions = [];
@@ -111,7 +124,10 @@ Deno.serve(async (req) => {
           prize_coins: divConfig.prize,
           entry_fee: divConfig.entryFee,
           max_participants: divConfig.maxPlayers,
-          match_generation_status: 'pending'
+          match_generation_status: 'pending',
+          format: format,
+          registration_deadline: registrationDeadline.toISOString(),
+          min_participants: 4
         })
         .select()
         .single();
