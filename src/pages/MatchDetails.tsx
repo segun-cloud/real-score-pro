@@ -236,31 +236,37 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const handleUnlockPrediction = async () => {
     if (userProfile.coins >= 20) {
       try {
-        // Deduct coins from database FIRST
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Not authenticated');
         
-        const { error: coinsError } = await supabase
-          .from('user_profiles')
-          .update({ coins: userProfile.coins - 20 })
-          .eq('id', user.id);
-        
-        if (coinsError) throw coinsError;
-        
-        // Update local state
-        setUserProfile(prev => ({ ...prev, coins: prev.coins - 20 }));
-        setAiPredictionUnlocked(true);
+        // Show loading state first
         setActiveTab("prediction");
         setIsLoadingPrediction(true);
 
-        // Call edge function with Supabase client
+        // Generate prediction FIRST before deducting coins
         const { data, error } = await supabase.functions.invoke('generate-match-prediction', {
           body: { match: matchDetails }
         });
         
         if (error) throw error;
         
+        // Only deduct coins AFTER successful prediction
+        const { error: coinsError } = await supabase
+          .from('user_profiles')
+          .update({ coins: userProfile.coins - 20 })
+          .eq('id', user.id);
+        
+        if (coinsError) {
+          console.error('Failed to deduct coins:', coinsError);
+          // Prediction succeeded but coin deduction failed - still show prediction
+          // but log the error for investigation
+        }
+        
+        // Update local state after successful prediction
+        setUserProfile(prev => ({ ...prev, coins: prev.coins - 20 }));
+        setAiPredictionUnlocked(true);
         setAiPrediction(data.prediction);
+        
         toast.success("AI Prediction Ready!", {
           description: "Your match prediction has been generated.",
         });
@@ -269,18 +275,6 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
         toast.error("Prediction Error", {
           description: error instanceof Error ? error.message : "Failed to generate prediction. Your coins have not been deducted.",
         });
-        // Reload user profile to sync coins
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('coins')
-            .eq('id', user.id)
-            .single();
-          if (profile) {
-            setUserProfile(prev => ({ ...prev, coins: profile.coins }));
-          }
-        }
         setAiPredictionUnlocked(false);
       } finally {
         setIsLoadingPrediction(false);
