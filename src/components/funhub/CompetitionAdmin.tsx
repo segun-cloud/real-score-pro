@@ -1,9 +1,14 @@
 import { useState } from "react";
+import { format, addDays } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { SportType } from "@/types/funhub";
 import { SPORT_CONFIG } from "@/types/funhub";
 
@@ -12,13 +17,18 @@ type CompetitionFormat = 'single_round_robin' | 'double_round_robin';
 export const CompetitionAdmin = () => {
   const [selectedSport, setSelectedSport] = useState<SportType>('football');
   const [selectedFormat, setSelectedFormat] = useState<CompetitionFormat>('single_round_robin');
+  const [registrationDeadline, setRegistrationDeadline] = useState<Date>(addDays(new Date(), 5));
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInitializeSeason = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('initialize-season', {
-        body: { sport: selectedSport, format: selectedFormat }
+        body: { 
+          sport: selectedSport, 
+          format: selectedFormat,
+          registrationDeadline: registrationDeadline.toISOString()
+        }
       });
 
       if (error) throw error;
@@ -195,6 +205,37 @@ export const CompetitionAdmin = () => {
               <SelectItem value="double_round_robin">Double Round-Robin (home & away)</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium mb-2 block">Registration Deadline</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !registrationDeadline && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {registrationDeadline ? format(registrationDeadline, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={registrationDeadline}
+                onSelect={(date) => date && setRegistrationDeadline(date)}
+                disabled={(date) => date < new Date()}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
+          <p className="text-xs text-muted-foreground mt-1">
+            Last day for teams to register for competitions
+          </p>
         </div>
 
         <div className="space-y-2">
