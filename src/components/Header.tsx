@@ -1,4 +1,4 @@
-import { Coins, Gamepad2 } from "lucide-react";
+import { Coins, Gamepad2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,6 +15,8 @@ interface HeaderProps {
   selectedSport: string;
   onSportChange: (sport: string) => void;
   userId?: string;
+  isGuest?: boolean;
+  onGuestLogin?: () => void;
 }
 
 const sports = [
@@ -28,7 +30,7 @@ const sports = [
   { id: 'american-football', name: 'American Football', emoji: '🏈' },
 ];
 
-export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, userId }: HeaderProps) => {
+export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, userId, isGuest, onGuestLogin }: HeaderProps) => {
   return (
     <header className="bg-card border-b border-border shadow-soft sticky top-0 z-50">
       <div className="flex items-center justify-between p-3">
@@ -53,21 +55,35 @@ export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, use
         </div>
         
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-2 bg-gradient-coins px-2 py-1 rounded-lg">
-            <Coins className="h-3 w-3 text-coins-foreground" />
-            <span className="text-xs font-semibold text-coins-foreground">{coins.toLocaleString()}</span>
-          </div>
-          
-          <NotificationToggle userId={userId} />
-          
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="h-8 w-8"
-            onClick={onFunHubClick}
-          >
-            <Gamepad2 className="h-4 w-4" />
-          </Button>
+          {isGuest ? (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={onGuestLogin}
+              className="h-8 text-xs"
+            >
+              <LogIn className="h-3 w-3 mr-1" />
+              Sign In
+            </Button>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 bg-gradient-coins px-2 py-1 rounded-lg">
+                <Coins className="h-3 w-3 text-coins-foreground" />
+                <span className="text-xs font-semibold text-coins-foreground">{coins.toLocaleString()}</span>
+              </div>
+              
+              <NotificationToggle userId={userId} />
+              
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8"
+                onClick={onFunHubClick}
+              >
+                <Gamepad2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
       
