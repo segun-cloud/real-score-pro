@@ -12,6 +12,7 @@ import { NotificationBell } from "@/components/funhub/NotificationBell";
 import { TeamDetails } from "@/components/funhub/TeamDetails";
 import { PlayerTraining } from "@/components/funhub/PlayerTraining";
 import { TeamKitManager } from "@/components/funhub/TeamKitManager";
+import { MatchSimulationScreen } from "@/components/funhub/MatchSimulationScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { SportType, UserTeam } from "@/types/funhub";
@@ -23,7 +24,7 @@ interface FunHubProps {
   onNavigate: (screen: string, competitionId?: string) => void;
 }
 
-type ActiveView = 'list' | 'teamDetails' | 'training' | 'kitManager';
+type ActiveView = 'list' | 'teamDetails' | 'training' | 'kitManager' | 'simulation';
 
 export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   const [userCoins, setUserCoins] = useState(1000);
@@ -34,6 +35,7 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>('list');
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUserData();
@@ -198,47 +200,63 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
     );
   }
 
-  // Handle sub-views for team management
-  if (activeView !== 'list' && selectedTeamId && userId) {
+  // Handle sub-views for team management and match simulation
+  if (activeView !== 'list' && userId) {
     const handleBackToList = async () => {
       setActiveView('list');
       setSelectedTeamId(null);
+      setSelectedMatchId(null);
       await loadUserData(); // Refresh data when returning
     };
 
-    return (
-      <div className="min-h-screen bg-background pb-20">
-        <div className="p-4">
-          {activeView === 'teamDetails' && (
-            <TeamDetails teamId={selectedTeamId} onBack={handleBackToList} />
-          )}
-          {activeView === 'training' && (
-            <PlayerTraining
-              teamId={selectedTeamId}
-              userId={userId}
-              userCoins={userCoins}
-              onBack={handleBackToList}
-              onCoinsUpdate={() => {
-                loadUserData();
-                onCoinsUpdate();
-              }}
-            />
-          )}
-          {activeView === 'kitManager' && (
-            <TeamKitManager
-              teamId={selectedTeamId}
-              userId={userId}
-              userCoins={userCoins}
-              onBack={handleBackToList}
-              onCoinsUpdate={() => {
-                loadUserData();
-                onCoinsUpdate();
-              }}
-            />
-          )}
+    // Match simulation view
+    if (activeView === 'simulation' && selectedMatchId) {
+      return (
+        <MatchSimulationScreen
+          matchId={selectedMatchId}
+          userId={userId}
+          onBack={handleBackToList}
+          onComplete={handleBackToList}
+        />
+      );
+    }
+
+    // Team management views
+    if (selectedTeamId) {
+      return (
+        <div className="min-h-screen bg-background pb-20">
+          <div className="p-4">
+            {activeView === 'teamDetails' && (
+              <TeamDetails teamId={selectedTeamId} onBack={handleBackToList} />
+            )}
+            {activeView === 'training' && (
+              <PlayerTraining
+                teamId={selectedTeamId}
+                userId={userId}
+                userCoins={userCoins}
+                onBack={handleBackToList}
+                onCoinsUpdate={() => {
+                  loadUserData();
+                  onCoinsUpdate();
+                }}
+              />
+            )}
+            {activeView === 'kitManager' && (
+              <TeamKitManager
+                teamId={selectedTeamId}
+                userId={userId}
+                userCoins={userCoins}
+                onBack={handleBackToList}
+                onCoinsUpdate={() => {
+                  loadUserData();
+                  onCoinsUpdate();
+                }}
+              />
+            )}
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
 
   return (
@@ -306,6 +324,10 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
             <MyMatches 
               userTeams={userTeams}
               onNavigate={onNavigate}
+              onPlayMatch={(matchId) => {
+                setSelectedMatchId(matchId);
+                setActiveView('simulation');
+              }}
             />
           </TabsContent>
 
