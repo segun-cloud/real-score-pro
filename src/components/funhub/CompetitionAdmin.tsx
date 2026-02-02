@@ -280,15 +280,17 @@ export const CompetitionAdmin = () => {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Initialize New Season?</AlertDialogTitle>
-                <AlertDialogDescription className="space-y-2">
-                  <p>You are about to create a new season with the following settings:</p>
-                  <ul className="list-disc list-inside text-sm space-y-1 mt-2">
-                    <li><strong>Sport:</strong> {SPORT_CONFIG[selectedSport].name}</li>
-                    <li><strong>Format:</strong> {selectedFormat === 'single_round_robin' ? 'Single Round-Robin' : 'Double Round-Robin'}</li>
-                    <li><strong>Divisions:</strong> 5</li>
-                    <li><strong>Registration Deadline:</strong> {format(registrationDeadline, "PPP")}</li>
-                  </ul>
-                  <p className="mt-2">This action cannot be undone.</p>
+                <AlertDialogDescription asChild>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>You are about to create a new season with the following settings:</p>
+                    <ul className="list-disc list-inside space-y-1 mt-2">
+                      <li><strong>Sport:</strong> {SPORT_CONFIG[selectedSport].name}</li>
+                      <li><strong>Format:</strong> {selectedFormat === 'single_round_robin' ? 'Single Round-Robin' : 'Double Round-Robin'}</li>
+                      <li><strong>Divisions:</strong> 5</li>
+                      <li><strong>Registration Deadline:</strong> {format(registrationDeadline, "PPP")}</li>
+                    </ul>
+                    <p className="mt-2">This action cannot be undone.</p>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
