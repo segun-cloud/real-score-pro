@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Trophy } from "lucide-react";
-import { format, isPast } from "date-fns";
+import { Calendar, Trophy, Play } from "lucide-react";
+import { format, isPast, isToday } from "date-fns";
 import type { UserTeam } from "@/types/funhub";
 
 interface Match {
@@ -20,14 +21,16 @@ interface Match {
   status: string;
   match_date: string;
   isHomeTeam: boolean;
+  competitionStatus?: string;
 }
 
 interface MyMatchesProps {
   userTeams: UserTeam[];
   onNavigate?: (screen: string, competitionId?: string) => void;
+  onPlayMatch?: (matchId: string) => void;
 }
 
-export const MyMatches = ({ userTeams, onNavigate }: MyMatchesProps) => {
+export const MyMatches = ({ userTeams, onNavigate, onPlayMatch }: MyMatchesProps) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,7 +61,7 @@ export const MyMatches = ({ userTeams, onNavigate }: MyMatchesProps) => {
           match_date,
           home_team:user_teams!matches_home_team_id_fkey(team_name),
           away_team:user_teams!matches_away_team_id_fkey(team_name),
-          competitions(name)
+          competitions(name, status)
         `)
         .or(`home_team_id.in.(${teamIds.join(',')}),away_team_id.in.(${teamIds.join(',')})`)
         .order('match_date', { ascending: true });
@@ -83,7 +86,8 @@ export const MyMatches = ({ userTeams, onNavigate }: MyMatchesProps) => {
           away_score: m.away_score,
           status: m.status,
           match_date: m.match_date,
-          isHomeTeam: teamIds.includes(m.home_team_id)
+          isHomeTeam: teamIds.includes(m.home_team_id),
+          competitionStatus: m.competitions?.status
         })));
       }
     } catch (error) {
@@ -109,26 +113,34 @@ export const MyMatches = ({ userTeams, onNavigate }: MyMatchesProps) => {
     return 'draw';
   };
 
+  const canPlayMatch = (match: Match) => {
+    if (match.status !== 'scheduled') return false;
+    if (match.competitionStatus !== 'active') return false;
+    const matchDate = new Date(match.match_date);
+    return isPast(matchDate) || isToday(matchDate);
+  };
+
   const renderMatch = (match: Match) => {
     const result = getMatchResult(match);
     const matchDate = new Date(match.match_date);
     const isPastMatch = isPast(matchDate);
+    const canPlay = canPlayMatch(match);
     
     return (
       <Card 
         key={match.id} 
-        className={`cursor-pointer hover:border-primary transition-colors ${
+        className={`transition-colors ${
           result === 'win' ? 'border-l-4 border-l-green-500' :
           result === 'loss' ? 'border-l-4 border-l-red-500' :
           result === 'draw' ? 'border-l-4 border-l-yellow-500' : ''
         }`}
-        onClick={() => onNavigate?.('competition-details', match.competition_id)}
       >
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-muted-foreground">{match.competition_name}</span>
             <Badge variant={match.status === 'completed' ? 'secondary' : 'outline'}>
               {match.status === 'completed' ? 'Completed' : 
+               canPlay ? 'Ready to Play' :
                isPastMatch ? 'Pending Result' : format(matchDate, 'MMM d')}
             </Badge>
           </div>
@@ -158,9 +170,38 @@ export const MyMatches = ({ userTeams, onNavigate }: MyMatchesProps) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-            <Calendar className="h-3 w-3" />
-            {format(matchDate, 'EEEE, MMMM d, yyyy')}
+          <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Calendar className="h-3 w-3" />
+              {format(matchDate, 'EEEE, MMMM d, yyyy')}
+            </div>
+            
+            {canPlay && onPlayMatch && (
+              <Button 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlayMatch(match.id);
+                }}
+                className="gap-1"
+              >
+                <Play className="h-3 w-3" />
+                Play
+              </Button>
+            )}
+            
+            {match.status === 'completed' && (
+              <Button 
+                size="sm" 
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onNavigate?.('competition-details', match.competition_id);
+                }}
+              >
+                View Standings
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
