@@ -21,10 +21,17 @@ import { Header } from "./components/Header";
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
+import { useFavoriteNotifications } from "@/hooks/useFavoriteNotifications";
+
 const queryClient = new QueryClient();
+
 type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites' | 'feeds' | 'fun-hub' | 'competition-details' | 'login' | 'signup' | 'onboarding' | 'update-password';
+
+// Screens accessible to guests (unauthenticated users)
+const GUEST_ACCESSIBLE_SCREENS: Screen[] = ['matches', 'match-details', 'feeds', 'leagues'];
+
 const App = () => {
-  const [currentScreen, setCurrentScreen] = useState<Screen>('login');
+  const [currentScreen, setCurrentScreen] = useState<Screen>('matches');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
@@ -33,17 +40,16 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
+  // Subscribe to favorite notifications for logged-in users
+  useFavoriteNotifications(user?.id);
 
   // Authentication state management
   useEffect(() => {
     // Set up auth state listener
     const {
-      data: {
-        subscription
-      }
+      data: { subscription }
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -65,9 +71,12 @@ const App = () => {
         // Fetch user profile to get coins and onboarding status
         setTimeout(async () => {
           try {
-            const {
-              data: profile
-            } = await supabase.from('user_profiles').select('coins, onboarding_completed').eq('id', session.user.id).single();
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('coins, onboarding_completed')
+              .eq('id', session.user.id)
+              .single();
+              
             if (profile) {
               setCoins(profile.coins);
               // Check if onboarding is needed
@@ -93,41 +102,46 @@ const App = () => {
         }, 0);
       } else {
         setCoins(0);
-        if (currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'update-password') {
-          setCurrentScreen('login');
+        // For guests, redirect to matches (scores view) instead of login
+        if (!GUEST_ACCESSIBLE_SCREENS.includes(currentScreen) && 
+            currentScreen !== 'login' && 
+            currentScreen !== 'signup' && 
+            currentScreen !== 'update-password') {
+          setCurrentScreen('matches');
         }
       }
       setIsLoadingAuth(false);
     });
 
     // Check for existing session
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         // Fetch user profile including onboarding status
-        supabase.from('user_profiles').select('coins, onboarding_completed').eq('id', session.user.id).single().then(({
-          data: profile
-        }) => {
-          if (profile) {
-            setCoins(profile.coins);
-            // Check if onboarding is needed
-            if (!profile.onboarding_completed) {
-              setCurrentScreen('onboarding');
+        supabase
+          .from('user_profiles')
+          .select('coins, onboarding_completed')
+          .eq('id', session.user.id)
+          .single()
+          .then(({ data: profile }) => {
+            if (profile) {
+              setCoins(profile.coins);
+              // Check if onboarding is needed
+              if (!profile.onboarding_completed) {
+                setCurrentScreen('onboarding');
+              } else {
+                setCurrentScreen('matches');
+              }
             } else {
-              setCurrentScreen('matches');
+              // Profile doesn't exist yet (new user), show onboarding
+              setCurrentScreen('onboarding');
             }
-          } else {
-            // Profile doesn't exist yet (new user), show onboarding
-            setCurrentScreen('onboarding');
-          }
-          setIsLoadingAuth(false);
-        });
+            setIsLoadingAuth(false);
+          });
       } else {
+        // Guest user - show matches by default
+        setCurrentScreen('matches');
         setIsLoadingAuth(false);
       }
     });
@@ -138,9 +152,11 @@ const App = () => {
   const updateCoins = async () => {
     if (!user) return;
     try {
-      const {
-        data: profile
-      } = await supabase.from('user_profiles').select('coins').eq('id', user.id).single();
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('coins')
+        .eq('id', user.id)
+        .single();
       if (profile) {
         setCoins(profile.coins);
       }
@@ -148,84 +164,157 @@ const App = () => {
       console.error('Error updating coins:', error);
     }
   };
+
   const handleMatchClick = (match: Match) => {
     setSelectedMatchId(match.id);
     setSelectedMatch(match);
     setCurrentScreen('match-details');
   };
+
   const handleBack = () => {
     setCurrentScreen('matches');
     setSelectedMatchId(null);
     setSelectedMatch(null);
   };
+
   const handleNavigate = (screen: string, competitionId?: string) => {
-    // Protect routes - require authentication
-    if (!user && screen !== 'login' && screen !== 'signup') {
+    // Check if the screen requires authentication
+    const screenAsType = screen as Screen;
+    const requiresAuth = !GUEST_ACCESSIBLE_SCREENS.includes(screenAsType) && 
+                         screen !== 'login' && 
+                         screen !== 'signup';
+
+    if (!user && requiresAuth) {
       toast({
-        title: "Authentication required",
-        description: "Please sign in to access this feature",
-        variant: "destructive"
+        title: "Sign up to access this feature",
+        description: "Create a free account to save favorites, join competitions, and get notifications",
+        variant: "default"
       });
-      setCurrentScreen('login');
+      setCurrentScreen('signup');
       return;
     }
+
     if (screen === 'competition-details' && competitionId) {
       setSelectedCompetitionId(competitionId);
     }
-    setCurrentScreen(screen as Screen);
+    setCurrentScreen(screenAsType);
     setSelectedMatchId(null);
   };
+
   const handleFunHubClick = () => {
     if (!user) {
-      setCurrentScreen('login');
+      toast({
+        title: "Sign up to access FunHub",
+        description: "Create teams, join competitions, and win prizes!",
+        variant: "default"
+      });
+      setCurrentScreen('signup');
       return;
     }
     setCurrentScreen('fun-hub');
   };
+
   const handleSportChange = (sport: string) => {
     setSelectedSport(sport);
   };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setCurrentScreen('login');
+    setCurrentScreen('matches');
     toast({
       title: "Logged out",
       description: "You've been logged out successfully"
     });
   };
+
+  const handleGuestLogin = () => {
+    setCurrentScreen('login');
+  };
+
+  const handleGuestSignup = () => {
+    setCurrentScreen('signup');
+  };
+
   const renderScreen = () => {
     if (isLoadingAuth) {
-      return <div className="min-h-screen flex items-center justify-center">
+      return (
+        <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <p className="text-muted-foreground">Loading...</p>
           </div>
-        </div>;
+        </div>
+      );
     }
+
     switch (currentScreen) {
       case 'login':
-        return <Login onNavigateToSignup={() => setCurrentScreen('signup')} onLoginSuccess={() => {
-          setCurrentScreen('matches');
-          updateCoins();
-        }} />;
+        return (
+          <Login
+            onNavigateToSignup={() => setCurrentScreen('signup')}
+            onLoginSuccess={() => {
+              setCurrentScreen('matches');
+              updateCoins();
+            }}
+          />
+        );
       case 'signup':
-        return <Signup onNavigateToLogin={() => setCurrentScreen('login')} onSignupSuccess={() => {
-          // Will be handled by onAuthStateChange which checks onboarding status
-        }} />;
+        return (
+          <Signup
+            onNavigateToLogin={() => setCurrentScreen('login')}
+            onSignupSuccess={() => {
+              // Will be handled by onAuthStateChange which checks onboarding status
+            }}
+          />
+        );
       case 'update-password':
-        return <UpdatePassword onSuccess={() => {
-          setCurrentScreen('matches');
-          updateCoins();
-        }} />;
+        return (
+          <UpdatePassword
+            onSuccess={() => {
+              setCurrentScreen('matches');
+              updateCoins();
+            }}
+          />
+        );
       case 'onboarding':
-        return user ? <Onboarding userId={user.id} onComplete={() => {
-          setCurrentScreen('matches');
-          updateCoins();
-        }} /> : <Login onNavigateToSignup={() => setCurrentScreen('signup')} onLoginSuccess={() => {}} />;
+        return user ? (
+          <Onboarding
+            userId={user.id}
+            onComplete={() => {
+              setCurrentScreen('matches');
+              updateCoins();
+            }}
+          />
+        ) : (
+          <Login onNavigateToSignup={() => setCurrentScreen('signup')} onLoginSuccess={() => {}} />
+        );
       case 'matches':
-        return <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
+        return (
+          <Home
+            onMatchClick={handleMatchClick}
+            selectedSport={selectedSport}
+            isGuest={!user}
+            onGuestLogin={handleGuestLogin}
+            onGuestSignup={handleGuestSignup}
+          />
+        );
       case 'match-details':
-        return selectedMatchId ? <MatchDetails matchId={selectedMatchId} match={selectedMatch || undefined} onBack={handleBack} onFunHubClick={handleFunHubClick} /> : <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
+        return selectedMatchId ? (
+          <MatchDetails
+            matchId={selectedMatchId}
+            match={selectedMatch || undefined}
+            onBack={handleBack}
+            onFunHubClick={handleFunHubClick}
+          />
+        ) : (
+          <Home
+            onMatchClick={handleMatchClick}
+            selectedSport={selectedSport}
+            isGuest={!user}
+            onGuestLogin={handleGuestLogin}
+            onGuestSignup={handleGuestSignup}
+          />
+        );
       case 'profile':
         return <Profile onBack={handleBack} coins={coins} onLogout={handleLogout} onCoinsUpdate={updateCoins} />;
       case 'leagues':
@@ -237,27 +326,62 @@ const App = () => {
       case 'fun-hub':
         return <FunHub userId={user?.id} onCoinsUpdate={updateCoins} onNavigate={handleNavigate} />;
       case 'competition-details':
-        return selectedCompetitionId ? <div className="min-h-screen bg-background pb-20">
+        return selectedCompetitionId ? (
+          <div className="min-h-screen bg-background pb-20">
             <CompetitionDetails competitionId={selectedCompetitionId} onBack={() => setCurrentScreen('fun-hub')} />
-          </div> : <FunHub userId={user?.id} onCoinsUpdate={updateCoins} onNavigate={handleNavigate} />;
+          </div>
+        ) : (
+          <FunHub userId={user?.id} onCoinsUpdate={updateCoins} onNavigate={handleNavigate} />
+        );
       default:
-        return <Home onMatchClick={handleMatchClick} selectedSport={selectedSport} />;
+        return (
+          <Home
+            onMatchClick={handleMatchClick}
+            selectedSport={selectedSport}
+            isGuest={!user}
+            onGuestLogin={handleGuestLogin}
+            onGuestSignup={handleGuestSignup}
+          />
+        );
     }
   };
-  return <QueryClientProvider client={queryClient}>
+
+  // Determine if we should show header and navigation
+  const showHeaderAndNav = currentScreen !== 'login' && 
+                           currentScreen !== 'signup' && 
+                           currentScreen !== 'onboarding' &&
+                           currentScreen !== 'update-password';
+
+  return (
+    <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen w-full overflow-x-hidden bg-[#f4f4f4]">
           <Toaster />
           <Sonner />
-          {user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' && <>
-              <Header coins={coins} onFunHubClick={handleFunHubClick} selectedSport={selectedSport} onSportChange={handleSportChange} userId={user?.id} />
-            </>}
-          <div className={`mx-auto w-full max-w-[480px] ${user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' ? 'pb-16' : ''}`}>
+          {showHeaderAndNav && (
+            <Header
+              coins={user ? coins : 0}
+              onFunHubClick={handleFunHubClick}
+              selectedSport={selectedSport}
+              onSportChange={handleSportChange}
+              userId={user?.id}
+              isGuest={!user}
+              onGuestLogin={handleGuestLogin}
+            />
+          )}
+          <div className={`mx-auto w-full max-w-[480px] ${showHeaderAndNav ? 'pb-16' : ''}`}>
             {renderScreen()}
           </div>
-          {user && currentScreen !== 'login' && currentScreen !== 'signup' && currentScreen !== 'onboarding' && <BottomNavigation activeScreen={currentScreen === 'match-details' ? 'matches' : currentScreen} onNavigate={handleNavigate} />}
+          {showHeaderAndNav && (
+            <BottomNavigation
+              activeScreen={currentScreen === 'match-details' ? 'matches' : currentScreen}
+              onNavigate={handleNavigate}
+            />
+          )}
         </div>
       </TooltipProvider>
-    </QueryClientProvider>;
+    </QueryClientProvider>
+  );
 };
+
 export default App;

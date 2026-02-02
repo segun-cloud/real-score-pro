@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { MatchCard } from "@/components/MatchCard";
 import { NativeAd } from "@/components/NativeAd";
+import { GuestBanner } from "@/components/GuestBanner";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -18,9 +19,12 @@ import { useLiveScores } from "@/hooks/useLiveScores";
 interface HomeProps {
   onMatchClick: (match: Match) => void;
   selectedSport: string;
+  isGuest?: boolean;
+  onGuestLogin?: () => void;
+  onGuestSignup?: () => void;
 }
 
-export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
+export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGuestSignup }: HomeProps) => {
   const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLiveOnly, setShowLiveOnly] = useState(false);
@@ -173,6 +177,11 @@ export const Home = ({ onMatchClick, selectedSport }: HomeProps) => {
   return (
     <div className="space-y-6">
       <div className="px-4">
+        {/* Guest Banner */}
+        {isGuest && onGuestLogin && onGuestSignup && (
+          <GuestBanner onLogin={onGuestLogin} onSignup={onGuestSignup} />
+        )}
+        
         {/* Calendar and Search Controls */}
         <div className="mb-6 space-y-3">
           <div className="flex items-center justify-between gap-2">
