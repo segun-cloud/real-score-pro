@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Search, CalendarIcon, RefreshCw, Play, Wifi, WifiOff } from "lucide-react";
+import { Search, CalendarIcon, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { Match } from "@/types/sports";
 import { mockMatches } from "@/data/mockData";
 import { format, formatDistanceToNow } from "date-fns";
@@ -29,7 +29,6 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   const [searchQuery, setSearchQuery] = useState("");
   const [showLiveOnly, setShowLiveOnly] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [dbMatches, setDbMatches] = useState<any[]>([]);
   const [apiMatches, setApiMatches] = useState<Match[]>([]);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
   const [isCached, setIsCached] = useState(false);
@@ -39,34 +38,12 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   const { liveScores, isConnected, lastUpdate, getMatchScore, hasRecentScoreChange } = useLiveScores();
 
   useEffect(() => {
-    loadDbMatches();
     loadApiMatches();
   }, []);
 
   useEffect(() => {
     loadApiMatches();
   }, [selectedSport, selectedDate]);
-
-  const loadDbMatches = async () => {
-    try {
-      const { data } = await supabase
-        .from('matches')
-        .select(`
-          *,
-          competition:competitions(name, sport),
-          home_team:user_teams!matches_home_team_id_fkey(team_name),
-          away_team:user_teams!matches_away_team_id_fkey(team_name)
-        `)
-        .order('match_date', { ascending: false })
-        .limit(10);
-
-      if (data) {
-        setDbMatches(data);
-      }
-    } catch (error) {
-      console.error('Error loading matches:', error);
-    }
-  };
 
   const loadApiMatches = async () => {
     setIsLoadingApi(true);
@@ -266,98 +243,6 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
           </div>
         ) : (
           <>
-            {/* Database Competition Matches */}
-            {dbMatches.length > 0 && (
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <h2 className="text-base font-semibold">Competition Matches</h2>
-                  <Badge variant="secondary">Live</Badge>
-                </div>
-                <div className="space-y-3">
-                  {dbMatches.map((match: any) => (
-                    <div
-                      key={match.id}
-                      className="bg-card border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors"
-                      onClick={() => {
-                        const transformedMatch: Match = {
-                          id: match.id,
-                          homeTeam: match.home_team?.team_name || 'Home Team',
-                          awayTeam: match.away_team?.team_name || 'Away Team',
-                          homeScore: match.home_score ?? null,
-                          awayScore: match.away_score ?? null,
-                          homeTeamLogo: '/placeholder.svg',
-                          awayTeamLogo: '/placeholder.svg',
-                          status: match.status,
-                          league: match.competition?.name || 'Competition',
-                          startTime: match.match_date,
-                          sport: match.competition?.sport || 'football',
-                          minute: null
-                        };
-                        onMatchClick(transformedMatch);
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs text-muted-foreground">
-                          {match.competition?.name || 'Competition'}
-                        </span>
-                        <Badge variant={match.status === 'completed' ? 'secondary' : 'default'}>
-                          {match.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <p className="font-medium">{match.home_team?.team_name || 'Home Team'}</p>
-                        </div>
-                        <div className="flex items-center gap-4 px-4">
-                          <span className="text-2xl font-bold">
-                            {match.home_score ?? '-'}
-                          </span>
-                          <span className="text-muted-foreground">:</span>
-                          <span className="text-2xl font-bold">
-                            {match.away_score ?? '-'}
-                          </span>
-                        </div>
-                        <div className="flex-1 text-right">
-                          <p className="font-medium">{match.away_team?.team_name || 'Away Team'}</p>
-                        </div>
-                      </div>
-                      
-                      {match.status === 'scheduled' && (
-                        <div className="mt-3 pt-3 border-t">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="w-full"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const transformedMatch: Match = {
-                                id: match.id,
-                                homeTeam: match.home_team?.team_name || 'Home Team',
-                                awayTeam: match.away_team?.team_name || 'Away Team',
-                                homeScore: match.home_score ?? null,
-                                awayScore: match.away_score ?? null,
-                                homeTeamLogo: '/placeholder.svg',
-                                awayTeamLogo: '/placeholder.svg',
-                                status: match.status,
-                                league: match.competition?.name || 'Competition',
-                                startTime: match.match_date,
-                                sport: match.competition?.sport || 'football',
-                                minute: null
-                              };
-                              onMatchClick(transformedMatch);
-                            }}
-                          >
-                            <Play className="mr-2 h-4 w-4" />
-                            Simulate Match
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Show matches grouped by status or league */}
             {showLiveOnly ? (
               <div>
