@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MatchCard } from "@/components/MatchCard";
 import { NativeAd } from "@/components/NativeAd";
 import { GuestBanner } from "@/components/GuestBanner";
@@ -36,10 +36,25 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   
   // Real-time score updates
   const { liveScores, isConnected, lastUpdate, getMatchScore, hasRecentScoreChange } = useLiveScores();
+  
+  // Track if we've already auto-toggled to live mode
+  const hasAutoToggledLive = useRef(false);
 
   useEffect(() => {
     loadApiMatches();
   }, []);
+  
+  // Auto-toggle to live mode when live matches are available (only on initial load)
+  useEffect(() => {
+    if (!hasAutoToggledLive.current && apiMatches.length > 0) {
+      const hasLiveMatches = apiMatches.some(match => match.status === 'live');
+      if (hasLiveMatches) {
+        setShowLiveOnly(true);
+        hasAutoToggledLive.current = true;
+        console.log('[Home] Auto-toggled to live mode - live matches detected');
+      }
+    }
+  }, [apiMatches]);
 
   useEffect(() => {
     loadApiMatches();
