@@ -55,9 +55,16 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
     return sportEmojis[match.sport];
   };
 
+  const isLive = match.status === 'live';
+
   return (
     <Card 
-      className="p-1.5 hover:shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.99] bg-card border-border"
+      className={cn(
+        "p-1.5 hover:shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.99]",
+        isLive 
+          ? "bg-amber-50 dark:bg-amber-950/30 border-l-4 border-l-amber-400 border-amber-200 dark:border-amber-800" 
+          : "bg-card border-border"
+      )}
       onClick={() => onClick(match)}
     >
       <div className="flex items-center gap-2">
