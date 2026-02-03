@@ -355,7 +355,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen w-full overflow-x-hidden bg-[#f4f4f4]">
+        <div className="min-h-screen w-full overflow-x-hidden bg-background">
           <Toaster />
           <Sonner />
           {showHeaderAndNav && (
