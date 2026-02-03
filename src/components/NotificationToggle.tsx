@@ -14,6 +14,17 @@ interface NotificationToggleProps {
 export const NotificationToggle = ({ userId }: NotificationToggleProps) => {
   const { isSupported, isSubscribed, isLoading, permission, toggle } = usePushNotifications(userId);
 
+  // Debug logging to help diagnose notification state
+  console.log('[NotificationToggle] State:', { isSupported, isSubscribed, isLoading, permission, userId });
+
+  if (isLoading) {
+    return (
+      <Button variant="ghost" size="icon" disabled className="opacity-50">
+        <Bell className="h-5 w-5 animate-pulse" />
+      </Button>
+    );
+  }
+
   if (!isSupported) {
     return (
       <Tooltip>
