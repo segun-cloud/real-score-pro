@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { FootballPitch } from "@/components/FootballPitch";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { HeadToHead } from "@/components/HeadToHead";
+import { LiveMatchTracker } from "@/components/LiveMatchTracker";
 import { supabase } from "@/integrations/supabase/client";
 
 interface MatchDetailsProps {
@@ -1233,67 +1234,122 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
     }
   };
 
+  // Transform events for LiveMatchTracker
+  const transformedEvents = matchDetails.events.map((event) => ({
+    minute: event.minute,
+    type: event.type as any,
+    team: event.team,
+    player: event.player,
+    description: event.description,
+  }));
+
+  // Determine ball position based on current minute and events
+  const getBallPosition = () => {
+    if (matchDetails.status !== 'live') return { x: 50, y: 50 };
+    const minute = matchDetails.minute || 0;
+    // Simulate some ball movement based on time
+    const x = 30 + Math.sin(minute * 0.5) * 40;
+    const y = 30 + Math.cos(minute * 0.3) * 20;
+    return { x, y };
+  };
+
+  const isLiveMatch = matchDetails.status === 'live';
+  const isFootballMatch = matchDetails.sport === 'football';
+
   return (
     <div className="h-screen bg-background flex flex-col w-full max-w-full overflow-x-hidden">
       {/* Fixed Header */}
       <div className="sticky top-0 z-20 flex-shrink-0 p-4 border-b bg-background/95 backdrop-blur-sm w-full">
-        <div className="flex items-center gap-3 mb-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
+        <div className="flex items-center gap-3 mb-3">
+          <Button variant="ghost" size="icon" onClick={onBack} className="rounded-xl hover-lift press-effect">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-sm font-semibold">Match Details</h1>
+          <div className="flex-1">
+            <h1 className="text-sm font-bold">Match Details</h1>
+            {matchDetails.league && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <span>🏆</span> {matchDetails.league}
+              </p>
+            )}
+          </div>
+          {isLiveMatch && (
+            <Badge className="gradient-live text-live-foreground border-0 animate-pulse">
+              🔴 LIVE
+            </Badge>
+          )}
         </div>
 
-        {/* League Badge */}
-        {matchDetails.league && (
-          <button 
-            onClick={() => toast(`View ${matchDetails.league} details`)}
-            className="mb-3 flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors"
-          >
-            <span className="text-sm">🏆</span>
-            <span className="font-medium">{matchDetails.league}</span>
-          </button>
+        {/* Show LiveMatchTracker for live football matches, simple header for others */}
+        {isLiveMatch && isFootballMatch ? (
+          <LiveMatchTracker
+            homeTeam={matchDetails.homeTeam}
+            awayTeam={matchDetails.awayTeam}
+            homeTeamLogo={matchDetails.homeTeamLogo}
+            awayTeamLogo={matchDetails.awayTeamLogo}
+            homeScore={matchDetails.homeScore ?? 0}
+            awayScore={matchDetails.awayScore ?? 0}
+            minute={matchDetails.minute}
+            status="live"
+            events={transformedEvents}
+            statistics={matchDetails.statistics ? {
+              possession: matchDetails.statistics.possession,
+              shots: matchDetails.statistics.shots,
+              shotsOnTarget: matchDetails.statistics.shotsOnTarget,
+              corners: matchDetails.statistics.corners,
+              fouls: matchDetails.statistics.fouls,
+            } : undefined}
+            currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
+            ballPosition={getBallPosition()}
+          />
+        ) : (
+          /* Standard match header for non-live or non-football matches */
+          <Card className="p-3 rounded-2xl">
+            <div className="flex items-center justify-between mb-2">
+              <Badge 
+                variant={matchDetails.status === 'live' ? 'destructive' : 'secondary'}
+                className={matchDetails.status === 'live' ? 'gradient-live text-live-foreground text-xs px-2 py-1 border-0' : 'text-xs px-2 py-1 rounded-lg'}
+              >
+                {matchDetails.status === 'live' ? 'LIVE' : matchDetails.status.toUpperCase()}
+              </Badge>
+              <span className="text-xs text-muted-foreground">{matchDetails.league}</span>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="text-center flex-1">
+                {matchDetails.homeTeamLogo && (
+                  <img src={matchDetails.homeTeamLogo} alt="" className="w-10 h-10 object-contain mx-auto mb-1" />
+                )}
+                <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
+                {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
+                  <div className="text-2xl font-bold mt-1">{matchDetails.homeScore ?? 0}</div>
+                )}
+              </div>
+              
+              <div className="mx-3 text-center">
+                {matchDetails.status === 'live' || matchDetails.status === 'finished' ? (
+                  <div className="text-xl font-bold text-muted-foreground">-</div>
+                ) : (
+                  <div className="text-sm font-bold text-muted-foreground">VS</div>
+                )}
+                {matchDetails.status === 'live' && matchDetails.minute && (
+                  <Badge className="gradient-live text-live-foreground text-xs px-2 py-0.5 border-0 mt-1 animate-pulse">
+                    {matchDetails.minute}'
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="text-center flex-1">
+                {matchDetails.awayTeamLogo && (
+                  <img src={matchDetails.awayTeamLogo} alt="" className="w-10 h-10 object-contain mx-auto mb-1" />
+                )}
+                <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
+                {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
+                  <div className="text-2xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
+                )}
+              </div>
+            </div>
+          </Card>
         )}
-
-        {/* Match Header */}
-        <Card className="p-3">
-          <div className="flex items-center justify-between mb-2">
-            <Badge 
-              variant={matchDetails.status === 'live' ? 'destructive' : 'secondary'}
-              className={matchDetails.status === 'live' ? 'bg-live text-live-foreground text-xs px-2 py-1' : 'text-xs px-2 py-1'}
-            >
-              {matchDetails.status === 'live' ? 'LIVE' : matchDetails.status.toUpperCase()}
-            </Badge>
-            <span className="text-xs text-muted-foreground">{matchDetails.league}</span>
-          </div>
-          
-          <div className="flex items-center justify-between">
-            <div className="text-center flex-1">
-              <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
-              {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-lg font-bold text-primary mt-1">{matchDetails.homeScore ?? 0}</div>
-              )}
-            </div>
-            
-            <div className="mx-3 text-center">
-              {matchDetails.status === 'live' || matchDetails.status === 'finished' ? (
-                <div className="text-lg font-bold text-muted-foreground">-</div>
-              ) : (
-                <div className="text-sm font-bold text-muted-foreground">VS</div>
-              )}
-              {matchDetails.status === 'live' && matchDetails.minute && (
-                <div className="text-xs text-live font-semibold">{matchDetails.minute}'</div>
-              )}
-            </div>
-            
-            <div className="text-center flex-1">
-              <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
-              {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                <div className="text-lg font-bold text-primary mt-1">{matchDetails.awayScore ?? 0}</div>
-              )}
-            </div>
-          </div>
-        </Card>
       </div>
 
       {/* Main area with horizontal tabs + content */}
