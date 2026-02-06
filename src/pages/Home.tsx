@@ -15,6 +15,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLiveScores } from "@/hooks/useLiveScores";
+import { cn } from "@/lib/utils";
 
 interface HomeProps {
   onMatchClick: (match: Match) => void;
@@ -167,7 +168,7 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 animate-fade-in">
       <div className="px-4">
         {/* Guest Banner */}
         {isGuest && onGuestLogin && onGuestSignup && (
@@ -175,25 +176,25 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
         )}
         
         {/* Calendar and Search Controls */}
-        <div className="mb-6 space-y-3">
+        <div className="mb-5 space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search matches..."
-                className="pl-10"
+                className="pl-10 rounded-xl border-border/50 bg-secondary/30 focus:bg-background transition-colors"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="rounded-xl border-border/50 hover-lift press-effect">
                   <CalendarIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
+              <PopoverContent className="w-auto p-0 glass-strong rounded-xl border-border/50" align="end">
                 <Calendar
                   mode="single"
                   selected={selectedDate}
@@ -208,69 +209,88 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
               size="icon"
               onClick={() => loadApiMatches()}
               disabled={isLoadingApi}
+              className="rounded-xl border-border/50 hover-lift press-effect"
             >
               <RefreshCw className={`h-4 w-4 ${isLoadingApi ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           
-          {/* Live Toggle */}
-          <div className="flex items-center justify-between">
+          {/* Live Toggle - Enhanced */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 border border-border/30">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">Show Live Only</span>
-              <Badge variant={showLiveOnly ? "destructive" : "outline"} className={showLiveOnly ? "animate-pulse" : ""}>
-                {showLiveOnly ? "LIVE" : "ALL"}
+              <Badge 
+                className={cn(
+                  "transition-all duration-300",
+                  showLiveOnly 
+                    ? "gradient-live text-live-foreground border-0 glow-live animate-pulse" 
+                    : "bg-secondary text-secondary-foreground"
+                )}
+              >
+                {showLiveOnly ? "🔴 LIVE" : "ALL"}
               </Badge>
             </div>
             <Switch checked={showLiveOnly} onCheckedChange={setShowLiveOnly} />
           </div>
 
           {selectedDate && (
-            <p className="text-xs text-muted-foreground">
-              Showing matches for {format(selectedDate, 'PPP')}
+            <p className="text-xs text-muted-foreground px-1">
+              📅 Showing matches for <span className="font-medium text-foreground">{format(selectedDate, 'PPP')}</span>
             </p>
           )}
 
-          {/* Real-time connection status */}
-          <div className="flex items-center justify-between">
+          {/* Real-time connection status - Refined */}
+          <div className="flex items-center justify-between px-1">
             <div className="text-xs text-muted-foreground flex items-center gap-2">
               {isConnected ? (
-                <>
-                  <Wifi className="h-3 w-3 text-green-500" />
-                  <span className="text-green-500">Real-time connected</span>
-                </>
+                <div className="flex items-center gap-1.5 text-success">
+                  <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                  <Wifi className="h-3 w-3" />
+                  <span>Live connected</span>
+                </div>
               ) : (
-                <>
-                  <WifiOff className="h-3 w-3 text-yellow-500" />
-                  <span className="text-yellow-500">Connecting...</span>
-                </>
+                <div className="flex items-center gap-1.5 text-warning">
+                  <div className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+                  <WifiOff className="h-3 w-3" />
+                  <span>Connecting...</span>
+                </div>
               )}
               {lastUpdate && (
-                <span>• Updated {formatDistanceToNow(lastUpdate, { addSuffix: true })}</span>
+                <span className="text-muted-foreground/70">• {formatDistanceToNow(lastUpdate, { addSuffix: true })}</span>
               )}
-              {isCached && <span className="text-yellow-500">• Cached</span>}
+              {isCached && <span className="text-warning">• Cached</span>}
             </div>
           </div>
         </div>
 
         {isLoadingApi ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 rounded-full bg-primary/10 animate-pulse" />
+              </div>
+            </div>
+            <span className="text-sm text-muted-foreground">Loading matches...</span>
           </div>
         ) : (
           <>
             {/* Show matches grouped by status or league */}
             {showLiveOnly ? (
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <h2 className="text-base font-semibold">Live Matches</h2>
-                  <Badge variant="destructive" className="bg-live text-live-foreground animate-pulse">
-                    LIVE
+              <div className="animate-fade-up">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-xl gradient-live flex items-center justify-center shadow-sm">
+                    <span className="text-lg">🔴</span>
+                  </div>
+                  <h2 className="text-lg font-bold">Live Matches</h2>
+                  <Badge className="gradient-live text-live-foreground border-0 animate-pulse">
+                    {filteredMatches.length}
                   </Badge>
                 </div>
                 <div className="space-y-3">
                   {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
-                      <div key={match.id}>
+                      <div key={match.id} className="animate-fade-up" style={{ animationDelay: `${index * 50}ms` }}>
                         <MatchCard 
                           match={match} 
                           onClick={onMatchClick}
@@ -281,20 +301,30 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">No live matches currently</p>
+                    <div className="text-center py-12 px-4">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-secondary/50 flex items-center justify-center">
+                        <span className="text-3xl opacity-50">📺</span>
+                      </div>
+                      <p className="text-muted-foreground font-medium">No live matches currently</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">Check back later for live action!</p>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
-                {Object.entries(groupMatchesByLeague(filteredMatches)).map(([league, leagueMatches]) => (
-                  <div key={league}>
-                    <h2 className="text-base font-semibold mb-3 flex items-center gap-2">
-                      {getSportEmoji(leagueMatches[0].sport)} {league}
-                    </h2>
-                    <div className="space-y-3">
+                {Object.entries(groupMatchesByLeague(filteredMatches)).map(([league, leagueMatches], groupIndex) => (
+                  <div key={league} className="animate-fade-up" style={{ animationDelay: `${groupIndex * 100}ms` }}>
+                    <div className="flex items-center gap-2 mb-3 sticky top-0 py-2 bg-background/80 backdrop-blur-sm z-10">
+                      <div className="w-8 h-8 rounded-xl bg-secondary/80 flex items-center justify-center text-lg shadow-soft">
+                        {getSportEmoji(leagueMatches[0].sport)}
+                      </div>
+                      <h2 className="text-base font-bold flex-1 truncate">{league}</h2>
+                      <Badge variant="outline" className="text-xs rounded-lg">
+                        {leagueMatches.length}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
                       {leagueMatches.map((match, index) => (
                         <div key={match.id}>
                           <MatchCard 
@@ -311,8 +341,12 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
                 ))}
                 
                 {filteredMatches.length === 0 && (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground">No matches found for this date</p>
+                  <div className="text-center py-12 px-4">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-secondary/50 flex items-center justify-center">
+                      <span className="text-3xl opacity-50">🏟️</span>
+                    </div>
+                    <p className="text-muted-foreground font-medium">No matches found for this date</p>
+                    <p className="text-xs text-muted-foreground/70 mt-1">Try selecting a different date</p>
                   </div>
                 )}
               </div>

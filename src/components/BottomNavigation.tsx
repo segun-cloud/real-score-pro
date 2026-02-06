@@ -1,5 +1,5 @@
 import { Home, Trophy, Heart, Rss, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type NavigationItem = {
   id: string;
@@ -22,28 +22,52 @@ interface BottomNavigationProps {
 
 export const BottomNavigation = ({ activeScreen, onNavigate }: BottomNavigationProps) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t z-50">
-      <div className="mx-auto max-w-[480px] flex justify-around items-center h-16 px-2">
+    <nav className="fixed bottom-0 left-0 right-0 glass-strong border-t border-border/30 z-50 animate-slide-up">
+      <div className="mx-auto max-w-[480px] flex justify-around items-center h-16 px-1">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeScreen === item.id;
           
           return (
-            <Button
+            <button
               key={item.id}
-              variant="ghost"
-              size="sm"
               onClick={() => onNavigate(item.id)}
-              className={`flex-1 flex flex-col items-center justify-center h-full gap-1 rounded-none ${
-                isActive ? 'text-primary' : 'text-muted-foreground'
-              }`}
+              className={cn(
+                "flex-1 flex flex-col items-center justify-center h-full gap-0.5 relative press-effect",
+                "transition-all duration-300 rounded-xl mx-0.5",
+                isActive 
+                  ? "text-primary" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+              )}
             >
-              <Icon className={`h-5 w-5 ${isActive ? 'fill-primary' : ''}`} />
-              <span className="text-xs">{item.label}</span>
-            </Button>
+              {/* Active indicator */}
+              {isActive && (
+                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full gradient-primary shadow-sm" />
+              )}
+              
+              <div className={cn(
+                "p-1.5 rounded-xl transition-all duration-300",
+                isActive && "bg-primary/10 glow-primary"
+              )}>
+                <Icon className={cn(
+                  "h-5 w-5 transition-all duration-300",
+                  isActive && "scale-110"
+                )} />
+              </div>
+              
+              <span className={cn(
+                "text-[10px] font-medium transition-all duration-300",
+                isActive && "font-semibold"
+              )}>
+                {item.label}
+              </span>
+            </button>
           );
         })}
       </div>
+      
+      {/* Safe area for notched devices */}
+      <div className="h-safe-area-inset-bottom bg-transparent" />
     </nav>
   );
 };
