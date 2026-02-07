@@ -1258,9 +1258,9 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
 
   return (
     <div className="h-screen bg-background flex flex-col w-full max-w-full overflow-x-hidden">
-      {/* Fixed Header */}
-      <div className="sticky top-0 z-20 flex-shrink-0 p-4 border-b bg-background/95 backdrop-blur-sm w-full">
-        <div className="flex items-center gap-3 mb-3">
+      {/* Fixed Header - compact for live tracker mode */}
+      <div className="sticky top-0 z-20 flex-shrink-0 p-4 pb-2 border-b bg-background/95 backdrop-blur-sm w-full">
+        <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={onBack} className="rounded-xl hover-lift press-effect">
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -1279,31 +1279,9 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           )}
         </div>
 
-        {/* Show LiveMatchTracker for live football matches, simple header for others */}
-        {isLiveMatch && isFootballMatch ? (
-          <LiveMatchTracker
-            homeTeam={matchDetails.homeTeam}
-            awayTeam={matchDetails.awayTeam}
-            homeTeamLogo={matchDetails.homeTeamLogo}
-            awayTeamLogo={matchDetails.awayTeamLogo}
-            homeScore={matchDetails.homeScore ?? 0}
-            awayScore={matchDetails.awayScore ?? 0}
-            minute={matchDetails.minute}
-            status="live"
-            events={transformedEvents}
-            statistics={matchDetails.statistics ? {
-              possession: matchDetails.statistics.possession,
-              shots: matchDetails.statistics.shots,
-              shotsOnTarget: matchDetails.statistics.shotsOnTarget,
-              corners: matchDetails.statistics.corners,
-              fouls: matchDetails.statistics.fouls,
-            } : undefined}
-            currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
-            ballPosition={getBallPosition()}
-          />
-        ) : (
-          /* Standard match header for non-live or non-football matches */
-          <Card className="p-3 rounded-2xl">
+        {/* Standard match header for non-live or non-football matches */}
+        {!(isLiveMatch && isFootballMatch) && (
+          <Card className="p-3 rounded-2xl mt-3">
             <div className="flex items-center justify-between mb-2">
               <Badge 
                 variant={matchDetails.status === 'live' ? 'destructive' : 'secondary'}
@@ -1352,9 +1330,36 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
         )}
       </div>
 
-      {/* Main area with horizontal tabs + content */}
-      <div className="flex-1 min-h-0 px-4 py-3 flex flex-col overflow-hidden w-full min-w-0">
-        <div className="mb-4 w-full">
+      {/* Scrollable content area */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden w-full min-w-0">
+        {/* LiveMatchTracker in scrollable area for live football */}
+        {isLiveMatch && isFootballMatch && (
+          <div className="px-4 pt-3 flex-shrink-0">
+            <LiveMatchTracker
+              homeTeam={matchDetails.homeTeam}
+              awayTeam={matchDetails.awayTeam}
+              homeTeamLogo={matchDetails.homeTeamLogo}
+              awayTeamLogo={matchDetails.awayTeamLogo}
+              homeScore={matchDetails.homeScore ?? 0}
+              awayScore={matchDetails.awayScore ?? 0}
+              minute={matchDetails.minute}
+              status="live"
+              events={transformedEvents}
+              statistics={matchDetails.statistics ? {
+                possession: matchDetails.statistics.possession,
+                shots: matchDetails.statistics.shots,
+                shotsOnTarget: matchDetails.statistics.shotsOnTarget,
+                corners: matchDetails.statistics.corners,
+                fouls: matchDetails.statistics.fouls,
+              } : undefined}
+              currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
+              ballPosition={getBallPosition()}
+            />
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="px-4 py-3 w-full">
           <TabNavigation
             tabs={tabs}
             activeTab={activeTab}
@@ -1362,7 +1367,9 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             vertical={false}
           />
         </div>
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full min-w-0">
+        
+        {/* Tab content */}
+        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 pb-4 w-full min-w-0">
           {renderTabContent()}
         </main>
       </div>
