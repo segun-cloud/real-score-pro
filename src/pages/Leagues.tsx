@@ -89,7 +89,8 @@ export const Leagues = () => {
     try {
       // Only fetch API-Sports data if we have an api_league_id
       if (league.api_league_id) {
-        const currentYear = new Date().getFullYear();
+        // API-Sports free plan supports 2022-2024 seasons
+        const currentYear = Math.min(new Date().getFullYear() - 1, 2024);
         
         // Fetch standings, fixtures, and top scorers in parallel
         const [standingsRes, fixturesRes, scorersRes] = await Promise.all([

@@ -1,13 +1,11 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
+const APISPORTS_KEY = Deno.env.get('APISPORTS_KEY');
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -15,47 +13,48 @@ serve(async (req) => {
   try {
     const { leagueId, season } = await req.json();
 
-    if (!SPORTMONKS_API_KEY) {
-      throw new Error('SPORTMONKS_API_KEY not configured');
+    if (!APISPORTS_KEY) {
+      throw new Error('APISPORTS_KEY not configured');
     }
 
-    console.log(`Fetching standings for league: ${leagueId}, season: ${season || 'current'}`);
+    const currentSeason = season || new Date().getFullYear();
+    console.log(`Fetching standings for league: ${leagueId}, season: ${currentSeason}`);
 
-    // Use the correct SportMonks endpoint - standings by league ID
-    const url = `https://api.sportmonks.com/v3/football/standings/live/leagues/${leagueId}?api_token=${SPORTMONKS_API_KEY}&include=participant`;
-    
-    console.log(`Calling SportMonks URL: ${url.replace(SPORTMONKS_API_KEY, 'HIDDEN')}`);
-    
-    const response = await fetch(url);
+    const url = `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${currentSeason}`;
+    console.log(`Calling API-Sports: ${url}`);
+
+    const response = await fetch(url, {
+      headers: { 'x-apisports-key': APISPORTS_KEY },
+    });
+
     const apiData = await response.json();
+    console.log('API-Sports standings response:', JSON.stringify(apiData).substring(0, 500));
 
-    console.log('SportMonks standings response:', JSON.stringify(apiData).substring(0, 500));
-
-    // Handle API access/permission errors gracefully
-    if (!response.ok || apiData.code === 5007 || apiData.message?.includes('do not have access')) {
-      console.warn('SportMonks access error or no data:', apiData.message || 'Unknown error');
+    if (!response.ok || apiData.errors?.length > 0) {
+      console.warn('API-Sports error or no data:', apiData.errors || 'Unknown error');
       return new Response(
         JSON.stringify({ standings: [], message: 'Standings not available for this league' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Transform SportMonks data to our format
-    const standings = (apiData.data || []).map((entry: any) => ({
-      position: entry.position,
-      team_name: entry.participant?.name || 'Unknown',
-      team_logo: entry.participant?.image_path || '',
-      team_id: entry.participant_id,
+    // API-Sports returns standings in response[0].league.standings[0]
+    const leagueData = apiData.response?.[0]?.league;
+    const standingsArr = leagueData?.standings?.[0] || [];
+
+    const standings = standingsArr.map((entry: any) => ({
+      position: entry.rank,
+      team_name: entry.team?.name || 'Unknown',
+      team_logo: entry.team?.logo || '',
+      team_id: entry.team?.id,
       points: entry.points || 0,
-      played: entry.details?.find((d: any) => d.type_id === 129)?.value || 0,
-      won: entry.details?.find((d: any) => d.type_id === 130)?.value || 0,
-      drawn: entry.details?.find((d: any) => d.type_id === 131)?.value || 0,
-      lost: entry.details?.find((d: any) => d.type_id === 132)?.value || 0,
-      goals_for: entry.details?.find((d: any) => d.type_id === 133)?.value || 0,
-      goals_against: entry.details?.find((d: any) => d.type_id === 134)?.value || 0,
-      goal_difference: entry.details?.find((d: any) => d.type_id === 179)?.value || 
-        ((entry.details?.find((d: any) => d.type_id === 133)?.value || 0) - 
-         (entry.details?.find((d: any) => d.type_id === 134)?.value || 0)),
+      played: entry.all?.played || 0,
+      won: entry.all?.win || 0,
+      drawn: entry.all?.draw || 0,
+      lost: entry.all?.lose || 0,
+      goals_for: entry.all?.goals?.for || 0,
+      goals_against: entry.all?.goals?.against || 0,
+      goal_difference: entry.goalsDiff || 0,
     }));
 
     console.log(`Successfully fetched ${standings.length} standings entries`);

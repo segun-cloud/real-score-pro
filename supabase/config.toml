@@ -12,9 +12,6 @@ verify_jwt = false
 [functions.fetch-match-details-apisports]
 verify_jwt = false
 
-[functions.fetch-match-details-sportmonks]
-verify_jwt = false
-
 [functions.fetch-highlights]
 verify_jwt = false
 

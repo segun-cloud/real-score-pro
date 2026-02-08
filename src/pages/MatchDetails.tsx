@@ -44,19 +44,18 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
       try {
         const currentMatchId = match?.id || matchId;
         
-        // Check if this is a SportMonks or API-Football match
-        const isSportMonksMatch = currentMatchId.startsWith('sportmonks-') || currentMatchId.startsWith('api-football-');
-        const isApiSportsMatch = currentMatchId.startsWith('apisports-');
+        // Check if this is an API-Sports match
+        const isApiSportsMatch = currentMatchId.startsWith('apisports-') || currentMatchId.startsWith('api-football-');
         
-        if (isSportMonksMatch) {
-          // Fetch detailed data from SportMonks
-          const { data, error } = await supabase.functions.invoke('fetch-match-details-sportmonks', {
+        if (isApiSportsMatch && match) {
+          // Fetch detailed data from API-Sports
+          const { data, error } = await supabase.functions.invoke('fetch-match-details-apisports', {
             body: { matchId: currentMatchId },
           });
 
           if (error) throw error;
 
-          if (data && match) {
+          if (data) {
             const details: MatchDetailsType = {
               ...match,
               events: data.events || [],
@@ -69,40 +68,6 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             };
             setMatchDetails(details);
             if (data.h2h) setH2hData(data.h2h);
-          } else if (match) {
-            // If no detailed data but we have match, use match with empty details
-            const details: MatchDetailsType = {
-              ...match,
-              events: data?.events || [],
-              odds: data?.odds || { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
-              lineups: data?.lineups,
-              statistics: data?.statistics || {},
-              commentary: [],
-              media: { highlights: [], photos: [] },
-              h2h: data?.h2h,
-            };
-            setMatchDetails(details);
-            if (data?.h2h) setH2hData(data.h2h);
-          }
-        } else if (isApiSportsMatch) {
-          // Fetch detailed data from API-Sports (legacy)
-          const { data, error } = await supabase.functions.invoke('fetch-match-details-apisports', {
-            body: { matchId: currentMatchId },
-          });
-
-          if (error) throw error;
-
-          if (data && match) {
-            const details: MatchDetailsType = {
-              ...match,
-              events: data.events || [],
-              odds: data.odds || { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
-              lineups: data.lineups,
-              statistics: data.statistics || {},
-              commentary: [],
-              media: { highlights: [], photos: [] },
-            };
-            setMatchDetails(details);
           } else {
             throw new Error('No detailed data returned');
           }
@@ -115,16 +80,16 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             lineups: undefined,
             statistics: {},
             commentary: [],
-              media: { highlights: [], photos: [] },
-            };
-            setMatchDetails(details);
+            media: { highlights: [], photos: [] },
+          };
+          setMatchDetails(details);
         } else {
           // Try to fetch from cache using api_match_id
           const { data: cachedMatch } = await supabase
             .from('api_match_cache')
             .select('*')
             .eq('api_match_id', matchId)
-            .single();
+            .maybeSingle();
           
           if (cachedMatch) {
             const rawData = cachedMatch.raw_data as any;
@@ -144,11 +109,11 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
               events: [],
               odds: { homeWin: 0, draw: 0, awayWin: 0, updated: new Date().toISOString() },
               lineups: undefined,
-            statistics: {},
-            commentary: [],
-            media: { highlights: [], photos: [] },
-          };
-          setMatchDetails(details);
+              statistics: {},
+              commentary: [],
+              media: { highlights: [], photos: [] },
+            };
+            setMatchDetails(details);
           } else {
             // Fallback to mock data
             const details = getMockMatchDetails(matchId);

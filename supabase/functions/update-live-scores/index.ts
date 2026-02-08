@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -6,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
+const APISPORTS_KEY = Deno.env.get('APISPORTS_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -28,121 +27,52 @@ interface LiveScore {
   last_updated: string;
 }
 
-function mapStatus(fixture: any): string {
-  const statusId = fixture.state_id;
-  const statusName = fixture.state?.name?.toLowerCase() || '';
-  
-  // Live statuses
-  if ([2, 3, 4, 5].includes(statusId) || 
-      ['live', 'inplay', 'playing', '1st half', '2nd half', 'halftime', 'extra time', 'penalties'].includes(statusName)) {
-    return 'live';
-  }
-  
-  // Finished statuses
-  if ([5, 6, 7, 8, 9, 10, 11].includes(statusId) || 
-      ['finished', 'ft', 'aet', 'pen', 'ended', 'full time'].includes(statusName)) {
-    return 'finished';
-  }
-  
+function mapStatus(apiStatus: string): string {
+  const liveStatuses = ['1H', '2H', 'HT', 'ET', 'P', 'LIVE', 'BT'];
+  const finishedStatuses = ['FT', 'AET', 'PEN', 'FT_PEN', 'WO', 'AWD'];
+  if (liveStatuses.includes(apiStatus)) return 'live';
+  if (finishedStatuses.includes(apiStatus)) return 'finished';
   return 'scheduled';
 }
 
-function getCurrentMinute(fixture: any): number | null {
-  if (fixture.minute) return fixture.minute;
-  if (fixture.time?.minute) return fixture.time.minute;
-  if (fixture.periods) {
-    const periods = fixture.periods;
-    if (periods.length > 0) {
-      const lastPeriod = periods[periods.length - 1];
-      if (lastPeriod.minutes) return lastPeriod.minutes;
-    }
-  }
-  return null;
-}
-
-function parseScores(fixture: any): { homeScore: number; awayScore: number } {
-  let homeScore = 0;
-  let awayScore = 0;
-
-  if (fixture.scores) {
-    const scores = fixture.scores;
-    if (Array.isArray(scores)) {
-      const ftScore = scores.find((s: any) => s.description === 'CURRENT' || s.description === '2ND_HALF');
-      if (ftScore) {
-        homeScore = ftScore.score?.participant === 'home' ? ftScore.score.goals : homeScore;
-        awayScore = ftScore.score?.participant === 'away' ? ftScore.score.goals : awayScore;
-      }
-      scores.forEach((s: any) => {
-        if (s.score?.participant === 'home') homeScore = Math.max(homeScore, s.score.goals || 0);
-        if (s.score?.participant === 'away') awayScore = Math.max(awayScore, s.score.goals || 0);
-      });
-    }
-  }
-
-  if (fixture.score) {
-    if (typeof fixture.score === 'string') {
-      const parts = fixture.score.split('-');
-      if (parts.length === 2) {
-        homeScore = parseInt(parts[0].trim()) || 0;
-        awayScore = parseInt(parts[1].trim()) || 0;
-      }
-    }
-  }
-
-  if (fixture.result_info) {
-    const match = fixture.result_info.match(/(\d+)-(\d+)/);
-    if (match) {
-      homeScore = parseInt(match[1]) || 0;
-      awayScore = parseInt(match[2]) || 0;
-    }
-  }
-
-  return { homeScore, awayScore };
-}
-
 async function fetchLiveMatches(): Promise<LiveScore[]> {
-  if (!SPORTMONKS_API_KEY) {
-    console.log('No SportMonks API key configured');
+  if (!APISPORTS_KEY) {
+    console.log('No API-Sports key configured');
     return [];
   }
 
   try {
-    const url = `https://api.sportmonks.com/v3/football/livescores/inplay?api_token=${SPORTMONKS_API_KEY}&include=participants;league;scores;state`;
-    console.log('Fetching live matches from SportMonks...');
+    const url = 'https://v3.football.api-sports.io/fixtures?live=all';
+    console.log('Fetching live matches from API-Sports...');
     
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: { 'x-apisports-key': APISPORTS_KEY },
+    });
     
     if (!response.ok) {
-      console.error('SportMonks API error:', response.status, await response.text());
+      console.error('API-Sports error:', response.status, await response.text());
       return [];
     }
 
     const data = await response.json();
-    const fixtures = data.data || [];
+    const fixtures = data.response || [];
     console.log(`Found ${fixtures.length} live matches`);
 
-    return fixtures.map((fixture: any) => {
-      const participants = fixture.participants || [];
-      const homeTeam = participants.find((p: any) => p.meta?.location === 'home');
-      const awayTeam = participants.find((p: any) => p.meta?.location === 'away');
-      const { homeScore, awayScore } = parseScores(fixture);
-
-      return {
-        match_id: String(fixture.id),
-        home_team: homeTeam?.name || 'Home Team',
-        away_team: awayTeam?.name || 'Away Team',
-        home_score: homeScore,
-        away_score: awayScore,
-        status: mapStatus(fixture),
-        minute: getCurrentMinute(fixture),
-        league_name: fixture.league?.name || 'Unknown League',
-        home_team_logo: homeTeam?.image_path || null,
-        away_team_logo: awayTeam?.image_path || null,
-        sport: 'football',
-        match_date: fixture.starting_at || null,
-        last_updated: new Date().toISOString(),
-      };
-    });
+    return fixtures.map((f: any) => ({
+      match_id: `apisports-football-${f.fixture.id}`,
+      home_team: f.teams.home.name,
+      away_team: f.teams.away.name,
+      home_score: f.goals.home ?? 0,
+      away_score: f.goals.away ?? 0,
+      status: mapStatus(f.fixture.status.short),
+      minute: f.fixture.status.elapsed,
+      league_name: f.league.name,
+      home_team_logo: f.teams.home.logo,
+      away_team_logo: f.teams.away.logo,
+      sport: 'football',
+      match_date: f.fixture.date,
+      last_updated: new Date().toISOString(),
+    }));
   } catch (error) {
     console.error('Error fetching live matches:', error);
     return [];
@@ -158,9 +88,8 @@ async function updateLiveScores(scores: LiveScore[]): Promise<{ updated: number;
       .from('live_scores')
       .select('home_score, away_score, minute, status')
       .eq('match_id', score.match_id)
-      .single();
+      .maybeSingle();
 
-    // Only update if something changed
     if (existing) {
       if (
         existing.home_score !== score.home_score ||
@@ -203,7 +132,7 @@ async function updateLiveScores(scores: LiveScore[]): Promise<{ updated: number;
   return { updated, inserted };
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
