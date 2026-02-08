@@ -1,36 +1,23 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
+const APISPORTS_KEY = Deno.env.get('APISPORTS_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-const SPORTMONKS_BASE_URL = 'https://api.sportmonks.com/v3';
-
-// Status mapping from SportMonks to our format
-const mapStatus = (stateId: number, stateName: string): string => {
-  // SportMonks state IDs: 1=NS (Not Started), 2=LIVE, 3=HT, 4=FT, 5=FT_PEN, etc.
-  const liveStates = [2, 3, 21, 22, 23, 24, 25]; // Live, HT, Break, etc.
-  const finishedStates = [4, 5, 6, 7, 8, 9, 10, 11]; // FT, AET, PEN, etc.
-  
-  if (liveStates.includes(stateId)) return 'live';
-  if (finishedStates.includes(stateId)) return 'finished';
-  if (stateId === 1) return 'scheduled';
-  
-  // Fallback based on state name
-  if (stateName?.toLowerCase().includes('live') || stateName === 'HT') return 'live';
-  if (stateName === 'FT' || stateName?.toLowerCase().includes('finish')) return 'finished';
-  
+function mapFootballStatus(apiStatus: string): 'scheduled' | 'live' | 'finished' {
+  const liveStatuses = ['1H', '2H', 'HT', 'ET', 'P', 'LIVE', 'BT'];
+  const finishedStatuses = ['FT', 'AET', 'PEN', 'FT_PEN', 'WO', 'AWD', 'CANC', 'ABD', 'SUSP', 'INT'];
+  if (liveStatuses.includes(apiStatus)) return 'live';
+  if (finishedStatuses.includes(apiStatus)) return 'finished';
   return 'scheduled';
-};
+}
 
 async function logApiRequest(endpoint: string, sport: string, status: number, cached: boolean) {
   await supabase.from('api_request_log').insert({
@@ -42,233 +29,126 @@ async function logApiRequest(endpoint: string, sport: string, status: number, ca
 }
 
 async function fetchFromCache(sport: string, date: string) {
-  const cacheExpiry = new Date(Date.now() - 60000); // 1 minute cache
-  
+  const cacheExpiry = new Date(Date.now() - 60000).toISOString(); // 1 minute cache
   const { data } = await supabase
     .from('api_match_cache')
     .select('*')
     .eq('sport', sport)
     .gte('match_date', new Date(date).toISOString())
     .lt('match_date', new Date(new Date(date).getTime() + 86400000).toISOString())
-    .gte('last_updated', cacheExpiry.toISOString());
-  
+    .gte('last_updated', cacheExpiry);
   return data;
 }
 
-async function saveToCache(matches: any[]) {
-  for (const match of matches) {
-    await supabase
-      .from('api_match_cache')
-      .upsert({
-        api_match_id: match.api_match_id,
-        sport: match.sport,
-        league_name: match.league,
-        home_team: match.homeTeam,
-        away_team: match.awayTeam,
-        home_score: match.homeScore,
-        away_score: match.awayScore,
-        status: match.status,
-        match_date: match.startTime,
-        minute: match.minute,
-        raw_data: match,
-        last_updated: new Date().toISOString(),
-      }, { onConflict: 'api_match_id' });
-  }
-}
-
-// Parse participant scores from SportMonks response
-function parseScores(fixture: any) {
-  let homeScore = null;
-  let awayScore = null;
-  
-  // Method 1: Get scores from the scores array (newest format)
-  if (fixture.scores && Array.isArray(fixture.scores) && fixture.scores.length > 0) {
-    // Look for CURRENT or FT scores
-    for (const s of fixture.scores) {
-      if (s.participant === 'home' && (s.description === 'CURRENT' || s.description === 'FT' || s.description === '2ND_HALF')) {
-        homeScore = s.score?.goals ?? null;
-      }
-      if (s.participant === 'away' && (s.description === 'CURRENT' || s.description === 'FT' || s.description === '2ND_HALF')) {
-        awayScore = s.score?.goals ?? null;
-      }
-    }
-  }
-  
-  // Method 2: Try participants array meta (backup)
-  if ((homeScore === null || awayScore === null) && fixture.participants) {
-    const homeTeam = fixture.participants.find((p: any) => p.meta?.location === 'home');
-    const awayTeam = fixture.participants.find((p: any) => p.meta?.location === 'away');
-    
-    // Some responses have score directly on participant
-    if (homeTeam?.meta?.winner !== undefined) {
-      // Try to calculate from aggregate score if available
-      const homeAgg = fixture.aggregate?.home_score;
-      const awayAgg = fixture.aggregate?.away_score;
-      if (homeAgg !== undefined) homeScore = homeAgg;
-      if (awayAgg !== undefined) awayScore = awayAgg;
-    }
-  }
-  
-  // Method 3: Try result_info parsing for finished matches (last resort)
-  if ((homeScore === null || awayScore === null) && fixture.result_info) {
-    const resultMatch = fixture.result_info.match(/(\d+)-(\d+)/);
-    if (resultMatch) {
-      homeScore = parseInt(resultMatch[1]);
-      awayScore = parseInt(resultMatch[2]);
-    }
-  }
-  
-  return { homeScore, awayScore };
-}
-
-// Get team names from participants
-function getTeamNames(fixture: any) {
-  let homeTeam = 'Home Team';
-  let awayTeam = 'Away Team';
-  let homeTeamLogo = null;
-  let awayTeamLogo = null;
-  
-  if (fixture.participants && Array.isArray(fixture.participants)) {
-    const home = fixture.participants.find((p: any) => p.meta?.location === 'home');
-    const away = fixture.participants.find((p: any) => p.meta?.location === 'away');
-    
-    if (home) {
-      homeTeam = home.name || homeTeam;
-      homeTeamLogo = home.image_path || null;
-    }
-    if (away) {
-      awayTeam = away.name || awayTeam;
-      awayTeamLogo = away.image_path || null;
-    }
-  }
-  
-  return { homeTeam, awayTeam, homeTeamLogo, awayTeamLogo };
-}
-
-// Get current minute from periods
-function getCurrentMinute(fixture: any): number | null {
-  if (fixture.periods && Array.isArray(fixture.periods)) {
-    const activePeriod = fixture.periods.find((p: any) => p.ticking === true);
-    if (activePeriod) {
-      return activePeriod.minutes || null;
-    }
-  }
-  
-  // Try to get from state info
-  if (fixture.state?.short_name === 'HT') {
-    return 45;
-  }
-  
-  return fixture.minute || null;
-}
-
 async function fetchLiveFootballMatches() {
-  console.log('Calling SportMonks API for live football matches');
+  console.log('Calling API-Sports for live football matches');
+  const url = 'https://v3.football.api-sports.io/fixtures?live=all';
   
-  const url = `${SPORTMONKS_BASE_URL}/football/livescores/inplay?api_token=${SPORTMONKS_API_KEY}&include=participants;scores;periods;events;league.country;round`;
+  const response = await fetch(url, {
+    headers: { 'x-apisports-key': APISPORTS_KEY! },
+  });
   
-  const response = await fetch(url);
-  
-  await logApiRequest('sportmonks/livescores/inplay', 'football', response.status, false);
-  
-  console.log(`SportMonks API Response Status: ${response.status}`);
+  await logApiRequest('apisports/fixtures/live', 'football', response.status, false);
+  console.log(`API-Sports Response Status: ${response.status}`);
   
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`SportMonks API Error: ${response.status} - ${errorText}`);
-    throw new Error(`API error: ${response.status} - ${errorText}`);
+    console.error(`API-Sports Error: ${response.status} - ${errorText}`);
+    throw new Error(`API error: ${response.status}`);
   }
   
   const data = await response.json();
-  console.log(`SportMonks Response sample:`, JSON.stringify(data).substring(0, 500));
-  console.log(`Number of live fixtures: ${data.data?.length || 0}`);
+  const fixtures = data.response || [];
+  console.log(`Found ${fixtures.length} live football matches`);
   
-  if (!data.data || data.data.length === 0) {
-    console.log('No live matches found');
-    return [];
-  }
-  
-  return data.data.map((fixture: any) => {
-    const { homeTeam, awayTeam, homeTeamLogo, awayTeamLogo } = getTeamNames(fixture);
-    const { homeScore, awayScore } = parseScores(fixture);
-    const minute = getCurrentMinute(fixture);
-    const status = mapStatus(fixture.state_id, fixture.state?.short_name);
-    
-    // Get league name
-    const leagueName = fixture.league?.name || fixture.league_id?.toString() || 'Unknown League';
-    
-    return {
-      id: `api-football-${fixture.id}`,
-      api_match_id: `sportmonks-football-${fixture.id}`,
-      sport: 'football',
-      homeTeam,
-      awayTeam,
-      homeScore,
-      awayScore,
-      status,
-      startTime: fixture.starting_at || new Date().toISOString(),
-      league: leagueName,
-      homeTeamLogo,
-      awayTeamLogo,
-      minute,
-      round: fixture.round?.name || null,
-      events: fixture.events || [],
-    };
-  });
+  return fixtures.map((f: any) => ({
+    id: `apisports-football-${f.fixture.id}`,
+    api_match_id: `apisports-football-${f.fixture.id}`,
+    sport: 'football',
+    homeTeam: f.teams.home.name,
+    awayTeam: f.teams.away.name,
+    homeScore: f.goals.home,
+    awayScore: f.goals.away,
+    status: mapFootballStatus(f.fixture.status.short),
+    startTime: f.fixture.date,
+    league: f.league.name,
+    homeTeamLogo: f.teams.home.logo,
+    awayTeamLogo: f.teams.away.logo,
+    minute: f.fixture.status.elapsed,
+    round: f.league.round || null,
+  }));
 }
 
 async function fetchScheduledFootballMatches(date: string) {
-  console.log(`Calling SportMonks API for scheduled football matches on ${date}`);
+  console.log(`Calling API-Sports for football matches on ${date}`);
+  const url = `https://v3.football.api-sports.io/fixtures?date=${date}`;
   
-  const url = `${SPORTMONKS_BASE_URL}/football/fixtures/date/${date}?api_token=${SPORTMONKS_API_KEY}&include=participants;scores;league.country;round`;
+  const response = await fetch(url, {
+    headers: { 'x-apisports-key': APISPORTS_KEY! },
+  });
   
-  const response = await fetch(url);
-  
-  await logApiRequest('sportmonks/fixtures/date', 'football', response.status, false);
-  
-  console.log(`SportMonks API Response Status: ${response.status}`);
+  await logApiRequest('apisports/fixtures/date', 'football', response.status, false);
+  console.log(`API-Sports Response Status: ${response.status}`);
   
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`SportMonks API Error: ${response.status} - ${errorText}`);
-    throw new Error(`API error: ${response.status} - ${errorText}`);
+    console.error(`API-Sports Error: ${response.status} - ${errorText}`);
+    throw new Error(`API error: ${response.status}`);
   }
   
   const data = await response.json();
-  console.log(`SportMonks Response sample:`, JSON.stringify(data).substring(0, 500));
-  console.log(`Number of fixtures: ${data.data?.length || 0}`);
+  const fixtures = data.response || [];
+  console.log(`Found ${fixtures.length} football matches for ${date}`);
   
-  if (!data.data || data.data.length === 0) {
-    console.log('No matches found for date');
-    return [];
-  }
+  // Limit to top leagues to avoid timeout (top 200 matches)
+  const limitedFixtures = fixtures.slice(0, 200);
   
-  return data.data.map((fixture: any) => {
-    const { homeTeam, awayTeam, homeTeamLogo, awayTeamLogo } = getTeamNames(fixture);
-    const { homeScore, awayScore } = parseScores(fixture);
-    const status = mapStatus(fixture.state_id, fixture.state?.short_name);
-    const leagueName = fixture.league?.name || fixture.league_id?.toString() || 'Unknown League';
-    
-    return {
-      id: `api-football-${fixture.id}`,
-      api_match_id: `sportmonks-football-${fixture.id}`,
-      sport: 'football',
-      homeTeam,
-      awayTeam,
-      homeScore,
-      awayScore,
-      status,
-      startTime: fixture.starting_at || new Date().toISOString(),
-      league: leagueName,
-      homeTeamLogo,
-      awayTeamLogo,
-      minute: null,
-      round: fixture.round?.name || null,
-    };
-  });
+  return limitedFixtures.map((f: any) => ({
+    id: `apisports-football-${f.fixture.id}`,
+    api_match_id: `apisports-football-${f.fixture.id}`,
+    sport: 'football',
+    homeTeam: f.teams.home.name,
+    awayTeam: f.teams.away.name,
+    homeScore: f.goals.home,
+    awayScore: f.goals.away,
+    status: mapFootballStatus(f.fixture.status.short),
+    startTime: f.fixture.date,
+    league: f.league.name,
+    homeTeamLogo: f.teams.home.logo,
+    awayTeamLogo: f.teams.away.logo,
+    minute: f.fixture.status.elapsed,
+    round: f.league.round || null,
+  }));
 }
 
-serve(async (req) => {
+async function saveToCache(matches: any[]) {
+  // Batch upsert instead of one-by-one
+  const upsertData = matches.map(m => ({
+    api_match_id: m.api_match_id,
+    sport: m.sport,
+    league_name: m.league,
+    home_team: m.homeTeam,
+    away_team: m.awayTeam,
+    home_score: m.homeScore,
+    away_score: m.awayScore,
+    status: m.status,
+    match_date: m.startTime,
+    minute: m.minute,
+    raw_data: m,
+    last_updated: new Date().toISOString(),
+  }));
+
+  // Batch in chunks of 50
+  for (let i = 0; i < upsertData.length; i += 50) {
+    const chunk = upsertData.slice(i, i + 50);
+    const { error } = await supabase
+      .from('api_match_cache')
+      .upsert(chunk, { onConflict: 'api_match_id' });
+    if (error) console.error('Cache upsert error:', error);
+  }
+}
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -276,15 +156,15 @@ serve(async (req) => {
   try {
     const { sport, date, liveOnly } = await req.json();
     
-    if (!SPORTMONKS_API_KEY) {
-      console.error('SPORTMONKS_API_KEY not configured');
-      throw new Error('API key not configured. Please add your SportMonks API key.');
+    if (!APISPORTS_KEY) {
+      console.error('APISPORTS_KEY not configured');
+      throw new Error('API key not configured. Please add your API-Sports key.');
     }
 
     const targetDate = date || new Date().toISOString().split('T')[0];
     console.log(`Fetching ${sport} matches for ${targetDate}, liveOnly: ${liveOnly}`);
 
-    // Check cache first (skip for live matches to get real-time data)
+    // Check cache first (skip for live matches)
     if (!liveOnly) {
       const cachedMatches = await fetchFromCache(sport, targetDate);
       if (cachedMatches && cachedMatches.length > 0) {
@@ -302,6 +182,8 @@ serve(async (req) => {
           startTime: match.match_date,
           league: match.league_name,
           minute: match.minute,
+          homeTeamLogo: (match.raw_data as any)?.homeTeamLogo,
+          awayTeamLogo: (match.raw_data as any)?.awayTeamLogo,
         }));
         
         return new Response(
@@ -311,8 +193,7 @@ serve(async (req) => {
       }
     }
 
-    // Fetch from SportMonks API
-    let matches = [];
+    let matches: any[] = [];
     
     if (sport === 'football') {
       if (liveOnly) {
@@ -321,17 +202,17 @@ serve(async (req) => {
         matches = await fetchScheduledFootballMatches(targetDate);
       }
     } else {
-      // SportMonks primarily covers football - other sports not yet implemented
-      console.log(`Sport ${sport} not yet implemented with SportMonks`);
+      // Other sports not yet covered - return empty
+      console.log(`Sport ${sport} - returning empty for now`);
       matches = [];
     }
 
-    // Save to cache (not for live matches)
+    // Save to cache (not for live)
     if (matches.length > 0 && !liveOnly) {
       await saveToCache(matches);
     }
 
-    console.log(`Returning ${matches.length} matches from SportMonks API`);
+    console.log(`Returning ${matches.length} matches from API-Sports`);
 
     return new Response(
       JSON.stringify({ matches, cached: false }),
