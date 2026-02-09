@@ -33,19 +33,19 @@ const sports = [
 export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, userId, isGuest, onGuestLogin }: HeaderProps) => {
   return (
     <header className="glass-strong sticky top-0 z-50 border-b border-border/50">
-      <div className="flex items-center justify-between p-3">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center shadow-medium glow-primary">
-              <Sparkles className="h-4 w-4 text-primary-foreground" />
+      <div className="flex items-center justify-between px-2.5 py-2">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <div className="w-6 h-6 rounded-lg gradient-primary flex items-center justify-center shadow-medium glow-primary">
+              <Sparkles className="h-3 w-3 text-primary-foreground" />
             </div>
-            <h1 className="text-lg font-bold gradient-text tracking-tight">
+            <h1 className="text-sm font-bold gradient-text tracking-tight">
               RealScore
             </h1>
           </div>
           
           <Select value={selectedSport} onValueChange={onSportChange}>
-            <SelectTrigger className="w-[130px] h-8 text-xs bg-secondary/50 border-border/50 rounded-xl hover-lift">
+            <SelectTrigger className="w-[110px] h-7 text-[11px] bg-secondary/50 border-border/50 rounded-lg hover-lift">
               <SelectValue placeholder="Select sport" />
             </SelectTrigger>
             <SelectContent className="glass-strong rounded-xl border-border/50">
@@ -53,9 +53,9 @@ export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, use
                 <SelectItem 
                   key={sport.id} 
                   value={sport.id} 
-                  className="text-sm rounded-lg cursor-pointer"
+                  className="text-xs rounded-lg cursor-pointer"
                 >
-                  <span className="mr-2">{sport.emoji}</span>
+                  <span className="mr-1.5">{sport.emoji}</span>
                   {sport.name}
                 </SelectItem>
               ))}
@@ -63,22 +63,22 @@ export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, use
           </Select>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {isGuest ? (
             <Button 
               variant="default" 
               size="sm"
               onClick={onGuestLogin}
-              className="h-8 text-xs rounded-xl gradient-primary border-0 shadow-medium glow-primary hover-lift press-effect"
+              className="h-7 text-[11px] rounded-lg gradient-primary border-0 shadow-medium glow-primary hover-lift press-effect px-2.5"
             >
-              <LogIn className="h-3.5 w-3.5 mr-1.5" />
+              <LogIn className="h-3 w-3 mr-1" />
               Sign In
             </Button>
           ) : (
             <>
-              <div className="flex items-center gap-1.5 gradient-coins px-3 py-1.5 rounded-xl shadow-soft glow-coins animate-pulse-slow">
-                <Coins className="h-3.5 w-3.5 text-coins-foreground" />
-                <span className="text-xs font-bold text-coins-foreground">{coins.toLocaleString()}</span>
+              <div className="flex items-center gap-1 gradient-coins px-2 py-1 rounded-lg shadow-soft glow-coins animate-pulse-slow">
+                <Coins className="h-3 w-3 text-coins-foreground" />
+                <span className="text-[11px] font-bold text-coins-foreground">{coins.toLocaleString()}</span>
               </div>
               
               <NotificationToggle userId={userId} />
@@ -86,10 +86,10 @@ export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, use
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-9 w-9 rounded-xl gradient-primary border-0 shadow-medium glow-primary hover-lift press-effect"
+                className="h-7 w-7 rounded-lg gradient-primary border-0 shadow-medium glow-primary hover-lift press-effect"
                 onClick={onFunHubClick}
               >
-                <Gamepad2 className="h-4.5 w-4.5 text-primary-foreground" />
+                <Gamepad2 className="h-3.5 w-3.5 text-primary-foreground" />
               </Button>
             </>
           )}
