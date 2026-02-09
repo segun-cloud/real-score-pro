@@ -86,10 +86,10 @@ export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, use
               <Button 
                 variant="ghost" 
                 size="icon"
-                className="h-9 w-9 rounded-xl bg-secondary/50 hover:bg-primary/10 hover:text-primary hover-lift press-effect"
+                className="h-9 w-9 rounded-xl gradient-primary border-0 shadow-medium glow-primary hover-lift press-effect"
                 onClick={onFunHubClick}
               >
-                <Gamepad2 className="h-4 w-4" />
+                <Gamepad2 className="h-4.5 w-4.5 text-primary-foreground" />
               </Button>
             </>
           )}
