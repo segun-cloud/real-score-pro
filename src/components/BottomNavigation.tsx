@@ -23,7 +23,7 @@ interface BottomNavigationProps {
 export const BottomNavigation = ({ activeScreen, onNavigate }: BottomNavigationProps) => {
   return (
     <nav className="fixed bottom-0 left-0 right-0 glass-strong border-t border-border/30 z-50 animate-slide-up">
-      <div className="mx-auto max-w-[480px] flex justify-around items-center h-16 px-1">
+      <div className="mx-auto max-w-[480px] flex justify-around items-center h-12 px-1">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeScreen === item.id;
@@ -33,24 +33,23 @@ export const BottomNavigation = ({ activeScreen, onNavigate }: BottomNavigationP
               key={item.id}
               onClick={() => onNavigate(item.id)}
               className={cn(
-                "flex-1 flex flex-col items-center justify-center h-full gap-0.5 relative press-effect",
-                "transition-all duration-300 rounded-xl mx-0.5",
+                "flex-1 flex flex-col items-center justify-center h-full gap-0 relative press-effect",
+                "transition-all duration-300 rounded-lg mx-0.5",
                 isActive 
                   ? "text-primary" 
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
               )}
             >
-              {/* Active indicator */}
               {isActive && (
-                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full gradient-primary shadow-sm" />
+                <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-6 h-0.5 rounded-full gradient-primary shadow-sm" />
               )}
               
               <div className={cn(
-                "p-1.5 rounded-xl transition-all duration-300",
+                "p-1 rounded-lg transition-all duration-300",
                 isActive && "bg-primary/10 glow-primary"
               )}>
                 <Icon className={cn(
-                  "h-5 w-5 transition-all duration-300",
+                  "h-4 w-4 transition-all duration-300",
                   isActive && "scale-110"
                 )} />
               </div>

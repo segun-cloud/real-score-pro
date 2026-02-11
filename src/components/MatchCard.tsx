@@ -61,39 +61,37 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
   return (
     <Card 
       className={cn(
-        "group p-3 transition-all duration-300 cursor-pointer hover-lift press-effect overflow-hidden relative",
+        "group p-2 transition-all duration-300 cursor-pointer hover-lift press-effect overflow-hidden relative",
         isLive 
-          ? "bg-gradient-to-r from-live/5 via-card to-card border-l-4 border-l-live shadow-medium glow-live" 
-          : "bg-card border-border/50 hover:border-primary/30 hover:shadow-medium"
+          ? "bg-gradient-to-r from-live/5 via-card to-card border-l-3 border-l-live shadow-sm glow-live" 
+          : "bg-card border-border/50 hover:border-primary/30 hover:shadow-sm"
       )}
       onClick={() => onClick(match)}
     >
-      {/* Shimmer effect for live matches */}
       {isLive && (
         <div className="absolute inset-0 animate-shimmer pointer-events-none" />
       )}
       
-      <div className="flex items-center gap-3 relative">
-        {/* Teams and scores */}
-        <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex items-center gap-2 relative">
+        <div className="flex-1 min-w-0 space-y-1">
           {/* Home Team */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
               {match.homeTeamLogo ? (
                 <img 
                   src={match.homeTeamLogo} 
                   alt="" 
-                  className="w-6 h-6 object-contain flex-shrink-0 rounded-md bg-secondary/30 p-0.5" 
+                  className="w-4.5 h-4.5 object-contain flex-shrink-0 rounded bg-secondary/30 p-0.5" 
                 />
               ) : (
-                <div className="w-6 h-6 bg-gradient-to-br from-primary/20 to-primary/10 rounded-md flex-shrink-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-primary/60">
+                <div className="w-4.5 h-4.5 bg-gradient-to-br from-primary/20 to-primary/10 rounded flex-shrink-0 flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-primary/60">
                     {match.homeTeam.charAt(0)}
                   </span>
                 </div>
               )}
               <span className={cn(
-                "text-sm font-medium truncate transition-colors",
+                "text-xs font-medium truncate transition-colors",
                 isLive && "text-foreground"
               )}>
                 {match.homeTeam}
@@ -101,7 +99,7 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
             </div>
             <span 
               className={cn(
-                "text-lg font-bold w-8 text-right flex-shrink-0 transition-all duration-500",
+                "text-sm font-bold w-6 text-right flex-shrink-0 transition-all duration-500",
                 hasHomeScoreChange && "text-success scale-125 glow-primary",
                 isLive && "text-foreground"
               )}
@@ -112,22 +110,22 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
           
           {/* Away Team */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
               {match.awayTeamLogo ? (
                 <img 
                   src={match.awayTeamLogo} 
                   alt="" 
-                  className="w-6 h-6 object-contain flex-shrink-0 rounded-md bg-secondary/30 p-0.5" 
+                  className="w-4.5 h-4.5 object-contain flex-shrink-0 rounded bg-secondary/30 p-0.5" 
                 />
               ) : (
-                <div className="w-6 h-6 bg-gradient-to-br from-secondary to-secondary/50 rounded-md flex-shrink-0 flex items-center justify-center">
-                  <span className="text-[10px] font-bold text-muted-foreground">
+                <div className="w-4.5 h-4.5 bg-gradient-to-br from-secondary to-secondary/50 rounded flex-shrink-0 flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-muted-foreground">
                     {match.awayTeam.charAt(0)}
                   </span>
                 </div>
               )}
               <span className={cn(
-                "text-sm font-medium truncate transition-colors",
+                "text-xs font-medium truncate transition-colors",
                 isLive && "text-foreground"
               )}>
                 {match.awayTeam}
@@ -135,7 +133,7 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
             </div>
             <span 
               className={cn(
-                "text-lg font-bold w-8 text-right flex-shrink-0 transition-all duration-500",
+                "text-sm font-bold w-6 text-right flex-shrink-0 transition-all duration-500",
                 hasAwayScoreChange && "text-success scale-125 glow-primary",
                 isLive && "text-foreground"
               )}
@@ -146,11 +144,11 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
         </div>
         
         {/* Status & Actions */}
-        <div className="flex flex-col items-center gap-2 pl-2 border-l border-border/30">
+        <div className="flex flex-col items-center gap-1 pl-1.5 border-l border-border/30">
           {getStatusBadge()}
           
           {isLive && match.minute && (
-            <span className="text-xs font-bold text-live tabular-nums">
+            <span className="text-[10px] font-bold text-live tabular-nums">
               {match.minute}'
             </span>
           )}
@@ -159,7 +157,7 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
             variant="ghost"
             size="icon"
             className={cn(
-              "h-7 w-7 rounded-lg transition-all duration-300",
+              "h-6 w-6 rounded transition-all duration-300",
               isFavourited('match', match.id) 
                 ? "text-primary bg-primary/10 hover:bg-primary/20" 
                 : "text-muted-foreground hover:text-primary hover:bg-primary/10"
@@ -168,7 +166,7 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
           >
             <Heart 
               className={cn(
-                "h-4 w-4 transition-all duration-300",
+                "h-3 w-3 transition-all duration-300",
                 isFavourited('match', match.id) && "fill-primary scale-110"
               )}
             />
