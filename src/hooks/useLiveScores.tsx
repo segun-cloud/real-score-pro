@@ -144,7 +144,7 @@ export function useLiveScores() {
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        
         setIsConnected(status === 'SUBSCRIBED');
       });
 
