@@ -68,8 +68,55 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
     loadApiMatches();
   }, [selectedSport, selectedDate]);
 
-  const loadApiMatches = async () => {
+  const loadApiMatchesAsync = async () => {
     setIsLoadingApi(true);
+    try {
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}`;
+      
+      const { data, error } = await supabase.functions.invoke('fetch-live-matches', {
+        body: {
+          sport: selectedSport.toLowerCase(),
+          date: formattedDate,
+          liveOnly: showLiveOnly,
+        },
+      });
+
+      if (error) throw error;
+
+      const fetchedMatches = data.matches || [];
+      
+      if (fetchedMatches.length === 0) {
+        const mockForSport = mockMatches.filter(m => 
+          m.sport === selectedSport.toLowerCase()
+        );
+        setApiMatches(mockForSport);
+        setIsCached(false);
+        toast({
+          title: "Showing sample matches",
+          description: `No live ${selectedSport} matches found. Displaying sample data for testing.`,
+        });
+      } else {
+        setApiMatches(fetchedMatches);
+        setIsCached(data.cached || false);
+      }
+    } catch (error) {
+      console.error('Error loading API matches:', error);
+      toast({
+        title: "Using mock data",
+        description: "Unable to load live matches, showing sample data",
+        variant: "destructive",
+      });
+      setApiMatches(mockMatches.filter(m => m.sport === selectedSport.toLowerCase()));
+    } finally {
+      setIsLoadingApi(false);
+    }
+  };
+
+  const loadApiMatches = () => {
+    loadApiMatchesAsync();
     try {
       const year = selectedDate.getFullYear();
       const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
