@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MatchCard } from "@/components/MatchCard";
 import { NativeAd } from "@/components/NativeAd";
 import { GuestBanner } from "@/components/GuestBanner";
@@ -8,7 +8,8 @@ import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Search, CalendarIcon, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { Search, CalendarIcon, RefreshCw, Wifi, WifiOff, ArrowDownCircle } from "lucide-react";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { Match } from "@/types/sports";
 import { mockMatches } from "@/data/mockData";
 import { format, formatDistanceToNow } from "date-fns";
@@ -41,6 +42,15 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   // Track if we've already auto-toggled to live mode
   const hasAutoToggledLive = useRef(false);
 
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    await loadApiMatchesAsync();
+  }, [selectedSport, selectedDate, showLiveOnly]);
+
+  const { containerRef, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
+
   
   // Auto-toggle to live mode when live matches are available (only on initial load)
   useEffect(() => {
@@ -58,15 +68,13 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
     loadApiMatches();
   }, [selectedSport, selectedDate]);
 
-  const loadApiMatches = async () => {
+  const loadApiMatchesAsync = async () => {
     setIsLoadingApi(true);
     try {
       const year = selectedDate.getFullYear();
       const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
       const day = String(selectedDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
-      
-      
       
       const { data, error } = await supabase.functions.invoke('fetch-live-matches', {
         body: {
@@ -105,6 +113,10 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
     } finally {
       setIsLoadingApi(false);
     }
+  };
+
+  const loadApiMatches = () => {
+    loadApiMatchesAsync();
   };
 
   // Merge API matches with real-time scores
@@ -165,7 +177,25 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div ref={containerRef} className="space-y-4 animate-fade-in overflow-auto relative">
+      {/* Pull-to-refresh indicator */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
+        style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
+      >
+        <div className="flex flex-col items-center gap-1">
+          <ArrowDownCircle
+            className={cn(
+              "h-5 w-5 text-primary transition-transform duration-200",
+              isRefreshing && "animate-spin",
+              progress >= 1 && !isRefreshing && "rotate-180"
+            )}
+          />
+          <span className="text-[10px] text-muted-foreground">
+            {isRefreshing ? "Refreshing..." : progress >= 1 ? "Release to refresh" : "Pull to refresh"}
+          </span>
+        </div>
+      </div>
       <div className="px-4">
         {/* Guest Banner */}
         {isGuest && onGuestLogin && onGuestSignup && (
