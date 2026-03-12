@@ -115,10 +115,10 @@ export const MatchCard = ({ match, onClick, hasHomeScoreChange, hasAwayScoreChan
                 <img 
                   src={match.awayTeamLogo} 
                   alt="" 
-                  className="w-4.5 h-4.5 object-contain flex-shrink-0 rounded bg-secondary/30 p-0.5" 
+                  className="w-4 h-4 object-contain flex-shrink-0 rounded bg-secondary/30 p-0.5" 
                 />
               ) : (
-                <div className="w-4.5 h-4.5 bg-gradient-to-br from-secondary to-secondary/50 rounded flex-shrink-0 flex items-center justify-center">
+                <div className="w-4 h-4 bg-gradient-to-br from-secondary to-secondary/50 rounded flex-shrink-0 flex items-center justify-center">
                   <span className="text-[8px] font-bold text-muted-foreground">
                     {match.awayTeam.charAt(0)}
                   </span>
