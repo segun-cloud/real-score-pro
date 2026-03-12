@@ -222,7 +222,25 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div ref={containerRef} className="space-y-4 animate-fade-in overflow-auto relative">
+      {/* Pull-to-refresh indicator */}
+      <div
+        className="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
+        style={{ height: pullDistance > 0 ? `${pullDistance}px` : '0px' }}
+      >
+        <div className="flex flex-col items-center gap-1">
+          <ArrowDownCircle
+            className={cn(
+              "h-5 w-5 text-primary transition-transform duration-200",
+              isRefreshing && "animate-spin",
+              progress >= 1 && !isRefreshing && "rotate-180"
+            )}
+          />
+          <span className="text-[10px] text-muted-foreground">
+            {isRefreshing ? "Refreshing..." : progress >= 1 ? "Release to refresh" : "Pull to refresh"}
+          </span>
+        </div>
+      </div>
       <div className="px-4">
         {/* Guest Banner */}
         {isGuest && onGuestLogin && onGuestSignup && (
