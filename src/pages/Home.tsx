@@ -41,9 +41,6 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   // Track if we've already auto-toggled to live mode
   const hasAutoToggledLive = useRef(false);
 
-  useEffect(() => {
-    loadApiMatches();
-  }, []);
   
   // Auto-toggle to live mode when live matches are available (only on initial load)
   useEffect(() => {
