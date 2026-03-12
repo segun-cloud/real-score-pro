@@ -14,8 +14,6 @@ interface NotificationToggleProps {
 export const NotificationToggle = ({ userId }: NotificationToggleProps) => {
   const { isSupported, isSubscribed, isLoading, permission, toggle } = usePushNotifications(userId);
 
-  // Debug logging to help diagnose notification state
-  console.log('[NotificationToggle] State:', { isSupported, isSubscribed, isLoading, permission, userId });
 
   if (isLoading) {
     return (

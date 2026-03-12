@@ -1,23 +1,60 @@
 
 
-## Issues Found
+## Plan: Fix Notification Display & Auto-Toggle Live Matches
 
-1. **Duplicate API fetch on mount** -- `Home.tsx` has two `useEffect` hooks that both call `loadApiMatches()` on initial render: one with `[]` deps (line 44) and one with `[selectedSport, selectedDate]` deps (line 60). This causes every match fetch to happen twice.
+### Problem 1: Notification Always Off
 
-2. **Excessive console.log spam** -- `NotificationToggle.tsx` logs state on every render (line 18), causing 10+ log entries per page load. The `useLiveScores` hook also logs every realtime payload and subscription status change.
+**Current Behavior:**
+- The bell icon shows as "off" (hollow bell) for most users
+- Only users who previously enabled push notifications show the "on" state
 
-3. **Duplicate fetch on sport/date change** -- The first useEffect (line 44) is entirely redundant since the second one (line 60) already covers initial mount.
+**Root Cause:**
+- This is expected behavior - the notification toggle shows the current subscription state
+- Users must click the bell to request browser permission and subscribe
+- The Lovable preview environment may have limitations with Web Push API
 
-## Plan
+**Solution:**
+Add better visual feedback and debugging to help understand notification state.
 
-### 1. Fix duplicate fetch in Home.tsx
-- Remove the first `useEffect(() => { loadApiMatches(); }, [])` (lines 44-46) since the second effect with `[selectedSport, selectedDate]` already fires on mount.
+**Changes to `src/components/NotificationToggle.tsx`:**
+- Add console logging to debug the notification state
+- Show loading state while checking subscription
 
-### 2. Remove debug console.log in NotificationToggle.tsx
-- Remove line 18 (`console.log('[NotificationToggle] State:' ...)`).
+---
 
-### 3. Remove verbose console.log in useLiveScores.tsx
-- Remove `console.log('Realtime update received:', payload)` (line 86).
-- Remove `console.log('Realtime subscription status:', status)` (line 148).
-- Remove `console.log('Fetching matches for date:' ...)` in Home.tsx (line 72).
+### Problem 2: Auto-Toggle to Live Matches
+
+**Current Behavior:**
+- The "Show Live Only" toggle defaults to OFF
+- Users must manually enable it
+
+**Desired Behavior:**
+- Automatically enable "Live Only" mode when there are live matches available
+
+**Changes to `src/pages/Home.tsx`:**
+- After loading matches, check if any have `status === 'live'`
+- If live matches exist, automatically set `showLiveOnly` to `true`
+- Only auto-enable on initial load (not on refresh) to avoid annoying users who manually turned it off
+
+---
+
+### Technical Implementation
+
+#### NotificationToggle.tsx
+- Add console logging to track `isSupported`, `isSubscribed`, `permission` values
+- This will help diagnose why notifications appear off
+
+#### Home.tsx  
+- Add a `hasAutoToggledLive` ref to track if we've already auto-toggled
+- After `apiMatches` loads, check if any are live
+- If live matches exist and we haven't auto-toggled yet, set `showLiveOnly = true`
+
+---
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/Home.tsx` | Add auto-toggle logic for live matches |
+| `src/components/NotificationToggle.tsx` | Add debugging logs |
 

@@ -41,9 +41,6 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   // Track if we've already auto-toggled to live mode
   const hasAutoToggledLive = useRef(false);
 
-  useEffect(() => {
-    loadApiMatches();
-  }, []);
   
   // Auto-toggle to live mode when live matches are available (only on initial load)
   useEffect(() => {
@@ -69,7 +66,7 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
       const day = String(selectedDate.getDate()).padStart(2, '0');
       const formattedDate = `${year}-${month}-${day}`;
       
-      console.log('Fetching matches for date:', formattedDate, 'sport:', selectedSport);
+      
       
       const { data, error } = await supabase.functions.invoke('fetch-live-matches', {
         body: {

@@ -83,7 +83,6 @@ export function useLiveScores() {
           table: 'live_scores',
         },
         (payload) => {
-          console.log('Realtime update received:', payload);
           
           if (payload.eventType === 'DELETE') {
             setLiveScores((prev) => {
@@ -145,7 +144,7 @@ export function useLiveScores() {
         }
       )
       .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
+        
         setIsConnected(status === 'SUBSCRIBED');
       });
 
