@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { MatchCard } from "@/components/MatchCard";
 import { NativeAd } from "@/components/NativeAd";
 import { GuestBanner } from "@/components/GuestBanner";
