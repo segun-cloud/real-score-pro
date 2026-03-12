@@ -42,6 +42,15 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
   // Track if we've already auto-toggled to live mode
   const hasAutoToggledLive = useRef(false);
 
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    await loadApiMatchesAsync();
+  }, [selectedSport, selectedDate, showLiveOnly]);
+
+  const { containerRef, pullDistance, isRefreshing, progress } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
+
   
   // Auto-toggle to live mode when live matches are available (only on initial load)
   useEffect(() => {
