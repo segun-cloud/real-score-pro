@@ -1009,7 +1009,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                         key={player.number}
                         className="flex items-center gap-3 p-2 rounded-lg bg-background/50 border border-blue-200/50 dark:border-blue-900/50 hover:bg-background/80 transition-colors"
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shrink-0">
                           {player.number}
                         </div>
                         <div className="flex-1 min-w-0">
