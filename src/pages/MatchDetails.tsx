@@ -1287,7 +1287,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                 )}
                 <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
                 {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                  <div className="text-2xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
+                  <div className="text-xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
                 )}
               </div>
             </div>
