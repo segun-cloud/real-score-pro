@@ -1260,7 +1260,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             <div className="flex items-center justify-between">
               <div className="text-center flex-1">
                 {matchDetails.homeTeamLogo && (
-                  <img src={matchDetails.homeTeamLogo} alt="" className="w-10 h-10 object-contain mx-auto mb-1" />
+                  <img src={matchDetails.homeTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
                 )}
                 <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
                 {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
