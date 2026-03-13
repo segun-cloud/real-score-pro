@@ -801,7 +801,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-blue-500/20 border-2 border-blue-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).over_under?.over_2_5}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).over_under?.over_2_5}%</div>
                           <div className="text-xs text-muted-foreground">OVER</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
