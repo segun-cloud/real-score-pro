@@ -826,7 +826,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                 <div className="space-y-3">
                   <h4 className="font-semibold">Correct Score</h4>
                   <div className="text-center p-4 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg">
-                    <div className="text-4xl font-bold text-white mb-1">
+                    <div className="text-2xl font-bold text-white mb-1">
                       {aiPrediction.correct_score.prediction}
                     </div>
                     <Badge variant="secondary" className="bg-white/20 text-white">
