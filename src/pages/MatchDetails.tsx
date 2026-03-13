@@ -376,7 +376,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
               )}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Away Win</p>
-                <p className="text-2xl font-bold text-primary">{matchDetails.odds.awayWin}</p>
+                <p className="text-lg font-bold text-primary">{matchDetails.odds.awayWin}</p>
               </div>
             </div>
           </Card>
