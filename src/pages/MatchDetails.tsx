@@ -873,7 +873,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                   ) : (
                     <>
                       <div className="text-center p-4 bg-gradient-to-br from-teal-500 to-green-500 rounded-lg">
-                        <div className="text-4xl font-bold text-white mb-1">
+                         <div className="text-2xl font-bold text-white mb-1">
                           {(aiPrediction as any).half_time_score?.prediction}
                         </div>
                         <div className="text-xs text-white/80">Predicted HT Result</div>
