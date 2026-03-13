@@ -324,7 +324,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                     )}
                     {matchDetails.statistics.shotsOnTarget && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shotsOnTarget.away}</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shotsOnTarget.away}</p>
                       </div>
                     )}
                     {matchDetails.statistics.corners && (
