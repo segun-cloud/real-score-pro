@@ -667,7 +667,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-red-500/20 border-2 border-red-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).odd_even?.even}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).odd_even?.even}%</div>
                           <div className="text-xs text-muted-foreground">EVEN</div>
                         </div>
                       </div>
