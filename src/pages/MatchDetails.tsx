@@ -329,7 +329,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                     )}
                     {matchDetails.statistics.corners && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.corners.away}</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.corners.away}</p>
                       </div>
                     )}
                   </div>
