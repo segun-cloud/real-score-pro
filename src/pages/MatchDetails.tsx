@@ -298,8 +298,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                   <div className="grid grid-cols-3 gap-4 text-center">
                     {matchDetails.statistics.shots && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shots.home}</p>
-                        <p className="text-xs text-muted-foreground">Shots</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shots.home}</p>
+                        <p className="text-[10px] text-muted-foreground">Shots</p>
                       </div>
                     )}
                     {matchDetails.statistics.shotsOnTarget && (
