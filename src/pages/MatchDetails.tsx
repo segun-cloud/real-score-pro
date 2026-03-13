@@ -659,7 +659,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-green-500/20 border-2 border-green-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).odd_even?.odd}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).odd_even?.odd}%</div>
                           <div className="text-xs text-muted-foreground">ODD</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
