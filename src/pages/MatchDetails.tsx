@@ -809,7 +809,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-indigo-500/20 border-2 border-indigo-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).over_under?.under_2_5}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).over_under?.under_2_5}%</div>
                           <div className="text-xs text-muted-foreground">UNDER</div>
                         </div>
                       </div>
