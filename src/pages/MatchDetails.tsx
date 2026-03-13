@@ -366,7 +366,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Home Win</p>
-                <p className="text-2xl font-bold text-primary">{matchDetails.odds.homeWin}</p>
+                <p className="text-lg font-bold text-primary">{matchDetails.odds.homeWin}</p>
               </div>
               {matchDetails.odds.draw && (
                 <div className="text-center">
