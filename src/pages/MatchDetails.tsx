@@ -493,7 +493,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
         if (!aiPredictionUnlocked && !userProfile.isPremium) {
           return (
             <Card className="p-6 text-center">
-              <Brain className="h-12 w-12 mx-auto mb-4 text-primary" />
+              <Brain className="h-8 w-8 mx-auto mb-3 text-primary" />
               <h3 className="font-semibold mb-2">AI Match Prediction</h3>
               <p className="text-muted-foreground mb-4">
                 Unlock AI-powered predictions and insights for this match
