@@ -310,8 +310,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                     )}
                     {matchDetails.statistics.corners && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.corners.home}</p>
-                        <p className="text-xs text-muted-foreground">Corners</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.corners.home}</p>
+                        <p className="text-[10px] text-muted-foreground">Corners</p>
                       </div>
                     )}
                   </div>
