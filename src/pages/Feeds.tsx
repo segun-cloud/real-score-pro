@@ -20,10 +20,9 @@ interface FeedItem {
   videoUrl?: string;
 }
 
-
 const FEED_CONFIG = {
-  highlights: { icon: Play, label: 'Match Highlights', color: 'text-red-500' },
-  news: { icon: Newspaper, label: 'Team News', color: 'text-blue-500' },
+  highlights: { icon: Play, label: 'Highlights', color: 'text-red-500' },
+  news: { icon: Newspaper, label: 'News', color: 'text-blue-500' },
   transfers: { icon: Users, label: 'Transfers', color: 'text-green-500' },
   updates: { icon: TrendingUp, label: 'Updates', color: 'text-orange-500' },
 };
@@ -69,37 +68,37 @@ export const Feeds = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="bg-card border-b p-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold">Sports Feeds</h1>
-        <p className="text-sm text-muted-foreground">Latest news and highlights</p>
+      <div className="bg-card border-b p-3 sticky top-0 z-10">
+        <h1 className="text-base font-bold">Sports Feeds</h1>
+        <p className="text-[11px] text-muted-foreground">Latest news and highlights</p>
       </div>
 
-      <div className="p-4">
+      <div className="p-3">
         <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as FeedType | 'all')} className="w-full">
-          <TabsList className="w-full grid grid-cols-5 mb-4">
-            <TabsTrigger value="all">All</TabsTrigger>
+          <TabsList className="w-full grid grid-cols-5 mb-3 h-8">
+            <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
             <TabsTrigger value="highlights">
-              <Play className="h-4 w-4" />
+              <Play className="h-3.5 w-3.5" />
             </TabsTrigger>
             <TabsTrigger value="news">
-              <Newspaper className="h-4 w-4" />
+              <Newspaper className="h-3.5 w-3.5" />
             </TabsTrigger>
             <TabsTrigger value="transfers">
-              <Users className="h-4 w-4" />
+              <Users className="h-3.5 w-3.5" />
             </TabsTrigger>
             <TabsTrigger value="updates">
-              <TrendingUp className="h-4 w-4" />
+              <TrendingUp className="h-3.5 w-3.5" />
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value={selectedTab} className="space-y-3">
+          <TabsContent value={selectedTab} className="space-y-2">
             {isLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : filteredFeeds.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">No feeds available</p>
+              <div className="text-center py-10">
+                <p className="text-muted-foreground text-sm">No feeds available</p>
               </div>
             ) : (
               filteredFeeds.map((feed) => {
@@ -123,27 +122,27 @@ export const Feeds = () => {
                       }
                     }}
                   >
-                    <CardHeader className="pb-3">
+                    <CardHeader className="pb-2 pt-3 px-3">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <Icon className={`h-4 w-4 ${config.color}`} />
-                          <Badge variant="secondary" className="text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <Icon className={`h-3.5 w-3.5 ${config.color}`} />
+                          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                             {config.label}
                           </Badge>
                         </div>
-                        <span className="text-xs text-muted-foreground">{feed.timestamp}</span>
+                        <span className="text-[10px] text-muted-foreground">{feed.timestamp}</span>
                       </div>
-                      <CardTitle className="text-base leading-tight mt-2">{feed.title}</CardTitle>
+                      <CardTitle className="text-sm leading-tight mt-1.5">{feed.title}</CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground mb-2">{feed.description}</p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
+                    <CardContent className="pt-0 px-3 pb-3">
+                      <p className="text-xs text-muted-foreground mb-1.5">{feed.description}</p>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
                           {feed.sport}
                         </Badge>
                         {feed.videoUrl && (
-                          <Badge variant="default" className="text-xs">
-                            <Play className="h-3 w-3 mr-1" />
+                          <Badge variant="default" className="text-[10px] px-1.5 py-0">
+                            <Play className="h-2.5 w-2.5 mr-0.5" />
                             Watch
                           </Badge>
                         )}

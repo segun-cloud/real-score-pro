@@ -1,37 +1,60 @@
 
 
-## UI Compactness Tweaks Across Pages
+## Plan: Fix Notification Display & Auto-Toggle Live Matches
 
-Aligning Leagues, Feeds, Profile, and Match Details pages with the compact design philosophy already applied to the Home page and match cards.
+### Problem 1: Notification Always Off
 
-### 1. Leagues Page
-- Reduce sticky header padding (`p-4` to `p-3`), title font (`text-xl` to `text-base`), select height
-- Shrink country flags from `text-2xl` to `text-lg`, accordion padding
-- League cards: reduce logo from `w-8 h-8` to `w-6 h-6`, tighten padding (`p-3` to `p-2`)
-- League detail view: shrink header logo (`w-10 h-10` to `w-7 h-7`), title to `text-base`
-- Standings table: smaller text, tighter cell padding
-- Fixture cards: reduce team logos (`w-6 h-6` to `w-5 h-5`), scores from `text-lg` to `text-sm`
-- Top scorers: shrink player photo (`w-10 h-10` to `w-7 h-7`), rank badge (`w-8 h-8` to `w-6 h-6`)
+**Current Behavior:**
+- The bell icon shows as "off" (hollow bell) for most users
+- Only users who previously enabled push notifications show the "on" state
 
-### 2. Feeds Page
-- Reduce header padding and title size to match Home page
-- Tab icons from `h-4 w-4` to `h-3.5 w-3.5`
-- Feed cards: reduce `CardHeader` padding, title from `text-base` to `text-sm`, icon from `h-4` to `h-3.5`
-- Badge text from `text-xs` to `text-[10px]`
+**Root Cause:**
+- This is expected behavior - the notification toggle shows the current subscription state
+- Users must click the bell to request browser permission and subscribe
+- The Lovable preview environment may have limitations with Web Push API
 
-### 3. Profile Page
-- Reduce header padding, back button icon size
-- Avatar from `h-20 w-20` to `h-14 w-14`, username from `text-2xl` to `text-lg`
-- Stats grid: tighten spacing, smaller labels
-- Card section headers: smaller text and icons
-- Premium card, settings, about sections: reduce padding and font sizes
-- Daily check-in grid: more compact
+**Solution:**
+Add better visual feedback and debugging to help understand notification state.
 
-### 4. Match Details Page
-- Header: already compact, minor tightening
-- Match header card: reduce team logos from `w-10 h-10` to `w-8 h-8`, scores from `text-2xl` to `text-xl`
-- Statistics: reduce stat values from `text-2xl` to `text-lg`
-- AI Prediction: reduce Brain icon from `h-12` to `h-8`, percentage values from `text-2xl` to `text-lg`, correct score from `text-4xl` to `text-2xl`
-- Lineups: reduce substitute player number badges from `w-8 h-8` to `w-6 h-6`
-- Media grid: tighter spacing
+**Changes to `src/components/NotificationToggle.tsx`:**
+- Add console logging to debug the notification state
+- Show loading state while checking subscription
+
+---
+
+### Problem 2: Auto-Toggle to Live Matches
+
+**Current Behavior:**
+- The "Show Live Only" toggle defaults to OFF
+- Users must manually enable it
+
+**Desired Behavior:**
+- Automatically enable "Live Only" mode when there are live matches available
+
+**Changes to `src/pages/Home.tsx`:**
+- After loading matches, check if any have `status === 'live'`
+- If live matches exist, automatically set `showLiveOnly` to `true`
+- Only auto-enable on initial load (not on refresh) to avoid annoying users who manually turned it off
+
+---
+
+### Technical Implementation
+
+#### NotificationToggle.tsx
+- Add console logging to track `isSupported`, `isSubscribed`, `permission` values
+- This will help diagnose why notifications appear off
+
+#### Home.tsx  
+- Add a `hasAutoToggledLive` ref to track if we've already auto-toggled
+- After `apiMatches` loads, check if any are live
+- If live matches exist and we haven't auto-toggled yet, set `showLiveOnly = true`
+
+---
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/Home.tsx` | Add auto-toggle logic for live matches |
+| `src/components/NotificationToggle.tsx` | Add debugging logs |
 

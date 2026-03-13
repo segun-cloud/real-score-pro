@@ -73,7 +73,6 @@ export const Leagues = () => {
     }
   };
 
-  // Group leagues by country
   const leaguesByCountry: LeaguesByCountry = leagues.reduce((acc, league) => {
     if (!acc[league.country]) {
       acc[league.country] = [];
@@ -87,12 +86,9 @@ export const Leagues = () => {
     setLoadingLeagueData(true);
     
     try {
-      // Only fetch API-Sports data if we have an api_league_id
       if (league.api_league_id) {
-        // API-Sports free plan supports 2022-2024 seasons
         const currentYear = Math.min(new Date().getFullYear() - 1, 2024);
         
-        // Fetch standings, fixtures, and top scorers in parallel
         const [standingsRes, fixturesRes, scorersRes] = await Promise.all([
           supabase.functions.invoke('fetch-league-standings', {
             body: { leagueId: league.api_league_id, season: currentYear }
@@ -105,17 +101,10 @@ export const Leagues = () => {
           })
         ]);
 
-        if (standingsRes.data?.standings) {
-          setStandings(standingsRes.data.standings);
-        }
-        if (fixturesRes.data?.fixtures) {
-          setFixtures(fixturesRes.data.fixtures);
-        }
-        if (scorersRes.data?.topScorers) {
-          setTopScorers(scorersRes.data.topScorers);
-        }
+        if (standingsRes.data?.standings) setStandings(standingsRes.data.standings);
+        if (fixturesRes.data?.fixtures) setFixtures(fixturesRes.data.fixtures);
+        if (scorersRes.data?.topScorers) setTopScorers(scorersRes.data.topScorers);
       } else {
-        // Show message that API data is not available for this league
         toast.info('Detailed stats not available for this league yet');
       }
     } catch (error) {
@@ -129,49 +118,49 @@ export const Leagues = () => {
   if (selectedLeague) {
     return (
       <div className="min-h-screen bg-background pb-20">
-        <div className="bg-card border-b p-4 sticky top-0 z-10">
+        <div className="bg-card border-b p-3 sticky top-0 z-10">
           <button 
             onClick={() => setSelectedLeague(null)}
-            className="text-primary hover:underline mb-2"
+            className="text-primary hover:underline mb-1 text-sm"
           >
             ← Back to Leagues
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {selectedLeague.logo_url ? (
-              <img src={selectedLeague.logo_url} alt="" className="w-10 h-10 object-contain" />
+              <img src={selectedLeague.logo_url} alt="" className="w-7 h-7 object-contain" />
             ) : (
-              <span className="text-2xl">{COUNTRY_FLAGS[selectedLeague.country]}</span>
+              <span className="text-lg">{COUNTRY_FLAGS[selectedLeague.country]}</span>
             )}
-            <h1 className="text-xl font-bold">{selectedLeague.name}</h1>
+            <h1 className="text-base font-bold">{selectedLeague.name}</h1>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {selectedLeague.country} • {selectedLeague.sport}
           </p>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-3 space-y-3">
           {loadingLeagueData ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex justify-center items-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
             <Tabs defaultValue="standings" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="standings">Standings</TabsTrigger>
-                <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
-                <TabsTrigger value="scorers">Top Scorers</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-8">
+                <TabsTrigger value="standings" className="text-xs">Standings</TabsTrigger>
+                <TabsTrigger value="fixtures" className="text-xs">Fixtures</TabsTrigger>
+                <TabsTrigger value="scorers" className="text-xs">Top Scorers</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="standings" className="mt-4">
+              <TabsContent value="standings" className="mt-3">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>League Table</CardTitle>
+                  <CardHeader className="pb-2 pt-3 px-3">
+                    <CardTitle className="text-sm">League Table</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-2 pb-3">
                     {standings.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground mb-2">No standings data available</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground text-sm mb-1">No standings data available</p>
+                        <p className="text-[10px] text-muted-foreground">
                           This may be a limitation of the free API plan
                         </p>
                       </div>
@@ -180,32 +169,32 @@ export const Leagues = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-12">#</TableHead>
-                              <TableHead>Team</TableHead>
-                              <TableHead className="text-center">P</TableHead>
-                              <TableHead className="text-center">W</TableHead>
-                              <TableHead className="text-center">D</TableHead>
-                              <TableHead className="text-center">L</TableHead>
-                              <TableHead className="text-center">Pts</TableHead>
+                              <TableHead className="w-8 text-xs px-1">#</TableHead>
+                              <TableHead className="text-xs px-1">Team</TableHead>
+                              <TableHead className="text-center text-xs px-1">P</TableHead>
+                              <TableHead className="text-center text-xs px-1">W</TableHead>
+                              <TableHead className="text-center text-xs px-1">D</TableHead>
+                              <TableHead className="text-center text-xs px-1">L</TableHead>
+                              <TableHead className="text-center text-xs px-1">Pts</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {standings.map((team: any, index: number) => (
                               <TableRow key={team.position || team.rank || index}>
-                                <TableCell className="font-medium">{team.position || team.rank || index + 1}</TableCell>
-                                <TableCell className="flex items-center gap-2">
+                                <TableCell className="font-medium text-xs px-1 py-1.5">{team.position || team.rank || index + 1}</TableCell>
+                                <TableCell className="flex items-center gap-1.5 text-xs px-1 py-1.5">
                                   {(team.team_logo || team.team?.logo) ? (
-                                    <img src={team.team_logo || team.team?.logo} alt="" className="w-5 h-5 object-contain" />
+                                    <img src={team.team_logo || team.team?.logo} alt="" className="w-4 h-4 object-contain" />
                                   ) : (
-                                    <div className="w-5 h-5 bg-muted rounded-full" />
+                                    <div className="w-4 h-4 bg-muted rounded-full" />
                                   )}
-                                  <span className="text-sm truncate">{team.team_name || team.team?.name || 'Unknown'}</span>
+                                  <span className="truncate">{team.team_name || team.team?.name || 'Unknown'}</span>
                                 </TableCell>
-                                <TableCell className="text-center">{team.played ?? team.all?.played ?? 0}</TableCell>
-                                <TableCell className="text-center">{team.won ?? team.all?.win ?? 0}</TableCell>
-                                <TableCell className="text-center">{team.drawn ?? team.all?.draw ?? 0}</TableCell>
-                                <TableCell className="text-center">{team.lost ?? team.all?.lose ?? 0}</TableCell>
-                                <TableCell className="text-center font-bold">{team.points ?? 0}</TableCell>
+                                <TableCell className="text-center text-xs px-1 py-1.5">{team.played ?? team.all?.played ?? 0}</TableCell>
+                                <TableCell className="text-center text-xs px-1 py-1.5">{team.won ?? team.all?.win ?? 0}</TableCell>
+                                <TableCell className="text-center text-xs px-1 py-1.5">{team.drawn ?? team.all?.draw ?? 0}</TableCell>
+                                <TableCell className="text-center text-xs px-1 py-1.5">{team.lost ?? team.all?.lose ?? 0}</TableCell>
+                                <TableCell className="text-center font-bold text-xs px-1 py-1.5">{team.points ?? 0}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -216,25 +205,25 @@ export const Leagues = () => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="fixtures" className="mt-4">
+              <TabsContent value="fixtures" className="mt-3">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Fixtures</CardTitle>
+                  <CardHeader className="pb-2 pt-3 px-3">
+                    <CardTitle className="text-sm">Recent Fixtures</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 pb-3">
                     {fixtures.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground mb-2">No fixtures data available</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground text-sm mb-1">No fixtures data available</p>
+                        <p className="text-[10px] text-muted-foreground">
                           This may be a limitation of the free API plan
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {fixtures.map((fixture: any) => (
-                          <div key={fixture.id} className="border rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-xs text-muted-foreground">
+                          <div key={fixture.id} className="border rounded-lg p-2">
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[10px] text-muted-foreground">
                                 {new Date(fixture.startTime).toLocaleDateString()}
                               </span>
                               <Badge 
@@ -243,28 +232,28 @@ export const Leagues = () => {
                                   fixture.status === 'finished' ? 'secondary' : 
                                   'outline'
                                 }
-                                className="text-xs"
+                                className="text-[10px] px-1.5 py-0"
                               >
                                 {fixture.status}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 flex-1">
-                                <img src={fixture.homeTeamLogo} alt="" className="w-6 h-6" />
-                                <span className="text-sm font-medium">{fixture.homeTeam}</span>
+                              <div className="flex items-center gap-1.5 flex-1">
+                                <img src={fixture.homeTeamLogo} alt="" className="w-5 h-5" />
+                                <span className="text-xs font-medium truncate">{fixture.homeTeam}</span>
                               </div>
-                              <div className="flex items-center gap-3 px-4">
-                                <span className="text-lg font-bold">
+                              <div className="flex items-center gap-2 px-3">
+                                <span className="text-sm font-bold">
                                   {fixture.homeScore ?? '-'}
                                 </span>
-                                <span className="text-muted-foreground">:</span>
-                                <span className="text-lg font-bold">
+                                <span className="text-muted-foreground text-xs">:</span>
+                                <span className="text-sm font-bold">
                                   {fixture.awayScore ?? '-'}
                                 </span>
                               </div>
-                              <div className="flex items-center gap-2 flex-1 justify-end">
-                                <span className="text-sm font-medium">{fixture.awayTeam}</span>
-                                <img src={fixture.awayTeamLogo} alt="" className="w-6 h-6" />
+                              <div className="flex items-center gap-1.5 flex-1 justify-end">
+                                <span className="text-xs font-medium truncate">{fixture.awayTeam}</span>
+                                <img src={fixture.awayTeamLogo} alt="" className="w-5 h-5" />
                               </div>
                             </div>
                           </div>
@@ -275,39 +264,39 @@ export const Leagues = () => {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="scorers" className="mt-4">
+              <TabsContent value="scorers" className="mt-3">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Top Scorers</CardTitle>
+                  <CardHeader className="pb-2 pt-3 px-3">
+                    <CardTitle className="text-sm">Top Scorers</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="px-3 pb-3">
                     {topScorers.length === 0 ? (
-                      <div className="text-center py-8">
-                        <p className="text-muted-foreground mb-2">No top scorers data available</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="text-center py-6">
+                        <p className="text-muted-foreground text-sm mb-1">No top scorers data available</p>
+                        <p className="text-[10px] text-muted-foreground">
                           This may be a limitation of the free API plan
                         </p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {topScorers.map((player: any, index: number) => (
-                          <div key={index} className="flex items-center gap-3 p-2 border rounded-lg">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-sm">
+                          <div key={index} className="flex items-center gap-2 p-1.5 border rounded-lg">
+                            <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground font-bold text-[10px]">
                               {index + 1}
                             </div>
-                            <img src={player.photo} alt="" className="w-10 h-10 rounded-full" />
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{player.name}</p>
-                              <p className="text-xs text-muted-foreground">{player.team}</p>
+                            <img src={player.photo} alt="" className="w-7 h-7 rounded-full" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-xs truncate">{player.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{player.team}</p>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-lg">{player.goals}</p>
-                              <p className="text-xs text-muted-foreground">goals</p>
+                              <p className="font-bold text-sm">{player.goals}</p>
+                              <p className="text-[10px] text-muted-foreground">goals</p>
                             </div>
                             {player.assists > 0 && (
                               <div className="text-right">
-                                <p className="font-medium">{player.assists}</p>
-                                <p className="text-xs text-muted-foreground">assists</p>
+                                <p className="font-medium text-xs">{player.assists}</p>
+                                <p className="text-[10px] text-muted-foreground">assists</p>
                               </div>
                             )}
                           </div>
@@ -326,17 +315,16 @@ export const Leagues = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <div className="bg-card border-b p-4 sticky top-0 z-10">
-        <h1 className="text-xl font-bold mb-3">Leagues</h1>
+      <div className="bg-card border-b p-3 sticky top-0 z-10">
+        <h1 className="text-base font-bold mb-2">Leagues</h1>
         
-        {/* Sport Filter */}
         <Select value={selectedSport} onValueChange={(value) => setSelectedSport(value as SportType)}>
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full h-8 text-xs">
             <SelectValue placeholder="Select sport" />
           </SelectTrigger>
           <SelectContent>
             {Object.entries(SPORT_CONFIG).map(([key, config]) => (
-              <SelectItem key={key} value={key}>
+              <SelectItem key={key} value={key} className="text-xs">
                 {config.icon} {config.name}
               </SelectItem>
             ))}
@@ -344,48 +332,48 @@ export const Leagues = () => {
         </Select>
       </div>
 
-      <div className="p-4">
+      <div className="p-3">
         {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading leagues...</p>
+          <div className="text-center py-10">
+            <p className="text-muted-foreground text-sm">Loading leagues...</p>
           </div>
         ) : Object.keys(leaguesByCountry).length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No leagues found for this sport</p>
+          <div className="text-center py-10">
+            <p className="text-muted-foreground text-sm">No leagues found for this sport</p>
           </div>
         ) : (
-          <Accordion type="multiple" defaultValue={Object.keys(leaguesByCountry)} className="space-y-3">
+          <Accordion type="multiple" defaultValue={Object.keys(leaguesByCountry)} className="space-y-2">
             {Object.entries(leaguesByCountry).map(([country, countryLeagues]) => (
               <AccordionItem key={country} value={country} className="border rounded-lg">
-                <AccordionTrigger className="px-4 hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">{COUNTRY_FLAGS[country] || '🌍'}</span>
+                <AccordionTrigger className="px-3 py-2 hover:no-underline">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{COUNTRY_FLAGS[country] || '🌍'}</span>
                     <div className="text-left">
-                      <h3 className="font-bold">{country}</h3>
-                      <p className="text-xs text-muted-foreground">
+                      <h3 className="font-bold text-sm">{country}</h3>
+                      <p className="text-[10px] text-muted-foreground">
                         {countryLeagues.length} {countryLeagues.length === 1 ? 'league' : 'leagues'}
                       </p>
                     </div>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="space-y-2 mt-2">
+                <AccordionContent className="px-3 pb-3">
+                  <div className="space-y-1.5 mt-1">
                     {countryLeagues.map((league) => (
                       <Card 
                         key={league.id}
                         className="cursor-pointer hover:border-primary transition-colors"
                         onClick={() => handleLeagueClick(league)}
                       >
-                        <CardContent className="p-3 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
+                        <CardContent className="p-2 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
                             {league.logo_url ? (
-                              <img src={league.logo_url} alt="" className="w-8 h-8 object-contain" />
+                              <img src={league.logo_url} alt="" className="w-6 h-6 object-contain" />
                             ) : (
-                              <span className="text-2xl">{SPORT_CONFIG[league.sport].icon}</span>
+                              <span className="text-lg">{SPORT_CONFIG[league.sport].icon}</span>
                             )}
-                            <h4 className="font-medium">{league.name}</h4>
+                            <h4 className="font-medium text-sm">{league.name}</h4>
                           </div>
-                          <Badge variant="outline">View</Badge>
+                          <Badge variant="outline" className="text-[10px]">View</Badge>
                         </CardContent>
                       </Card>
                     ))}

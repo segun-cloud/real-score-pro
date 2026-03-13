@@ -298,20 +298,20 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                   <div className="grid grid-cols-3 gap-4 text-center">
                     {matchDetails.statistics.shots && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shots.home}</p>
-                        <p className="text-xs text-muted-foreground">Shots</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shots.home}</p>
+                        <p className="text-[10px] text-muted-foreground">Shots</p>
                       </div>
                     )}
                     {matchDetails.statistics.shotsOnTarget && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shotsOnTarget.home}</p>
-                        <p className="text-xs text-muted-foreground">On Target</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shotsOnTarget.home}</p>
+                        <p className="text-[10px] text-muted-foreground">On Target</p>
                       </div>
                     )}
                     {matchDetails.statistics.corners && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.corners.home}</p>
-                        <p className="text-xs text-muted-foreground">Corners</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.corners.home}</p>
+                        <p className="text-[10px] text-muted-foreground">Corners</p>
                       </div>
                     )}
                   </div>
@@ -319,17 +319,17 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                   <div className="grid grid-cols-3 gap-4 text-center">
                     {matchDetails.statistics.shots && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shots.away}</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shots.away}</p>
                       </div>
                     )}
                     {matchDetails.statistics.shotsOnTarget && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.shotsOnTarget.away}</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shotsOnTarget.away}</p>
                       </div>
                     )}
                     {matchDetails.statistics.corners && (
                       <div>
-                        <p className="text-2xl font-bold text-primary">{matchDetails.statistics.corners.away}</p>
+                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.corners.away}</p>
                       </div>
                     )}
                   </div>
@@ -366,17 +366,17 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Home Win</p>
-                <p className="text-2xl font-bold text-primary">{matchDetails.odds.homeWin}</p>
+                <p className="text-lg font-bold text-primary">{matchDetails.odds.homeWin}</p>
               </div>
               {matchDetails.odds.draw && (
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Draw</p>
-                  <p className="text-2xl font-bold text-primary">{matchDetails.odds.draw}</p>
+                  <p className="text-lg font-bold text-primary">{matchDetails.odds.draw}</p>
                 </div>
               )}
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">Away Win</p>
-                <p className="text-2xl font-bold text-primary">{matchDetails.odds.awayWin}</p>
+                <p className="text-lg font-bold text-primary">{matchDetails.odds.awayWin}</p>
               </div>
             </div>
           </Card>
@@ -492,10 +492,10 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
       case "prediction":
         if (!aiPredictionUnlocked && !userProfile.isPremium) {
           return (
-            <Card className="p-6 text-center">
-              <Brain className="h-12 w-12 mx-auto mb-4 text-primary" />
-              <h3 className="font-semibold mb-2">AI Match Prediction</h3>
-              <p className="text-muted-foreground mb-4">
+            <Card className="p-4 text-center">
+              <Brain className="h-8 w-8 mx-auto mb-3 text-primary" />
+              <h3 className="font-semibold text-sm mb-1.5">AI Match Prediction</h3>
+              <p className="text-muted-foreground text-xs mb-3">
                 Unlock AI-powered predictions and insights for this match
               </p>
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -659,7 +659,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-green-500/20 border-2 border-green-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).odd_even?.odd}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).odd_even?.odd}%</div>
                           <div className="text-xs text-muted-foreground">ODD</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
@@ -667,7 +667,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-red-500/20 border-2 border-red-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).odd_even?.even}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).odd_even?.even}%</div>
                           <div className="text-xs text-muted-foreground">EVEN</div>
                         </div>
                       </div>
@@ -687,7 +687,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-blue-500/20 border-2 border-blue-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).total_points?.over}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).total_points?.over}%</div>
                           <div className="text-xs text-muted-foreground">OVER</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
@@ -695,7 +695,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-indigo-500/20 border-2 border-indigo-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).total_points?.under}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).total_points?.under}%</div>
                           <div className="text-xs text-muted-foreground">UNDER</div>
                         </div>
                       </div>
@@ -715,7 +715,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-blue-500/20 border-2 border-blue-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).half_time_over_under?.over}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).half_time_over_under?.over}%</div>
                           <div className="text-xs text-muted-foreground">OVER</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
@@ -723,7 +723,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-indigo-500/20 border-2 border-indigo-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).half_time_over_under?.under}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).half_time_over_under?.under}%</div>
                           <div className="text-xs text-muted-foreground">UNDER</div>
                         </div>
                       </div>
@@ -743,7 +743,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-blue-500/20 border-2 border-blue-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).first_quarter_over_under?.over}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).first_quarter_over_under?.over}%</div>
                           <div className="text-xs text-muted-foreground">OVER</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
@@ -751,7 +751,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-indigo-500/20 border-2 border-indigo-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).first_quarter_over_under?.under}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).first_quarter_over_under?.under}%</div>
                           <div className="text-xs text-muted-foreground">UNDER</div>
                         </div>
                       </div>
@@ -773,7 +773,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-green-500/20 border-2 border-green-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).btts?.yes}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).btts?.yes}%</div>
                           <div className="text-xs text-muted-foreground">YES</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
@@ -781,7 +781,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-red-500/20 border-2 border-red-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).btts?.no}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).btts?.no}%</div>
                           <div className="text-xs text-muted-foreground">NO</div>
                         </div>
                       </div>
@@ -801,7 +801,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-blue-500/20 border-2 border-blue-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).over_under?.over_2_5}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).over_under?.over_2_5}%</div>
                           <div className="text-xs text-muted-foreground">OVER</div>
                         </div>
                         <div className={`p-3 rounded-lg text-center transition-all ${
@@ -809,7 +809,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                             ? 'bg-indigo-500/20 border-2 border-indigo-500' 
                             : 'bg-muted'
                         }`}>
-                          <div className="text-2xl font-bold">{(aiPrediction as any).over_under?.under_2_5}%</div>
+                          <div className="text-lg font-bold">{(aiPrediction as any).over_under?.under_2_5}%</div>
                           <div className="text-xs text-muted-foreground">UNDER</div>
                         </div>
                       </div>
@@ -826,7 +826,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                 <div className="space-y-3">
                   <h4 className="font-semibold">Correct Score</h4>
                   <div className="text-center p-4 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-lg">
-                    <div className="text-4xl font-bold text-white mb-1">
+                    <div className="text-2xl font-bold text-white mb-1">
                       {aiPrediction.correct_score.prediction}
                     </div>
                     <Badge variant="secondary" className="bg-white/20 text-white">
@@ -873,7 +873,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                   ) : (
                     <>
                       <div className="text-center p-4 bg-gradient-to-br from-teal-500 to-green-500 rounded-lg">
-                        <div className="text-4xl font-bold text-white mb-1">
+                         <div className="text-2xl font-bold text-white mb-1">
                           {(aiPrediction as any).half_time_score?.prediction}
                         </div>
                         <div className="text-xs text-white/80">Predicted HT Result</div>
@@ -986,7 +986,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                         key={player.number}
                         className="flex items-center gap-3 p-2 rounded-lg bg-background/50 border border-emerald-200/50 dark:border-emerald-900/50 hover:bg-background/80 transition-colors"
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold text-[10px] shrink-0">
                           {player.number}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1009,7 +1009,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                         key={player.number}
                         className="flex items-center gap-3 p-2 rounded-lg bg-background/50 border border-blue-200/50 dark:border-blue-900/50 hover:bg-background/80 transition-colors"
                       >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-[10px] shrink-0">
                           {player.number}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1260,11 +1260,11 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             <div className="flex items-center justify-between">
               <div className="text-center flex-1">
                 {matchDetails.homeTeamLogo && (
-                  <img src={matchDetails.homeTeamLogo} alt="" className="w-10 h-10 object-contain mx-auto mb-1" />
+                  <img src={matchDetails.homeTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
                 )}
                 <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
                 {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                  <div className="text-2xl font-bold mt-1">{matchDetails.homeScore ?? 0}</div>
+                  <div className="text-xl font-bold mt-1">{matchDetails.homeScore ?? 0}</div>
                 )}
               </div>
               
@@ -1283,11 +1283,11 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
               
               <div className="text-center flex-1">
                 {matchDetails.awayTeamLogo && (
-                  <img src={matchDetails.awayTeamLogo} alt="" className="w-10 h-10 object-contain mx-auto mb-1" />
+                  <img src={matchDetails.awayTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
                 )}
                 <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
                 {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                  <div className="text-2xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
+                  <div className="text-xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
                 )}
               </div>
             </div>
