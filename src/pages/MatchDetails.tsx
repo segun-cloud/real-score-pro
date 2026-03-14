@@ -1283,31 +1283,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
 
       {/* Scrollable content area */}
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden w-full min-w-0">
-        {/* LiveMatchTracker in scrollable area for live football */}
-        {isLiveMatch && isFootballMatch && (
-          <div className="px-4 pt-3 flex-shrink-0">
-            <LiveMatchTracker
-              homeTeam={matchDetails.homeTeam}
-              awayTeam={matchDetails.awayTeam}
-              homeTeamLogo={matchDetails.homeTeamLogo}
-              awayTeamLogo={matchDetails.awayTeamLogo}
-              homeScore={matchDetails.homeScore ?? 0}
-              awayScore={matchDetails.awayScore ?? 0}
-              minute={matchDetails.minute}
-              status="live"
-              events={transformedEvents}
-              statistics={matchDetails.statistics ? {
-                possession: matchDetails.statistics.possession,
-                shots: matchDetails.statistics.shots,
-                shotsOnTarget: matchDetails.statistics.shotsOnTarget,
-                corners: matchDetails.statistics.corners,
-                fouls: matchDetails.statistics.fouls,
-              } : undefined}
-              currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
-              ballPosition={getBallPosition()}
-            />
-          </div>
-        )}
+
+
 
         {/* Tabs */}
         <div className="px-4 py-3 w-full">
