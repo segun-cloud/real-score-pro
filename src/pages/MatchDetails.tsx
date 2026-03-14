@@ -190,15 +190,15 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const hasStats = matchDetails?.statistics && Object.keys(matchDetails.statistics).length > 0;
 
   const tabs = [
-    { id: "details", label: "Details" },
-    { id: "tracker", label: "Tracker" },
-    { id: "statistics", label: "Stats" },
-    { id: "standings", label: "Standings" },
-    { id: "lineups", label: "Lineups" },
-    { id: "media", label: "Media" },
-    ...(matchDetails?.status !== 'finished' ? [{ id: "prediction", label: "AI" }] : []),
-    { id: "matches", label: "Matches" },
-    ...(hasOdds ? [{ id: "odds", label: "Odds" }] : []),
+    { id: "details", label: "Details", icon: <FileText className="h-3.5 w-3.5" /> },
+    { id: "tracker", label: "Tracker", icon: <Radio className="h-3.5 w-3.5" /> },
+    { id: "statistics", label: "Stats", icon: <BarChart3 className="h-3.5 w-3.5" /> },
+    { id: "standings", label: "Standings", icon: <Trophy className="h-3.5 w-3.5" /> },
+    { id: "lineups", label: "Lineups", icon: <Users className="h-3.5 w-3.5" /> },
+    { id: "media", label: "Media", icon: <Play className="h-3.5 w-3.5" /> },
+    ...(matchDetails?.status !== 'finished' ? [{ id: "prediction", label: "AI", icon: <Brain className="h-3.5 w-3.5" /> }] : []),
+    { id: "matches", label: "Matches", icon: <Swords className="h-3.5 w-3.5" /> },
+    ...(hasOdds ? [{ id: "odds", label: "Odds", icon: <DollarSign className="h-3.5 w-3.5" /> }] : []),
   ];
 
   const handleUnlockPrediction = async () => {
