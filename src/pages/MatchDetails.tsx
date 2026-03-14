@@ -278,67 +278,6 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
       case "details":
         return (
           <div className="space-y-4">
-            {/* Key Statistics Summary */}
-            {matchDetails.statistics && Object.keys(matchDetails.statistics).length > 0 && (
-              <Card className="p-4">
-                <h3 className="font-semibold mb-3">Key Statistics</h3>
-                <div className="space-y-4">
-                  {/* Possession Bar (Football) */}
-                  {matchDetails.statistics.possession && (
-                    <div>
-                      <div className="flex justify-between items-center text-sm mb-2">
-                        <span className="font-semibold text-primary">{matchDetails.statistics.possession.home}%</span>
-                        <span className="text-muted-foreground">Possession</span>
-                        <span className="font-semibold text-primary">{matchDetails.statistics.possession.away}%</span>
-                      </div>
-                      <Progress value={matchDetails.statistics.possession.home} className="h-3" />
-                    </div>
-                  )}
-                  
-                  {/* Shots Comparison */}
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    {matchDetails.statistics.shots && (
-                      <div>
-                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shots.home}</p>
-                        <p className="text-[10px] text-muted-foreground">Shots</p>
-                      </div>
-                    )}
-                    {matchDetails.statistics.shotsOnTarget && (
-                      <div>
-                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shotsOnTarget.home}</p>
-                        <p className="text-[10px] text-muted-foreground">On Target</p>
-                      </div>
-                    )}
-                    {matchDetails.statistics.corners && (
-                      <div>
-                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.corners.home}</p>
-                        <p className="text-[10px] text-muted-foreground">Corners</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    {matchDetails.statistics.shots && (
-                      <div>
-                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shots.away}</p>
-                      </div>
-                    )}
-                    {matchDetails.statistics.shotsOnTarget && (
-                      <div>
-                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.shotsOnTarget.away}</p>
-                      </div>
-                    )}
-                    {matchDetails.statistics.corners && (
-                      <div>
-                        <p className="text-lg font-bold text-primary">{matchDetails.statistics.corners.away}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            )}
-            
-            {/* Match Events */}
             <Card className="p-4">
               <h3 className="font-semibold mb-3">Match Events</h3>
               {matchDetails.events.length === 0 ? (
@@ -359,6 +298,45 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             </Card>
           </div>
         );
+
+      case "tracker":
+        if (isLiveMatch && isFootballMatch) {
+          return (
+            <LiveMatchTracker
+              homeTeam={matchDetails.homeTeam}
+              awayTeam={matchDetails.awayTeam}
+              homeTeamLogo={matchDetails.homeTeamLogo}
+              awayTeamLogo={matchDetails.awayTeamLogo}
+              homeScore={matchDetails.homeScore ?? 0}
+              awayScore={matchDetails.awayScore ?? 0}
+              minute={matchDetails.minute}
+              status="live"
+              events={transformedEvents}
+              statistics={matchDetails.statistics ? {
+                possession: matchDetails.statistics.possession,
+                shots: matchDetails.statistics.shots,
+                shotsOnTarget: matchDetails.statistics.shotsOnTarget,
+                corners: matchDetails.statistics.corners,
+                fouls: matchDetails.statistics.fouls,
+              } : undefined}
+              currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
+              ballPosition={getBallPosition()}
+            />
+          );
+        }
+        return (
+          <div className="text-center py-8">
+            <div className="text-4xl mb-3">📡</div>
+            <p className="text-sm text-muted-foreground">Match tracker available during live matches</p>
+          </div>
+        );
+
+      case "statistics":
+        if (!hasStats) {
+          return (
+            <div className="text-center text-muted-foreground py-8 text-sm">Statistics not available</div>
+          );
+        }
 
       case "odds":
         return (
