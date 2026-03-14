@@ -191,13 +191,14 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
 
   const tabs = [
     { id: "details", label: "Details" },
-    ...(hasStats ? [{ id: "statistics", label: "Stats" }] : []),
-    ...(hasOdds ? [{ id: "odds", label: "Odds" }] : []),
-    ...(hasLineups ? [{ id: "lineups", label: "Lineups" }] : []),
-    { id: "h2h", label: "H2H" },
-    { id: "standings", label: "Table" },
+    { id: "tracker", label: "Tracker" },
+    { id: "statistics", label: "Stats" },
+    { id: "standings", label: "Standings" },
+    { id: "lineups", label: "Lineups" },
     { id: "media", label: "Media" },
-    ...(matchDetails?.status !== 'finished' ? [{ id: "prediction", label: "AI Prediction" }] : []),
+    ...(matchDetails?.status !== 'finished' ? [{ id: "prediction", label: "AI" }] : []),
+    { id: "matches", label: "Matches" },
+    ...(hasOdds ? [{ id: "odds", label: "Odds" }] : []),
   ];
 
   const handleUnlockPrediction = async () => {
