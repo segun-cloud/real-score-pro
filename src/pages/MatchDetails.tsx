@@ -1004,15 +1004,6 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </div>
         );
 
-      case 'h2h':
-        return (
-          <HeadToHead 
-            h2h={h2hData || matchDetails.h2h || null}
-            homeTeam={matchDetails.homeTeam}
-            awayTeam={matchDetails.awayTeam}
-            isLoading={isLoadingH2h}
-          />
-        );
 
       case 'standings':
         if (isCupCompetition) {
