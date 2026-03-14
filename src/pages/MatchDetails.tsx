@@ -1083,9 +1083,18 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </div>
         );
 
-      case 'fixtures':
+      case 'matches':
         return (
           <div className="space-y-4">
+            {/* Head to Head */}
+            <HeadToHead 
+              h2h={h2hData || matchDetails.h2h || null}
+              homeTeam={matchDetails.homeTeam}
+              awayTeam={matchDetails.awayTeam}
+              isLoading={isLoadingH2h}
+            />
+
+            {/* Recent & Upcoming Fixtures */}
             <h3 className="text-sm font-semibold">Recent & Upcoming Fixtures</h3>
             <div className="space-y-3">
               <div>
