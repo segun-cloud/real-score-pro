@@ -1232,55 +1232,53 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           )}
         </div>
 
-        {/* Standard match header for non-live or non-football matches */}
-        {!(isLiveMatch && isFootballMatch) && (
-          <Card className="p-3 rounded-2xl mt-3">
-            <div className="flex items-center justify-between mb-2">
-              <Badge 
-                variant={matchDetails.status === 'live' ? 'destructive' : 'secondary'}
-                className={matchDetails.status === 'live' ? 'gradient-live text-live-foreground text-xs px-2 py-1 border-0' : 'text-xs px-2 py-1 rounded-lg'}
-              >
-                {matchDetails.status === 'live' ? 'LIVE' : matchDetails.status.toUpperCase()}
-              </Badge>
-              <span className="text-xs text-muted-foreground">{matchDetails.league}</span>
+        {/* Match header card - always visible */}
+        <Card className="p-3 rounded-2xl mt-3">
+          <div className="flex items-center justify-between mb-2">
+            <Badge 
+              variant={matchDetails.status === 'live' ? 'destructive' : 'secondary'}
+              className={matchDetails.status === 'live' ? 'gradient-live text-live-foreground text-xs px-2 py-1 border-0' : 'text-xs px-2 py-1 rounded-lg'}
+            >
+              {matchDetails.status === 'live' ? 'LIVE' : matchDetails.status.toUpperCase()}
+            </Badge>
+            <span className="text-xs text-muted-foreground">{matchDetails.league}</span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="text-center flex-1">
+              {matchDetails.homeTeamLogo && (
+                <img src={matchDetails.homeTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
+              )}
+              <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
+              {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
+                <div className="text-xl font-bold mt-1">{matchDetails.homeScore ?? 0}</div>
+              )}
             </div>
             
-            <div className="flex items-center justify-between">
-              <div className="text-center flex-1">
-                {matchDetails.homeTeamLogo && (
-                  <img src={matchDetails.homeTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
-                )}
-                <div className="text-xs font-semibold">{matchDetails.homeTeam}</div>
-                {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                  <div className="text-xl font-bold mt-1">{matchDetails.homeScore ?? 0}</div>
-                )}
-              </div>
-              
-              <div className="mx-3 text-center">
-                {matchDetails.status === 'live' || matchDetails.status === 'finished' ? (
-                  <div className="text-xl font-bold text-muted-foreground">-</div>
-                ) : (
-                  <div className="text-sm font-bold text-muted-foreground">VS</div>
-                )}
-                {matchDetails.status === 'live' && matchDetails.minute && (
-                  <Badge className="gradient-live text-live-foreground text-xs px-2 py-0.5 border-0 mt-1 animate-pulse">
-                    {matchDetails.minute}'
-                  </Badge>
-                )}
-              </div>
-              
-              <div className="text-center flex-1">
-                {matchDetails.awayTeamLogo && (
-                  <img src={matchDetails.awayTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
-                )}
-                <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
-                {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
-                  <div className="text-xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
-                )}
-              </div>
+            <div className="mx-3 text-center">
+              {matchDetails.status === 'live' || matchDetails.status === 'finished' ? (
+                <div className="text-xl font-bold text-muted-foreground">-</div>
+              ) : (
+                <div className="text-sm font-bold text-muted-foreground">VS</div>
+              )}
+              {matchDetails.status === 'live' && matchDetails.minute && (
+                <Badge className="gradient-live text-live-foreground text-xs px-2 py-0.5 border-0 mt-1 animate-pulse">
+                  {matchDetails.minute}'
+                </Badge>
+              )}
             </div>
-          </Card>
-        )}
+            
+            <div className="text-center flex-1">
+              {matchDetails.awayTeamLogo && (
+                <img src={matchDetails.awayTeamLogo} alt="" className="w-8 h-8 object-contain mx-auto mb-1" />
+              )}
+              <div className="text-xs font-semibold">{matchDetails.awayTeam}</div>
+              {(matchDetails.status === 'live' || matchDetails.status === 'finished') && (
+                <div className="text-xl font-bold mt-1">{matchDetails.awayScore ?? 0}</div>
+              )}
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Scrollable content area */}
