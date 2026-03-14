@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users, Trophy, ImageIcon } from "lucide-react";
+import { ArrowLeft, Brain, Coins, Crown, Sparkles, TrendingUp, Target, BarChart3, Users, Trophy, ImageIcon, FileText, Radio, ChartBar, TableProperties, Shirt, Play, Swords, DollarSign } from "lucide-react";
 import { TabNavigation } from "@/components/TabNavigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
