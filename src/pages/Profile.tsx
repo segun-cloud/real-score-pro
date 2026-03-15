@@ -24,6 +24,7 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const { toast } = useToast();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<{
     username: string;
     email: string;
