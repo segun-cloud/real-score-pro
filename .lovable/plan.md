@@ -1,86 +1,60 @@
 
 
-## Comprehensive Notification System Tied to User Favourites
+## Plan: Fix Notification Display & Auto-Toggle Live Matches
 
-### Overview
-Enhance the existing notification infrastructure to deliver rich, event-driven alerts for favourited matches, teams, and leagues. Notifications will cover the full match lifecycle (pre-match through post-match) plus news/transfer/injury updates.
+### Problem 1: Notification Always Off
 
-### Notification Types
+**Current Behavior:**
+- The bell icon shows as "off" (hollow bell) for most users
+- Only users who previously enabled push notifications show the "on" state
 
-| Type | Trigger | Example |
-|------|---------|---------|
-| `match_reminder` | 1 hour before kickoff | "Arsenal vs Chelsea kicks off in 1 hour" |
-| `match_kickoff` | Match status changes to live | "Arsenal vs Chelsea has kicked off!" |
-| `goal` | Score change detected | "GOAL! Arsenal 1-0 Chelsea" |
-| `red_card` | Red card event from API | "Red Card! Player sent off" |
-| `yellow_card` | Yellow card event | "Yellow Card for Player" |
-| `penalty` | Penalty awarded/scored | "Penalty! Arsenal scores from the spot" |
-| `substitution` | Key substitution | "Substitution: Player On for Player Off" |
-| `halftime` | Status changes to HT | "Half Time: Arsenal 1-0 Chelsea" |
-| `match_ended` | Status changes to FT | "Full Time: Arsenal 2-1 Chelsea" |
-| `news` | Sports feed with injury/transfer tag | "Transfer: Player signs for Club" |
+**Root Cause:**
+- This is expected behavior - the notification toggle shows the current subscription state
+- Users must click the bell to request browser permission and subscribe
+- The Lovable preview environment may have limitations with Web Push API
 
-### Backend Changes
+**Solution:**
+Add better visual feedback and debugging to help understand notification state.
 
-**1. Add `notification_preferences` table** (migration)
-```sql
-CREATE TABLE notification_preferences (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  match_reminders boolean DEFAULT true,
-  match_kickoff boolean DEFAULT true,
-  goals boolean DEFAULT true,
-  cards boolean DEFAULT true,
-  match_end boolean DEFAULT true,
-  news_updates boolean DEFAULT true,
-  created_at timestamptz DEFAULT now()
-);
-```
-With RLS for owner-only access. One row per user, created on first notification toggle.
+**Changes to `src/components/NotificationToggle.tsx`:**
+- Add console logging to debug the notification state
+- Show loading state while checking subscription
 
-**2. Enhance `update-live-scores` edge function**
-- Track previous status per match (not just scores) in `match_score_cache` -- add `status` and `events_hash` columns to detect new events
-- When status transitions: `scheduled -> live` = kickoff, `live -> HT` = halftime, `live/HT -> FT` = match ended
-- Fetch match events from API-Sports (`/fixtures/events?fixture=ID`) for goals, cards, penalties, substitutions
-- For each detected event, query `user_favourites` to find affected users, then insert into `user_notifications`
-- Also trigger browser push via `send-goal-notification` (rename/generalize to `send-match-notification`)
+---
 
-**3. New `check-upcoming-matches` edge function** (scheduled via pg_cron every 15 min)
-- Queries API-Sports for fixtures starting within the next 60-75 minutes
-- Cross-references with `user_favourites` (match, team, league entity types)
-- Inserts `match_reminder` notifications for matched users
-- Uses a `reminder_sent_cache` to avoid duplicate reminders
+### Problem 2: Auto-Toggle to Live Matches
 
-**4. Enhance `send-goal-notification` -> rename to `send-match-notification`**
-- Generalize to handle all notification types, not just goals
-- Different notification title/body templates per event type
+**Current Behavior:**
+- The "Show Live Only" toggle defaults to OFF
+- Users must manually enable it
 
-### Frontend Changes
+**Desired Behavior:**
+- Automatically enable "Live Only" mode when there are live matches available
 
-**5. Enhance `useFavoriteNotifications` hook**
-- Subscribe to `user_notifications` INSERT events (already subscribed to `live_scores`)
-- Show different toast styles per notification type (goal = success, red card = destructive, reminder = info)
-- Play different notification sounds per event type (optional)
+**Changes to `src/pages/Home.tsx`:**
+- After loading matches, check if any have `status === 'live'`
+- If live matches exist, automatically set `showLiveOnly` to `true`
+- Only auto-enable on initial load (not on refresh) to avoid annoying users who manually turned it off
 
-**6. Update `NotificationsList` component**
-- Add icons for new notification types: cards (yellow/red), whistle (kickoff/end), clock (reminder), newspaper (news)
-- Add filter tabs: All, Matches, News
+---
 
-**7. Add Notification Settings to Profile page**
-- Toggle preferences: Match Reminders, Kickoff Alerts, Goals, Cards, Match End, News Updates
-- Reads/writes from `notification_preferences` table
+### Technical Implementation
 
-**8. Update `NotificationBell`**
-- Subscribe to realtime inserts on `user_notifications` for instant badge count updates (already done)
+#### NotificationToggle.tsx
+- Add console logging to track `isSupported`, `isSubscribed`, `permission` values
+- This will help diagnose why notifications appear off
 
-### Database Migrations
-1. Create `notification_preferences` table with RLS
-2. Add `status` column to `match_score_cache` table
-3. Create `reminder_sent_cache` table (match_id + user_id unique, with TTL cleanup)
+#### Home.tsx  
+- Add a `hasAutoToggledLive` ref to track if we've already auto-toggled
+- After `apiMatches` loads, check if any are live
+- If live matches exist and we haven't auto-toggled yet, set `showLiveOnly = true`
 
-### Technical Notes
-- The `update-live-scores` function already polls every 10 seconds from the frontend; event detection piggybacks on this
-- API-Sports `/fixtures/events` endpoint provides goals, cards, substitutions, VAR decisions
-- All notification inserts use service role key (bypasses RLS) since they're system-generated
-- The existing `user_notifications` INSERT policy already allows public inserts (`WITH CHECK: true`)
+---
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/Home.tsx` | Add auto-toggle logic for live matches |
+| `src/components/NotificationToggle.tsx` | Add debugging logs |
 

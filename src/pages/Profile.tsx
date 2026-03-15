@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { mockUserProfile } from "@/data/mockData";
+import { NotificationSettings } from "@/components/NotificationSettings";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { toast as sonnerToast } from "sonner";
@@ -23,6 +24,7 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const { toast } = useToast();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profileData, setProfileData] = useState<{
     username: string;
     email: string;
@@ -38,6 +40,7 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setCurrentUserId(user.id);
 
       const { data: profile } = await supabase
         .from('user_profiles')
@@ -288,6 +291,11 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
                 Subscribe for $0.99/month
               </Button>
             </Card>
+          )}
+
+          {/* Notification Preferences */}
+          {currentUserId && (
+            <NotificationSettings userId={currentUserId} />
           )}
 
           {/* Settings */}
