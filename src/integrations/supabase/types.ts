@@ -437,29 +437,35 @@ export type Database = {
         Row: {
           away_score: number
           away_team: string
+          events_hash: string | null
           home_score: number
           home_team: string
           id: string
           last_checked: string
           match_id: string
+          status: string | null
         }
         Insert: {
           away_score?: number
           away_team: string
+          events_hash?: string | null
           home_score?: number
           home_team: string
           id?: string
           last_checked?: string
           match_id: string
+          status?: string | null
         }
         Update: {
           away_score?: number
           away_team?: string
+          events_hash?: string | null
           home_score?: number
           home_team?: string
           id?: string
           last_checked?: string
           match_id?: string
+          status?: string | null
         }
         Relationships: []
       }
@@ -524,6 +530,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          cards: boolean
+          created_at: string
+          goals: boolean
+          id: string
+          match_end: boolean
+          match_kickoff: boolean
+          match_reminders: boolean
+          news_updates: boolean
+          penalties: boolean
+          user_id: string
+        }
+        Insert: {
+          cards?: boolean
+          created_at?: string
+          goals?: boolean
+          id?: string
+          match_end?: boolean
+          match_kickoff?: boolean
+          match_reminders?: boolean
+          news_updates?: boolean
+          penalties?: boolean
+          user_id: string
+        }
+        Update: {
+          cards?: boolean
+          created_at?: string
+          goals?: boolean
+          id?: string
+          match_end?: boolean
+          match_kickoff?: boolean
+          match_reminders?: boolean
+          news_updates?: boolean
+          penalties?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string
@@ -550,6 +595,27 @@ export type Database = {
           id?: string
           p256dh?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      reminder_sent_cache: {
+        Row: {
+          id: string
+          match_id: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          match_id: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          match_id?: string
+          sent_at?: string
           user_id?: string
         }
         Relationships: []
