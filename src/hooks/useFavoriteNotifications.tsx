@@ -13,12 +13,23 @@ interface FavoriteLeague {
   name: string;
 }
 
+const notificationStyles: Record<string, { icon: string; style?: 'success' | 'error' | 'info' | 'warning' }> = {
+  goal: { icon: '⚽', style: 'success' },
+  red_card: { icon: '🟥', style: 'error' },
+  yellow_card: { icon: '🟨', style: 'warning' },
+  penalty: { icon: '⚡', style: 'warning' },
+  match_kickoff: { icon: '🟢', style: 'info' },
+  halftime: { icon: '⏸️', style: 'info' },
+  match_ended: { icon: '🏁', style: 'info' },
+  match_reminder: { icon: '⏰', style: 'info' },
+  news: { icon: '📰', style: 'info' },
+};
+
 export function useFavoriteNotifications(userId: string | undefined) {
   const favoriteTeams = useRef<FavoriteTeam[]>([]);
   const favoriteLeagues = useRef<FavoriteLeague[]>([]);
   const favoriteMatchIds = useRef<Set<string>>(new Set());
 
-  // Load user's favorites
   const loadFavorites = useCallback(async () => {
     if (!userId) return;
 
@@ -59,19 +70,16 @@ export function useFavoriteNotifications(userId: string | undefined) {
     }
   }, [userId]);
 
-  // Check if a score update is relevant to user's favorites
   const isRelevantUpdate = useCallback((
     matchId: string,
     homeTeam: string,
     awayTeam: string,
     leagueName: string
   ): { relevant: boolean; reason: string } => {
-    // Check if match is favorited
     if (favoriteMatchIds.current.has(matchId)) {
       return { relevant: true, reason: 'Favorite match' };
     }
 
-    // Check if either team is favorited
     const homeTeamFav = favoriteTeams.current.find(
       (t) => t.name.toLowerCase() === homeTeam.toLowerCase()
     );
@@ -86,7 +94,6 @@ export function useFavoriteNotifications(userId: string | undefined) {
       return { relevant: true, reason: `Your team ${awayTeamFav.name}` };
     }
 
-    // Check if league is favorited
     const leagueFav = favoriteLeagues.current.find(
       (l) => l.name.toLowerCase() === leagueName.toLowerCase()
     );
@@ -97,13 +104,12 @@ export function useFavoriteNotifications(userId: string | undefined) {
     return { relevant: false, reason: '' };
   }, []);
 
-  // Subscribe to live score changes for favorites
   useEffect(() => {
     if (!userId) return;
 
     loadFavorites();
 
-    // Subscribe to live_scores changes
+    // Subscribe to live_scores changes (real-time score updates)
     const channel = supabase
       .channel('favorite-score-updates')
       .on(
@@ -129,7 +135,6 @@ export function useFavoriteNotifications(userId: string | undefined) {
             away_score: number;
           };
 
-          // Only process if there's a score change
           if (
             newScore.home_score === oldScore.home_score &&
             newScore.away_score === oldScore.away_score
@@ -158,7 +163,6 @@ export function useFavoriteNotifications(userId: string | undefined) {
               }
             );
 
-            // Try to send push notification if supported
             if ('Notification' in window && Notification.permission === 'granted') {
               new Notification(`⚽ GOAL! ${scoringTeam}`, {
                 body: `${newScore.home_team} ${newScore.home_score} - ${newScore.away_score} ${newScore.away_team}\n${reason}`,
@@ -166,6 +170,47 @@ export function useFavoriteNotifications(userId: string | undefined) {
                 tag: `goal-${newScore.match_id}`,
               });
             }
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to user_notifications INSERT for all notification types
+    const notifChannel = supabase
+      .channel('user-notifications-insert')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'user_notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const notif = payload.new as {
+            notification_type: string;
+            title: string;
+            message: string;
+          };
+
+          const style = notificationStyles[notif.notification_type];
+
+          if (style?.style === 'success') {
+            toast.success(notif.title, { description: notif.message, duration: 5000 });
+          } else if (style?.style === 'error') {
+            toast.error(notif.title, { description: notif.message, duration: 5000 });
+          } else if (style?.style === 'warning') {
+            toast.warning(notif.title, { description: notif.message, duration: 4000 });
+          } else {
+            toast.info(notif.title, { description: notif.message, duration: 4000 });
+          }
+
+          // Browser notification
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(notif.title, {
+              body: notif.message,
+              icon: '/favicon.ico',
+            });
           }
         }
       )
@@ -190,6 +235,7 @@ export function useFavoriteNotifications(userId: string | undefined) {
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(notifChannel);
       supabase.removeChannel(favChannel);
     };
   }, [userId, loadFavorites, isRelevantUpdate]);
