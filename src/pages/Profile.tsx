@@ -291,6 +291,11 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
             </Card>
           )}
 
+          {/* Notification Preferences */}
+          {profileData && (
+            <NotificationSettings userId={profileData ? undefined as any : ''} />
+          )}
+
           {/* Settings */}
           <Card className="p-3">
             <h3 className="font-semibold text-sm mb-3 flex items-center gap-1.5">
