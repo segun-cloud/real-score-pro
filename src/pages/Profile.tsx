@@ -40,6 +40,7 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setCurrentUserId(user.id);
 
       const { data: profile } = await supabase
         .from('user_profiles')
