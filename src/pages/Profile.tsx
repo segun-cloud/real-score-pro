@@ -294,8 +294,8 @@ export const Profile = ({ coins, onBack, onLogout, onCoinsUpdate }: ProfileProps
           )}
 
           {/* Notification Preferences */}
-          {profileData && (
-            <NotificationSettings userId={profileData ? undefined as any : ''} />
+          {currentUserId && (
+            <NotificationSettings userId={currentUserId} />
           )}
 
           {/* Settings */}
