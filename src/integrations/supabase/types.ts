@@ -379,6 +379,57 @@ export type Database = {
         }
         Relationships: []
       }
+      live_match_state: {
+        Row: {
+          attacking_team: string | null
+          away_attacks: number | null
+          away_dangerous_attacks: number | null
+          away_possession: number | null
+          ball_x: number
+          ball_y: number
+          created_at: string
+          home_attacks: number | null
+          home_dangerous_attacks: number | null
+          home_possession: number | null
+          id: string
+          match_id: string
+          phase: string
+          updated_at: string
+        }
+        Insert: {
+          attacking_team?: string | null
+          away_attacks?: number | null
+          away_dangerous_attacks?: number | null
+          away_possession?: number | null
+          ball_x?: number
+          ball_y?: number
+          created_at?: string
+          home_attacks?: number | null
+          home_dangerous_attacks?: number | null
+          home_possession?: number | null
+          id?: string
+          match_id: string
+          phase?: string
+          updated_at?: string
+        }
+        Update: {
+          attacking_team?: string | null
+          away_attacks?: number | null
+          away_dangerous_attacks?: number | null
+          away_possession?: number | null
+          ball_x?: number
+          ball_y?: number
+          created_at?: string
+          home_attacks?: number | null
+          home_dangerous_attacks?: number | null
+          home_possession?: number | null
+          id?: string
+          match_id?: string
+          phase?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       live_scores: {
         Row: {
           away_score: number | null
