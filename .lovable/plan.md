@@ -1,60 +1,63 @@
 
 
-## Plan: Fix Notification Display & Auto-Toggle Live Matches
+## Make the Tracker Simulation Data-Driven
 
-### Problem 1: Notification Always Off
+### Problem
+The football tracker simulation is 100% random. It doesn't reflect actual match data — a team dominating possession 70-30 in reality would still show ~50-50 on the tracker.
 
-**Current Behavior:**
-- The bell icon shows as "off" (hollow bell) for most users
-- Only users who previously enabled push notifications show the "on" state
+### Solution
+Feed real match statistics from the API into the simulation engine to bias its behavior, so the animation reflects actual match dynamics.
 
-**Root Cause:**
-- This is expected behavior - the notification toggle shows the current subscription state
-- Users must click the bell to request browser permission and subscribe
-- The Lovable preview environment may have limitations with Web Push API
+### How It Works
 
-**Solution:**
-Add better visual feedback and debugging to help understand notification state.
+**1. Pass real stats into the engine**
 
-**Changes to `src/components/NotificationToggle.tsx`:**
-- Add console logging to debug the notification state
-- Show loading state while checking subscription
+The `update-live-scores` edge function already fetches match data. The `MatchDetails` page already has access to match statistics (possession, shots, etc.). We pass these into `useFootballSimEngine` as new props:
 
----
+```text
+realPossession?: { home: number, away: number }  // e.g. 62/38
+realPressure?: 'home' | 'away' | 'neutral'       // derived from shots/corners
+matchStatus?: string                               // 1H, 2H, HT, FT
+```
 
-### Problem 2: Auto-Toggle to Live Matches
+**2. Bias the micro-event probabilities**
 
-**Current Behavior:**
-- The "Show Live Only" toggle defaults to OFF
-- Users must manually enable it
+Instead of fixed 70/15/10/5 split, weight them by real stats:
+- If home has 65% possession → home team gets ~65% of micro-events as the possessing team
+- If away has more shots → increase shot attempt probability when away has ball
+- Turnovers happen more for the team with less possession
 
-**Desired Behavior:**
-- Automatically enable "Live Only" mode when there are live matches available
+**3. Bias formation shifts with real pressure**
 
-**Changes to `src/pages/Home.tsx`:**
-- After loading matches, check if any have `status === 'live'`
-- If live matches exist, automatically set `showLiveOnly` to `true`
-- Only auto-enable on initial load (not on refresh) to avoid annoying users who manually turned it off
+Use shots-on-target ratio to determine which third the ball spends most time in. If home has 8 shots vs away's 2, the pressure zone naturally gravitates toward the away goal.
 
----
+**4. Sync goal events from real data**
 
-### Technical Implementation
+Already partially done — `currentEvent` triggers goal celebrations. Enhance to also trigger for cards, corners (set piece phase), and substitutions.
 
-#### NotificationToggle.tsx
-- Add console logging to track `isSupported`, `isSubscribed`, `permission` values
-- This will help diagnose why notifications appear off
+### Files to Change
 
-#### Home.tsx  
-- Add a `hasAutoToggledLive` ref to track if we've already auto-toggled
-- After `apiMatches` loads, check if any are live
-- If live matches exist and we haven't auto-toggled yet, set `showLiveOnly = true`
+| File | Change |
+|------|--------|
+| `src/hooks/useFootballSimEngine.ts` | Add `realStats` prop, bias `generateMicroEvent` probabilities and possession weighting |
+| `src/components/trackers/FootballTracker.tsx` | Pass real stats from parent through to engine |
+| `src/pages/MatchDetails.tsx` | Pass fetched match statistics to the tracker component |
 
----
+### Key Logic Change in `generateMicroEvent`
 
-### Files to Modify
+```text
+Current:  roll < 0.70 → pass (fixed)
+Proposed: possessionBias = realPossession[currentTeam] / 100
+          roll < (0.60 + possessionBias * 0.15) → pass
+          This means team with 65% possession keeps ball ~69% of micro-events
+          Team with 35% keeps it ~55%, creating natural turnover flow
+```
 
-| File | Changes |
-|------|---------|
-| `src/pages/Home.tsx` | Add auto-toggle logic for live matches |
-| `src/components/NotificationToggle.tsx` | Add debugging logs |
+### For Fun Hub Simulations
+These don't have real API data, so the engine falls back to its current random behavior — which is correct since those matches are fictional.
+
+### What This Does NOT Require
+- No new database tables
+- No new edge functions
+- No API changes — uses data already being fetched
 
