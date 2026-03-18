@@ -1005,12 +1005,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </div>
         );
 
-  // Must call hooks before any early returns
-  const matchPhaseEarly = useMatchPhaseTracker({
-    matchId: matchDetails?.id || matchId,
-    isLive: !!(matchDetails?.status === 'live' && matchDetails?.sport === 'football'),
-    goalserveMatchId: (matchDetails as any)?.goalserveMatchId,
-  });
+
 
 
       case 'standings':
