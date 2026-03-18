@@ -73,8 +73,8 @@ export const FootballTracker = ({
     }
     return 'none';
   }, [engine.pressureZone]);
+  const pressureGradient = useMemo(() => {
 
-  return (
     <div className="bg-card p-3 rounded-lg">
       {/* Pitch */}
       <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '16/10' }}>
