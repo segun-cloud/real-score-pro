@@ -319,8 +319,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                 shotsOnTarget: matchDetails.statistics.shotsOnTarget,
                 corners: matchDetails.statistics.corners,
                 fouls: matchDetails.statistics.fouls,
-              } : undefined}
-              currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
+               } : undefined}
+              currentAction={currentAction}
               ballPosition={getBallPosition()}
             />
           );
