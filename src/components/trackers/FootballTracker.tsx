@@ -11,6 +11,10 @@ interface FootballTrackerProps {
   isSimulating?: boolean;
   ballPosition?: { x: number; y: number };
   currentEvent?: { type: string; team: 'home' | 'away' } | null;
+  /** Real match phase from API */
+  livePhase?: 'safe' | 'attack' | 'dangerous_attack' | 'setpiece' | 'goal' | null;
+  /** Which team is attacking */
+  liveAttackingTeam?: 'home' | 'away' | null;
 }
 
 export const FootballTracker = ({
