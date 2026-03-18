@@ -26,6 +26,8 @@ export const FootballTracker = ({
   isSimulating = false,
   ballPosition,
   currentEvent,
+  livePhase,
+  liveAttackingTeam,
 }: FootballTrackerProps) => {
   const engine = useFootballSimEngine({
     isSimulating,
@@ -33,9 +35,32 @@ export const FootballTracker = ({
     ballPosition,
     homeTeam,
     awayTeam,
+    livePhase,
+    liveAttackingTeam,
   });
 
-  const pressureGradient = useMemo(() => {
+  // Derive display label from live phase
+  const phaseLabel = useMemo(() => {
+    if (!livePhase || !isSimulating) return null;
+    switch (livePhase) {
+      case 'dangerous_attack': return 'Dangerous Attack';
+      case 'attack': return 'Attack';
+      case 'setpiece': return 'Set Piece';
+      case 'goal': return 'GOAL!';
+      case 'safe': return 'Safe';
+      default: return null;
+    }
+  }, [livePhase, isSimulating]);
+
+  const phaseLabelColor = useMemo(() => {
+    switch (livePhase) {
+      case 'dangerous_attack': return 'text-red-400';
+      case 'attack': return 'text-amber-400';
+      case 'setpiece': return 'text-cyan-400';
+      case 'goal': return 'text-green-400';
+      default: return 'text-white/70';
+    }
+  }, [livePhase]);
     const zone = engine.pressureZone;
     // Green gradient shifts based on pressure
     const intensity = Math.abs(zone - 50) / 50;
