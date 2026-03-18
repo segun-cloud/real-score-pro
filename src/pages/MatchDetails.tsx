@@ -1200,13 +1200,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const isLiveMatch = matchDetails.status === 'live';
   const isFootballMatch = matchDetails.sport === 'football';
 
-  // Use real match phase tracker for live football matches
-  const matchPhase = useMatchPhaseTracker({
-    matchId: matchDetails.id,
-    isLive: isLiveMatch && isFootballMatch,
-    // goalserveMatchId would come from a mapping — for now passed via match data
-    goalserveMatchId: (matchDetails as any).goalserveMatchId,
-  });
+
 
   // Determine ball position from live phase data or fallback
   const getBallPosition = () => {
