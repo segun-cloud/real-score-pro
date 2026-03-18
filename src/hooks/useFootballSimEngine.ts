@@ -80,6 +80,10 @@ interface UseFootballSimEngineProps {
   ballPosition?: { x: number; y: number };
   homeTeam: string;
   awayTeam: string;
+  /** Real match phase from API data — overrides random micro-events when provided */
+  livePhase?: 'safe' | 'attack' | 'dangerous_attack' | 'setpiece' | 'goal' | null;
+  /** Which team is attacking, from API data */
+  liveAttackingTeam?: 'home' | 'away' | null;
 }
 
 export const useFootballSimEngine = ({
