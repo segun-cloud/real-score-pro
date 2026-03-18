@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.send-match-notification]
 verify_jwt = false
+
+[functions.fetch-live-match-state]
+verify_jwt = false

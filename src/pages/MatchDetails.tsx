@@ -17,6 +17,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { HeadToHead } from "@/components/HeadToHead";
 import { LiveMatchTracker } from "@/components/LiveMatchTracker";
 import { supabase } from "@/integrations/supabase/client";
+import { useMatchPhaseTracker } from "@/hooks/useMatchPhaseTracker";
 
 interface MatchDetailsProps {
   matchId: string;
@@ -38,6 +39,13 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const [isCupCompetition, setIsCupCompetition] = useState(false);
   const [h2hData, setH2hData] = useState<H2HRecord | null>(null);
   const [isLoadingH2h, setIsLoadingH2h] = useState(false);
+
+  // Hook must be called before any early returns
+  const matchPhase = useMatchPhaseTracker({
+    matchId: matchDetails?.id || matchId,
+    isLive: !!(matchDetails?.status === 'live' && matchDetails?.sport === 'football'),
+    goalserveMatchId: (matchDetails as any)?.goalserveMatchId,
+  });
 
   useEffect(() => {
     const loadMatchDetails = async () => {
@@ -318,8 +326,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
                 shotsOnTarget: matchDetails.statistics.shotsOnTarget,
                 corners: matchDetails.statistics.corners,
                 fouls: matchDetails.statistics.fouls,
-              } : undefined}
-              currentAction={matchDetails.minute && matchDetails.minute % 5 === 0 ? "Attack" : undefined}
+               } : undefined}
+              currentAction={currentAction}
               ballPosition={getBallPosition()}
             />
           );
@@ -1005,6 +1013,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
         );
 
 
+
+
       case 'standings':
         if (isCupCompetition) {
           return (
@@ -1187,18 +1197,30 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
     description: event.description,
   }));
 
-  // Determine ball position based on current minute and events
+  const isLiveMatch = matchDetails.status === 'live';
+  const isFootballMatch = matchDetails.sport === 'football';
+
+
+
+  // Determine ball position from live phase data or fallback
   const getBallPosition = () => {
-    if (matchDetails.status !== 'live') return { x: 50, y: 50 };
+    if (!isLiveMatch) return { x: 50, y: 50 };
+    if (matchPhase.ballX !== 50 || matchPhase.ballY !== 50) {
+      return { x: matchPhase.ballX, y: matchPhase.ballY };
+    }
     const minute = matchDetails.minute || 0;
-    // Simulate some ball movement based on time
     const x = 30 + Math.sin(minute * 0.5) * 40;
     const y = 30 + Math.cos(minute * 0.3) * 20;
     return { x, y };
   };
 
-  const isLiveMatch = matchDetails.status === 'live';
-  const isFootballMatch = matchDetails.sport === 'football';
+  // Derive currentAction from live phase
+  const currentAction = isLiveMatch && matchPhase.phase !== 'safe'
+    ? (matchPhase.phase === 'dangerous_attack' ? 'Dangerous Attack'
+      : matchPhase.phase === 'attack' ? 'Attack'
+      : matchPhase.phase === 'setpiece' ? 'Set Piece'
+      : undefined)
+    : undefined;
 
   return (
     <div className="h-screen bg-background flex flex-col w-full max-w-full overflow-x-hidden">

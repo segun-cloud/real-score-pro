@@ -11,6 +11,10 @@ interface FootballTrackerProps {
   isSimulating?: boolean;
   ballPosition?: { x: number; y: number };
   currentEvent?: { type: string; team: 'home' | 'away' } | null;
+  /** Real match phase from API */
+  livePhase?: 'safe' | 'attack' | 'dangerous_attack' | 'setpiece' | 'goal' | null;
+  /** Which team is attacking */
+  liveAttackingTeam?: 'home' | 'away' | null;
 }
 
 export const FootballTracker = ({
@@ -22,6 +26,8 @@ export const FootballTracker = ({
   isSimulating = false,
   ballPosition,
   currentEvent,
+  livePhase,
+  liveAttackingTeam,
 }: FootballTrackerProps) => {
   const engine = useFootballSimEngine({
     isSimulating,
@@ -29,17 +35,39 @@ export const FootballTracker = ({
     ballPosition,
     homeTeam,
     awayTeam,
+    livePhase,
+    liveAttackingTeam,
   });
+
+  // Derive display label from live phase
+  const phaseLabel = useMemo(() => {
+    if (!livePhase || !isSimulating) return null;
+    switch (livePhase) {
+      case 'dangerous_attack': return 'Dangerous Attack';
+      case 'attack': return 'Attack';
+      case 'setpiece': return 'Set Piece';
+      case 'goal': return 'GOAL!';
+      case 'safe': return 'Safe';
+      default: return null;
+    }
+  }, [livePhase, isSimulating]);
+
+  const phaseLabelColor = useMemo(() => {
+    switch (livePhase) {
+      case 'dangerous_attack': return 'text-red-400';
+      case 'attack': return 'text-amber-400';
+      case 'setpiece': return 'text-cyan-400';
+      case 'goal': return 'text-green-400';
+      default: return 'text-white/70';
+    }
+  }, [livePhase]);
 
   const pressureGradient = useMemo(() => {
     const zone = engine.pressureZone;
-    // Green gradient shifts based on pressure
     const intensity = Math.abs(zone - 50) / 50;
     if (zone > 55) {
-      // Pressure toward away goal (home attacking)
       return `radial-gradient(ellipse at ${zone}% 50%, rgba(59, 130, 246, ${0.08 + intensity * 0.12}) 0%, transparent 60%)`;
     } else if (zone < 45) {
-      // Pressure toward home goal (away attacking)
       return `radial-gradient(ellipse at ${zone}% 50%, rgba(239, 68, 68, ${0.08 + intensity * 0.12}) 0%, transparent 60%)`;
     }
     return 'none';
@@ -47,6 +75,18 @@ export const FootballTracker = ({
 
   return (
     <div className="bg-card p-3 rounded-lg">
+      {/* Live phase indicator */}
+      {phaseLabel && liveAttackingTeam && (
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-xs text-muted-foreground">
+            {liveAttackingTeam === 'home' ? homeTeam : awayTeam}
+          </span>
+          <Badge variant="outline" className={`text-xs font-semibold ${phaseLabelColor}`}>
+            {phaseLabel}
+          </Badge>
+        </div>
+      )}
+
       {/* Pitch */}
       <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '16/10' }}>
         {/* Grass background with stripes */}

@@ -80,12 +80,18 @@ interface UseFootballSimEngineProps {
   ballPosition?: { x: number; y: number };
   homeTeam: string;
   awayTeam: string;
+  /** Real match phase from API data — overrides random micro-events when provided */
+  livePhase?: 'safe' | 'attack' | 'dangerous_attack' | 'setpiece' | 'goal' | null;
+  /** Which team is attacking, from API data */
+  liveAttackingTeam?: 'home' | 'away' | null;
 }
 
 export const useFootballSimEngine = ({
   isSimulating,
   currentEvent,
   ballPosition,
+  livePhase,
+  liveAttackingTeam,
 }: UseFootballSimEngineProps) => {
   const [state, setState] = useState<SimEngineState>(() => initState());
   const animFrameRef = useRef<number>(0);
@@ -325,8 +331,20 @@ export const useFootballSimEngine = ({
         next.passingLines = prev.passingLines.filter(l => now - l.timestamp < 800);
 
         // Generate micro-event every 1.2-2.5 seconds
+        // When livePhase is provided, use it to bias the simulation instead of random events
         if (microEventTimerRef.current > 1200 + Math.random() * 1300) {
           microEventTimerRef.current = 0;
+          if (livePhase && livePhase !== 'safe') {
+            // Override phase from real API data
+            const mappedPhase = livePhase === 'dangerous_attack' ? 'attack' : livePhase === 'setpiece' ? 'setpiece' : 'attack';
+            phaseRef.current = mappedPhase;
+            // Bias possession toward attacking team
+            if (liveAttackingTeam) {
+              next.possession = liveAttackingTeam;
+            }
+          } else if (livePhase === 'safe') {
+            phaseRef.current = 'buildup';
+          }
           next = generateMicroEvent(next);
         }
 
