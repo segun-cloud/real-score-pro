@@ -40,7 +40,13 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const [h2hData, setH2hData] = useState<H2HRecord | null>(null);
   const [isLoadingH2h, setIsLoadingH2h] = useState(false);
 
-  useEffect(() => {
+  // Hook must be called before any early returns
+  const matchPhase = useMatchPhaseTracker({
+    matchId: matchDetails?.id || matchId,
+    isLive: !!(matchDetails?.status === 'live' && matchDetails?.sport === 'football'),
+    goalserveMatchId: (matchDetails as any)?.goalserveMatchId,
+  });
+
     const loadMatchDetails = async () => {
       try {
         const currentMatchId = match?.id || matchId;
