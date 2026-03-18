@@ -74,6 +74,19 @@ export const FootballTracker = ({
   }, [engine.pressureZone]);
 
   return (
+    <div className="bg-card p-3 rounded-lg">
+      {/* Live phase indicator */}
+      {phaseLabel && liveAttackingTeam && (
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-xs text-muted-foreground">
+            {liveAttackingTeam === 'home' ? homeTeam : awayTeam}
+          </span>
+          <Badge variant="outline" className={`text-xs font-semibold ${phaseLabelColor}`}>
+            {phaseLabel}
+          </Badge>
+        </div>
+      )}
+
       {/* Pitch */}
       <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '16/10' }}>
         {/* Grass background with stripes */}
