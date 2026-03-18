@@ -1188,18 +1188,36 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
     description: event.description,
   }));
 
-  // Determine ball position based on current minute and events
+  const isLiveMatch = matchDetails.status === 'live';
+  const isFootballMatch = matchDetails.sport === 'football';
+
+  // Use real match phase tracker for live football matches
+  const matchPhase = useMatchPhaseTracker({
+    matchId: matchDetails.id,
+    isLive: isLiveMatch && isFootballMatch,
+    // goalserveMatchId would come from a mapping — for now passed via match data
+    goalserveMatchId: (matchDetails as any).goalserveMatchId,
+  });
+
+  // Determine ball position from live phase data or fallback
   const getBallPosition = () => {
-    if (matchDetails.status !== 'live') return { x: 50, y: 50 };
+    if (!isLiveMatch) return { x: 50, y: 50 };
+    if (matchPhase.ballX !== 50 || matchPhase.ballY !== 50) {
+      return { x: matchPhase.ballX, y: matchPhase.ballY };
+    }
     const minute = matchDetails.minute || 0;
-    // Simulate some ball movement based on time
     const x = 30 + Math.sin(minute * 0.5) * 40;
     const y = 30 + Math.cos(minute * 0.3) * 20;
     return { x, y };
   };
 
-  const isLiveMatch = matchDetails.status === 'live';
-  const isFootballMatch = matchDetails.sport === 'football';
+  // Derive currentAction from live phase
+  const currentAction = isLiveMatch && matchPhase.phase !== 'safe'
+    ? (matchPhase.phase === 'dangerous_attack' ? 'Dangerous Attack'
+      : matchPhase.phase === 'attack' ? 'Attack'
+      : matchPhase.phase === 'setpiece' ? 'Set Piece'
+      : undefined)
+    : undefined;
 
   return (
     <div className="h-screen bg-background flex flex-col w-full max-w-full overflow-x-hidden">
