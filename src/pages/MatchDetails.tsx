@@ -17,6 +17,7 @@ import { VideoPlayer } from "@/components/VideoPlayer";
 import { HeadToHead } from "@/components/HeadToHead";
 import { LiveMatchTracker } from "@/components/LiveMatchTracker";
 import { supabase } from "@/integrations/supabase/client";
+import { useMatchPhaseTracker } from "@/hooks/useMatchPhaseTracker";
 
 interface MatchDetailsProps {
   matchId: string;
