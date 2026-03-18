@@ -47,6 +47,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
     goalserveMatchId: (matchDetails as any)?.goalserveMatchId,
   });
 
+  useEffect(() => {
     const loadMatchDetails = async () => {
       try {
         const currentMatchId = match?.id || matchId;
