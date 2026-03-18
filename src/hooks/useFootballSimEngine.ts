@@ -90,6 +90,8 @@ export const useFootballSimEngine = ({
   isSimulating,
   currentEvent,
   ballPosition,
+  livePhase,
+  liveAttackingTeam,
 }: UseFootballSimEngineProps) => {
   const [state, setState] = useState<SimEngineState>(() => initState());
   const animFrameRef = useRef<number>(0);
