@@ -44,6 +44,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const matchPhase = useMatchPhaseTracker({
     matchId: matchDetails?.id || matchId,
     isLive: !!(matchDetails?.status === 'live' && matchDetails?.sport === 'football'),
+    sportmonksFixtureId: (matchDetails as any)?.sportmonksFixtureId,
     statistics: matchDetails?.statistics,
   });
 
