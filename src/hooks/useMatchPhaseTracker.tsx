@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface MatchPhaseState {
@@ -27,109 +27,78 @@ const DEFAULT_STATE: MatchPhaseState = {
   awayPossession: 50,
 };
 
-interface StatPair {
-  home: number;
-  away: number;
-}
-
-interface MatchStatistics {
-  possession?: StatPair;
-  shots?: StatPair;
-  shotsOnTarget?: StatPair;
-  corners?: StatPair;
-  fouls?: StatPair;
-}
-
 interface UseMatchPhaseTrackerProps {
   matchId: string;
   isLive: boolean;
-  statistics?: MatchStatistics;
+  sportmonksFixtureId?: string;
+  statistics?: any;
 }
 
-export const useMatchPhaseTracker = ({ matchId, isLive, statistics }: UseMatchPhaseTrackerProps) => {
+export const useMatchPhaseTracker = ({ matchId, isLive, sportmonksFixtureId, statistics }: UseMatchPhaseTrackerProps) => {
   const [state, setState] = useState<MatchPhaseState>(DEFAULT_STATE);
   const [isLoading, setIsLoading] = useState(false);
-  const prevStatsRef = useRef<MatchStatistics | null>(null);
-  const decayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const prevStatsRef = useRef<any>(null);
+  const decayTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const inferPhase = useCallback((newStats: MatchStatistics, oldStats: MatchStatistics | null): Partial<MatchPhaseState> | null => {
-    if (!oldStats) return null; // First poll, no delta yet
-
-    const shotsDeltaHome = (newStats.shotsOnTarget?.home ?? 0) - (oldStats.shotsOnTarget?.home ?? 0);
-    const shotsDeltaAway = (newStats.shotsOnTarget?.away ?? 0) - (oldStats.shotsOnTarget?.away ?? 0);
-    const totalShotsDeltaHome = (newStats.shots?.home ?? 0) - (oldStats.shots?.home ?? 0);
-    const totalShotsDeltaAway = (newStats.shots?.away ?? 0) - (oldStats.shots?.away ?? 0);
-    const cornersDeltaHome = (newStats.corners?.home ?? 0) - (oldStats.corners?.home ?? 0);
-    const cornersDeltaAway = (newStats.corners?.away ?? 0) - (oldStats.corners?.away ?? 0);
-
-    // Shots on target → dangerous attack
-    if (shotsDeltaHome > 0) {
-      return { phase: 'dangerous_attack', attackingTeam: 'home', ballX: 82, ballY: 45 + Math.random() * 10 };
-    }
-    if (shotsDeltaAway > 0) {
-      return { phase: 'dangerous_attack', attackingTeam: 'away', ballX: 18, ballY: 45 + Math.random() * 10 };
-    }
-
-    // Corners → setpiece
-    if (cornersDeltaHome > 0) {
-      return { phase: 'setpiece', attackingTeam: 'home', ballX: 92, ballY: 10 + Math.random() * 40 };
-    }
-    if (cornersDeltaAway > 0) {
-      return { phase: 'setpiece', attackingTeam: 'away', ballX: 8, ballY: 10 + Math.random() * 40 };
-    }
-
-    // Total shots → attack
-    if (totalShotsDeltaHome > 0) {
-      return { phase: 'attack', attackingTeam: 'home', ballX: 68, ballY: 40 + Math.random() * 20 };
-    }
-    if (totalShotsDeltaAway > 0) {
-      return { phase: 'attack', attackingTeam: 'away', ballX: 32, ballY: 40 + Math.random() * 20 };
-    }
-
-    // No stat delta — use possession to infer
-    const homePoss = newStats.possession?.home ?? 50;
-    const awayPoss = newStats.possession?.away ?? 50;
-
-    if (homePoss > 60) {
-      return { phase: 'attack', attackingTeam: 'home', ballX: 62, ballY: 50 };
-    }
-    if (awayPoss > 60) {
-      return { phase: 'attack', attackingTeam: 'away', ballX: 38, ballY: 50 };
-    }
-
-    return null; // No change detected → will decay to safe
-  }, []);
-
-  const applyPhase = useCallback((update: Partial<MatchPhaseState>) => {
-    // Clear any existing decay timer
-    if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
-
-    setState(prev => ({
-      ...prev,
-      ...update,
-    }));
-
-    // Decay back to safe after 15 seconds
-    decayTimerRef.current = setTimeout(() => {
-      setState(prev => ({
-        ...prev,
-        phase: 'safe',
-        attackingTeam: null,
-        ballX: 50,
-        ballY: 50,
-      }));
-    }, 15000);
-  }, []);
-
-  // React to statistics passed from parent (already-fetched data)
+  // If we have a SportMonks fixture ID, use the dedicated edge function + realtime
   useEffect(() => {
-    if (!isLive || !statistics) return;
+    if (!isLive || !matchId || !sportmonksFixtureId) return;
 
-    const inferred = inferPhase(statistics, prevStatsRef.current);
-    prevStatsRef.current = statistics;
+    // Subscribe to realtime updates from live_match_state table
+    const channel = supabase
+      .channel(`match-state-${matchId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_match_state',
+          filter: `match_id=eq.${matchId}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            setState(mapDbToState(payload.new));
+          }
+        }
+      )
+      .subscribe();
 
-    // Update possession stats always
+    // Poll SportMonks via edge function every 10 seconds
+    const poll = async () => {
+      try {
+        setIsLoading(true);
+        const { data } = await supabase.functions.invoke('fetch-live-match-state', {
+          body: { matchId, sportmonksFixtureId },
+        });
+        if (data?.state) {
+          setState(mapApiToState(data.state));
+        }
+      } catch (error) {
+        console.error('Error polling SportMonks match state:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    poll();
+    pollIntervalRef.current = setInterval(poll, 10000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, [matchId, isLive, sportmonksFixtureId]);
+
+  // Fallback: infer phases from API-Sports statistics when no SportMonks fixture ID
+  useEffect(() => {
+    if (!isLive || !matchId || sportmonksFixtureId) return;
+    if (!statistics) return;
+
+    const inferred = inferPhaseFromStats(statistics, prevStatsRef.current);
+    prevStatsRef.current = { ...statistics };
+
+    // Always update possession/attack counts
     setState(prev => ({
       ...prev,
       homePossession: statistics.possession?.home ?? prev.homePossession,
@@ -141,13 +110,17 @@ export const useMatchPhaseTracker = ({ matchId, isLive, statistics }: UseMatchPh
     }));
 
     if (inferred) {
-      applyPhase(inferred);
+      if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
+      setState(prev => ({ ...prev, ...inferred }));
+      decayTimerRef.current = setTimeout(() => {
+        setState(prev => ({ ...prev, phase: 'safe', attackingTeam: null, ballX: 50, ballY: 50 }));
+      }, 15000);
     }
-  }, [isLive, statistics, inferPhase, applyPhase]);
+  }, [isLive, matchId, sportmonksFixtureId, statistics]);
 
-  // Poll API-Sports every 30s for fresh stats when live
+  // Fallback polling for API-Sports stats when no SportMonks ID
   useEffect(() => {
-    if (!isLive || !matchId) return;
+    if (!isLive || !matchId || sportmonksFixtureId) return;
 
     const poll = async () => {
       try {
@@ -155,12 +128,11 @@ export const useMatchPhaseTracker = ({ matchId, isLive, statistics }: UseMatchPh
         const { data, error } = await supabase.functions.invoke('fetch-match-details-apisports', {
           body: { matchId },
         });
-
         if (error || !data?.statistics) return;
 
-        const freshStats: MatchStatistics = data.statistics;
-        const inferred = inferPhase(freshStats, prevStatsRef.current);
-        prevStatsRef.current = freshStats;
+        const freshStats = data.statistics;
+        const inferred = inferPhaseFromStats(freshStats, prevStatsRef.current);
+        prevStatsRef.current = { ...freshStats };
 
         setState(prev => ({
           ...prev,
@@ -173,7 +145,11 @@ export const useMatchPhaseTracker = ({ matchId, isLive, statistics }: UseMatchPh
         }));
 
         if (inferred) {
-          applyPhase(inferred);
+          if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
+          setState(prev => ({ ...prev, ...inferred }));
+          decayTimerRef.current = setTimeout(() => {
+            setState(prev => ({ ...prev, phase: 'safe', attackingTeam: null, ballX: 50, ballY: 50 }));
+          }, 15000);
         }
       } catch (err) {
         console.error('Error polling match stats:', err);
@@ -182,7 +158,6 @@ export const useMatchPhaseTracker = ({ matchId, isLive, statistics }: UseMatchPh
       }
     };
 
-    // Poll every 30 seconds
     poll();
     pollIntervalRef.current = setInterval(poll, 30000);
 
@@ -190,7 +165,61 @@ export const useMatchPhaseTracker = ({ matchId, isLive, statistics }: UseMatchPh
       if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
       if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
     };
-  }, [matchId, isLive, inferPhase, applyPhase]);
+  }, [matchId, isLive, sportmonksFixtureId]);
 
   return { ...state, isLoading };
 };
+
+function mapDbToState(row: any): MatchPhaseState {
+  return {
+    phase: row.phase || 'safe',
+    ballX: Number(row.ball_x) || 50,
+    ballY: Number(row.ball_y) || 50,
+    attackingTeam: row.attacking_team || null,
+    homeAttacks: row.home_attacks || 0,
+    homeDangerousAttacks: row.home_dangerous_attacks || 0,
+    awayAttacks: row.away_attacks || 0,
+    awayDangerousAttacks: row.away_dangerous_attacks || 0,
+    homePossession: Number(row.home_possession) || 50,
+    awayPossession: Number(row.away_possession) || 50,
+  };
+}
+
+function mapApiToState(s: any): MatchPhaseState {
+  return {
+    phase: s.phase || 'safe',
+    ballX: s.ball_x ?? 50,
+    ballY: s.ball_y ?? 50,
+    attackingTeam: s.attacking_team || null,
+    homeAttacks: s.home_attacks || 0,
+    homeDangerousAttacks: s.home_dangerous_attacks || 0,
+    awayAttacks: s.away_attacks || 0,
+    awayDangerousAttacks: s.away_dangerous_attacks || 0,
+    homePossession: s.home_possession ?? 50,
+    awayPossession: s.away_possession ?? 50,
+  };
+}
+
+function inferPhaseFromStats(newStats: any, oldStats: any): Partial<MatchPhaseState> | null {
+  if (!oldStats) return null;
+
+  const sotDeltaHome = (newStats.shotsOnTarget?.home ?? 0) - (oldStats.shotsOnTarget?.home ?? 0);
+  const sotDeltaAway = (newStats.shotsOnTarget?.away ?? 0) - (oldStats.shotsOnTarget?.away ?? 0);
+  const shotsDeltaHome = (newStats.shots?.home ?? 0) - (oldStats.shots?.home ?? 0);
+  const shotsDeltaAway = (newStats.shots?.away ?? 0) - (oldStats.shots?.away ?? 0);
+  const cornersDeltaHome = (newStats.corners?.home ?? 0) - (oldStats.corners?.home ?? 0);
+  const cornersDeltaAway = (newStats.corners?.away ?? 0) - (oldStats.corners?.away ?? 0);
+
+  if (sotDeltaHome > 0) return { phase: 'dangerous_attack', attackingTeam: 'home', ballX: 82, ballY: 45 + Math.random() * 10 };
+  if (sotDeltaAway > 0) return { phase: 'dangerous_attack', attackingTeam: 'away', ballX: 18, ballY: 45 + Math.random() * 10 };
+  if (cornersDeltaHome > 0) return { phase: 'setpiece', attackingTeam: 'home', ballX: 92, ballY: 15 };
+  if (cornersDeltaAway > 0) return { phase: 'setpiece', attackingTeam: 'away', ballX: 8, ballY: 15 };
+  if (shotsDeltaHome > 0) return { phase: 'attack', attackingTeam: 'home', ballX: 68, ballY: 50 };
+  if (shotsDeltaAway > 0) return { phase: 'attack', attackingTeam: 'away', ballX: 32, ballY: 50 };
+
+  const homePoss = newStats.possession?.home ?? 50;
+  if (homePoss > 60) return { phase: 'attack', attackingTeam: 'home', ballX: 62, ballY: 50 };
+  if (homePoss < 40) return { phase: 'attack', attackingTeam: 'away', ballX: 38, ballY: 50 };
+
+  return null;
+}
