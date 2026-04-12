@@ -1,0 +1,16 @@
+{
+  "name": "RealScore - Live Sports Scores & AI Predictions",
+  "short_name": "RealScore",
+  "description": "Live sports scores, match details, and AI-powered predictions",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#6d28d9",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
