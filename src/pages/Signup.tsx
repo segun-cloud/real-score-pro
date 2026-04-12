@@ -25,19 +25,27 @@ export const Signup = ({ onNavigateToLogin, onSignupSuccess }: SignupProps) => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
       });
-      if (error) {
+
+      if (result.error) {
         toast({
           title: "Google sign-up failed",
-          description: error.message,
+          description: result.error.message,
           variant: "destructive",
         });
       }
+
+      if (result.redirected) {
+        return;
+      }
+
+      toast({
+        title: "Success!",
+        description: "Your account has been created",
+      });
+      onSignupSuccess();
     } catch (error) {
       toast({
         title: "Error",
