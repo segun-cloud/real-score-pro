@@ -41,6 +41,7 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [showA2HS, setShowA2HS] = useState(false);
   const { toast } = useToast();
 
   // Subscribe to favorite notifications for logged-in users
