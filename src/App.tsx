@@ -378,6 +378,7 @@ const App = () => {
         <div className="min-h-screen w-full overflow-x-hidden bg-background">
           <Toaster />
           <Sonner />
+          {showA2HS && <AddToHomeScreenGuide onDismiss={handleDismissA2HS} />}
           {showHeaderAndNav && (
             <Header
               coins={user ? coins : 0}
