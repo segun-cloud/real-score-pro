@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Home } from "./pages/Home";
+import { AddToHomeScreenGuide } from "./components/AddToHomeScreenGuide";
 import { CompetitionDetails } from "./pages/CompetitionDetails";
 import { MatchDetails } from "./pages/MatchDetails";
 import { Profile } from "./pages/Profile";
@@ -40,12 +41,31 @@ const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  const [showA2HS, setShowA2HS] = useState(false);
   const { toast } = useToast();
 
   // Subscribe to favorite notifications for logged-in users
   useFavoriteNotifications(user?.id);
 
-  // Authentication state management
+  // Show Add to Home Screen guide once on mobile
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as any).standalone === true;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const dismissed = localStorage.getItem("a2hs_dismissed");
+
+    if (isMobile && !isStandalone && !dismissed) {
+      // Delay slightly so it doesn't flash during initial load
+      const timer = setTimeout(() => setShowA2HS(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleDismissA2HS = () => {
+    setShowA2HS(false);
+    localStorage.setItem("a2hs_dismissed", "1");
+  };
   useEffect(() => {
     // Set up auth state listener
     const {
@@ -358,6 +378,7 @@ const App = () => {
         <div className="min-h-screen w-full overflow-x-hidden bg-background">
           <Toaster />
           <Sonner />
+          {showA2HS && <AddToHomeScreenGuide onDismiss={handleDismissA2HS} />}
           {showHeaderAndNav && (
             <Header
               coins={user ? coins : 0}
