@@ -47,7 +47,25 @@ const App = () => {
   // Subscribe to favorite notifications for logged-in users
   useFavoriteNotifications(user?.id);
 
-  // Authentication state management
+  // Show Add to Home Screen guide once on mobile
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as any).standalone === true;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const dismissed = localStorage.getItem("a2hs_dismissed");
+
+    if (isMobile && !isStandalone && !dismissed) {
+      // Delay slightly so it doesn't flash during initial load
+      const timer = setTimeout(() => setShowA2HS(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const handleDismissA2HS = () => {
+    setShowA2HS(false);
+    localStorage.setItem("a2hs_dismissed", "1");
+  };
   useEffect(() => {
     // Set up auth state listener
     const {
