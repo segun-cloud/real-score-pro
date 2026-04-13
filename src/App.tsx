@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Home } from "./pages/Home";
+import { AddToHomeScreenGuide } from "./components/AddToHomeScreenGuide";
 import { CompetitionDetails } from "./pages/CompetitionDetails";
 import { MatchDetails } from "./pages/MatchDetails";
 import { Profile } from "./pages/Profile";
