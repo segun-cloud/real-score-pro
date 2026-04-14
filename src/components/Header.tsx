@@ -1,4 +1,5 @@
 import { Coins, Gamepad2, LogIn, Sparkles } from "lucide-react";
+import { BannerAd } from "./BannerAd";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -96,12 +97,7 @@ export const Header = ({ coins, onFunHubClick, selectedSport, onSportChange, use
         </div>
       </div>
       
-      {/* Banner Ad Placeholder */}
-      <div className="bg-muted/50 border-t border-border/30 p-2 text-center">
-        <div className="bg-secondary/30 rounded-lg py-2 px-4 text-xs text-muted-foreground/70">
-          Banner Ad (AdMob ID: ca-app-pub-5502720572669424/8305362784)
-        </div>
-      </div>
+      <BannerAd position="top" />
     </header>
   );
 };
