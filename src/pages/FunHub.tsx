@@ -27,7 +27,7 @@ interface FunHubProps {
 type ActiveView = 'list' | 'teamDetails' | 'training' | 'kitManager' | 'simulation';
 
 export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
-  const [userCoins, setUserCoins] = useState(1000);
+  const [userCoins, setUserCoins] = useState(0);
   const [userTeams, setUserTeams] = useState<UserTeam[]>([]);
   const [selectedSport, setSelectedSport] = useState<SportType | null>(null);
   const [showTeamBuilder, setShowTeamBuilder] = useState(false);
@@ -137,11 +137,11 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
 
       if (playersError) throw playersError;
 
-      // Deduct coins
-      const { error: coinsError } = await supabase
-        .from('user_profiles')
-        .update({ coins: userCoins - totalCost })
-        .eq('id', userId);
+      // Atomic coin deduction via Postgres function (prevents race conditions / negatives)
+      const { error: coinsError } = await supabase.rpc('deduct_coins', {
+        _user_id: userId,
+        _amount: totalCost,
+      });
 
       if (coinsError) throw coinsError;
 
@@ -158,8 +158,20 @@ export const FunHub = ({ userId, onCoinsUpdate, onNavigate }: FunHubProps) => {
   };
 
   const generateRandomName = () => {
-    const firstNames = ['James', 'John', 'Robert', 'Michael', 'William', 'David', 'Carlos', 'Luis', 'Marco', 'Andre'];
-    const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Martinez', 'Rodriguez', 'Silva', 'Santos'];
+    const firstNames = [
+      'James', 'John', 'Robert', 'Michael', 'William', 'David', 'Carlos', 'Luis', 'Marco', 'Andre',
+      'Diego', 'Pablo', 'Sergio', 'Alvaro', 'Mateo', 'Lucas', 'Hugo', 'Leo', 'Pedro', 'Joao',
+      'Rafael', 'Bruno', 'Ricardo', 'Felix', 'Oscar', 'Mario', 'Ivan', 'Eric', 'Kevin', 'Nathan',
+      'Adam', 'Owen', 'Jack', 'Harry', 'George', 'Oliver', 'Liam', 'Noah', 'Ethan', 'Aaron',
+      'Tom', 'Sam', 'Ben', 'Max', 'Alex', 'Charlie', 'Henry', 'Daniel', 'Antonio', 'Francesco'
+    ];
+    const lastNames = [
+      'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Martinez', 'Rodriguez', 'Silva', 'Santos',
+      'Lopez', 'Gonzalez', 'Hernandez', 'Perez', 'Sanchez', 'Ramirez', 'Torres', 'Flores', 'Rivera', 'Gomez',
+      'Diaz', 'Cruz', 'Morales', 'Reyes', 'Ortiz', 'Castro', 'Vargas', 'Romero', 'Nunez', 'Aguilar',
+      'Wilson', 'Taylor', 'Davies', 'Evans', 'Thomas', 'Roberts', 'Walker', 'Wright', 'Robinson', 'Thompson',
+      'Rossi', 'Bianchi', 'Conti', 'Esposito', 'Ricci', 'Marino', 'Greco', 'Bruno', 'Gallo', 'Costa'
+    ];
     return `${firstNames[Math.floor(Math.random() * firstNames.length)]} ${lastNames[Math.floor(Math.random() * lastNames.length)]}`;
   };
 

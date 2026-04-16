@@ -2,8 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// VAPID public key - in production, generate your own key pair
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+// VAPID public key — MUST be replaced with a real key generated via web-push.
+// The placeholder below is the well-known Mozilla demo key and CANNOT deliver
+// notifications from your edge functions. Set VITE_VAPID_PUBLIC_KEY in env to
+// enable push notifications.
+const VAPID_PUBLIC_KEY = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) || '';
+const HAS_REAL_VAPID = !!VAPID_PUBLIC_KEY && VAPID_PUBLIC_KEY.length > 20;
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -87,6 +91,13 @@ export const usePushNotifications = (userId: string | undefined) => {
   const subscribe = useCallback(async () => {
     if (!userId) {
       toast.error('Please login to enable notifications');
+      return false;
+    }
+
+    if (!HAS_REAL_VAPID) {
+      toast.error('Push notifications not configured', {
+        description: 'A VAPID key is required. In-app notifications still work.',
+      });
       return false;
     }
 
