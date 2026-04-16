@@ -340,13 +340,6 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </div>
         );
 
-      case "statistics":
-        if (!hasStats) {
-          return (
-            <div className="text-center text-muted-foreground py-8 text-sm">Statistics not available</div>
-          );
-        }
-
       case "odds":
         return (
           <Card className="p-4">
@@ -371,7 +364,13 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
         );
 
       case "statistics":
-        const renderStatRow = (label: string, homeStat?: number, awayStat?: number) => {
+        if (!hasStats) {
+          return (
+            <Card className="p-6 text-center">
+              <p className="text-sm text-muted-foreground">Statistics not available for this match yet.</p>
+            </Card>
+          );
+        }
           if (homeStat === undefined || awayStat === undefined) return null;
           return (
             <div className="flex justify-between items-center text-xs py-2 border-b">
