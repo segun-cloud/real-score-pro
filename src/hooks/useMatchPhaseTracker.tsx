@@ -98,20 +98,22 @@ export const useMatchPhaseTracker = ({ matchId, isLive, sportmonksFixtureId, sta
     const inferred = inferPhaseFromStats(statistics, prevStatsRef.current);
     prevStatsRef.current = { ...statistics };
 
-    // Always update possession/attack counts
-    setState(prev => ({
-      ...prev,
-      homePossession: statistics.possession?.home ?? prev.homePossession,
-      awayPossession: statistics.possession?.away ?? prev.awayPossession,
-      homeAttacks: statistics.shots?.home ?? prev.homeAttacks,
-      awayAttacks: statistics.shots?.away ?? prev.awayAttacks,
-      homeDangerousAttacks: statistics.shotsOnTarget?.home ?? prev.homeDangerousAttacks,
-      awayDangerousAttacks: statistics.shotsOnTarget?.away ?? prev.awayDangerousAttacks,
-    }));
+    // Single setState — merge possession/attack updates AND any inferred phase atomically.
+    setState(prev => {
+      const next: MatchPhaseState = {
+        ...prev,
+        homePossession: statistics.possession?.home ?? prev.homePossession,
+        awayPossession: statistics.possession?.away ?? prev.awayPossession,
+        homeAttacks: statistics.shots?.home ?? prev.homeAttacks,
+        awayAttacks: statistics.shots?.away ?? prev.awayAttacks,
+        homeDangerousAttacks: statistics.shotsOnTarget?.home ?? prev.homeDangerousAttacks,
+        awayDangerousAttacks: statistics.shotsOnTarget?.away ?? prev.awayDangerousAttacks,
+      };
+      return inferred ? { ...next, ...inferred } : next;
+    });
 
     if (inferred) {
       if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
-      setState(prev => ({ ...prev, ...inferred }));
       decayTimerRef.current = setTimeout(() => {
         setState(prev => ({ ...prev, phase: 'safe', attackingTeam: null, ballX: 50, ballY: 50 }));
       }, 15000);
@@ -134,19 +136,21 @@ export const useMatchPhaseTracker = ({ matchId, isLive, sportmonksFixtureId, sta
         const inferred = inferPhaseFromStats(freshStats, prevStatsRef.current);
         prevStatsRef.current = { ...freshStats };
 
-        setState(prev => ({
-          ...prev,
-          homePossession: freshStats.possession?.home ?? prev.homePossession,
-          awayPossession: freshStats.possession?.away ?? prev.awayPossession,
-          homeAttacks: freshStats.shots?.home ?? prev.homeAttacks,
-          awayAttacks: freshStats.shots?.away ?? prev.awayAttacks,
-          homeDangerousAttacks: freshStats.shotsOnTarget?.home ?? prev.homeDangerousAttacks,
-          awayDangerousAttacks: freshStats.shotsOnTarget?.away ?? prev.awayDangerousAttacks,
-        }));
+        setState(prev => {
+          const next: MatchPhaseState = {
+            ...prev,
+            homePossession: freshStats.possession?.home ?? prev.homePossession,
+            awayPossession: freshStats.possession?.away ?? prev.awayPossession,
+            homeAttacks: freshStats.shots?.home ?? prev.homeAttacks,
+            awayAttacks: freshStats.shots?.away ?? prev.awayAttacks,
+            homeDangerousAttacks: freshStats.shotsOnTarget?.home ?? prev.homeDangerousAttacks,
+            awayDangerousAttacks: freshStats.shotsOnTarget?.away ?? prev.awayDangerousAttacks,
+          };
+          return inferred ? { ...next, ...inferred } : next;
+        });
 
         if (inferred) {
           if (decayTimerRef.current) clearTimeout(decayTimerRef.current);
-          setState(prev => ({ ...prev, ...inferred }));
           decayTimerRef.current = setTimeout(() => {
             setState(prev => ({ ...prev, phase: 'safe', attackingTeam: null, ballX: 50, ballY: 50 }));
           }, 15000);

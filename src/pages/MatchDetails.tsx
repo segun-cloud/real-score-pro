@@ -29,7 +29,7 @@ interface MatchDetailsProps {
 export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDetailsProps) => {
   const [matchDetails, setMatchDetails] = useState<MatchDetailsType | null>(null);
   const [activeTab, setActiveTab] = useState("details");
-  const [userProfile, setUserProfile] = useState(mockUserProfile);
+  const [userProfile, setUserProfile] = useState({ ...mockUserProfile, coins: 0 });
   const [aiPredictionUnlocked, setAiPredictionUnlocked] = useState(false);
   const [aiPrediction, setAiPrediction] = useState<any>(null);
   const [isLoadingPrediction, setIsLoadingPrediction] = useState(false);
@@ -39,6 +39,25 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
   const [isCupCompetition, setIsCupCompetition] = useState(false);
   const [h2hData, setH2hData] = useState<H2HRecord | null>(null);
   const [isLoadingH2h, setIsLoadingH2h] = useState(false);
+
+  // Load REAL user coin balance + subscribe to changes
+  useEffect(() => {
+    let mounted = true;
+    const loadCoins = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !mounted) return;
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('coins')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profile && mounted) {
+        setUserProfile(prev => ({ ...prev, coins: profile.coins }));
+      }
+    };
+    loadCoins();
+    return () => { mounted = false; };
+  }, []);
 
   // Hook must be called before any early returns
   const matchPhase = useMatchPhaseTracker({
@@ -167,21 +186,23 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
       
       setIsLoadingStandings(true);
       try {
-        // Find league ID from database
+        // Use full league name with ilike, maybeSingle to avoid silent failures
         const { data: league } = await supabase
           .from('leagues')
           .select('api_league_id')
-          .ilike('name', `%${matchDetails.league.split(' ').slice(0, 2).join(' ')}%`)
-          .single();
-        
+          .ilike('name', `%${matchDetails.league}%`)
+          .maybeSingle();
+
         if (league?.api_league_id) {
           const { data, error } = await supabase.functions.invoke('fetch-league-standings', {
             body: { leagueId: league.api_league_id }
           });
-          
+
           if (!error && data?.standings) {
             setStandings(data.standings);
           }
+        } else {
+          console.log('[Standings] No league row found for:', matchDetails.league);
         }
       } catch (error) {
         console.error('Error loading standings:', error);
@@ -340,13 +361,6 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </div>
         );
 
-      case "statistics":
-        if (!hasStats) {
-          return (
-            <div className="text-center text-muted-foreground py-8 text-sm">Statistics not available</div>
-          );
-        }
-
       case "odds":
         return (
           <Card className="p-4">
@@ -370,7 +384,14 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </Card>
         );
 
-      case "statistics":
+      case "statistics": {
+        if (!hasStats) {
+          return (
+            <Card className="p-6 text-center">
+              <p className="text-sm text-muted-foreground">Statistics not available for this match yet.</p>
+            </Card>
+          );
+        }
         const renderStatRow = (label: string, homeStat?: number, awayStat?: number) => {
           if (homeStat === undefined || awayStat === undefined) return null;
           return (
@@ -476,6 +497,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             </div>
           </Card>
         );
+      }
 
       case "prediction":
         if (!aiPredictionUnlocked && !userProfile.isPremium) {
@@ -1096,56 +1118,25 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
               isLoading={isLoadingH2h}
             />
 
-            {/* Recent & Upcoming Fixtures */}
-            <h3 className="text-sm font-semibold">Recent & Upcoming Fixtures</h3>
-            <div className="space-y-3">
-              <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">{matchDetails.homeTeam} Fixtures</h4>
+            {/* Recent & Upcoming Fixtures — only render if real data exists */}
+            {matchDetails.h2h?.recentMatches && matchDetails.h2h.recentMatches.length > 0 ? (
+              <>
+                <h3 className="text-sm font-semibold">Recent Meetings</h3>
                 <div className="space-y-2">
-                  {[
-                    { date: "Jan 12", opponent: "vs Sevilla", result: "W 2-1", status: "finished" },
-                    { date: "Jan 15", opponent: "vs Barcelona", result: "2-1", status: "live" },
-                    { date: "Jan 18", opponent: "@ Valencia", result: "-", status: "scheduled" },
-                    { date: "Jan 22", opponent: "vs Atletico", result: "-", status: "scheduled" }
-                  ].map((fixture, i) => (
+                  {matchDetails.h2h.recentMatches.map((m: any, i: number) => (
                     <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded text-xs">
-                      <span className="text-muted-foreground">{fixture.date}</span>
-                      <span className="flex-1 text-center">{fixture.opponent}</span>
-                      <span className={`font-medium ${
-                        fixture.status === 'finished' 
-                          ? fixture.result.startsWith('W') ? 'text-green-600' : 'text-red-600'
-                          : fixture.status === 'live' ? 'text-primary' : 'text-muted-foreground'
-                      }`}>
-                        {fixture.result}
-                      </span>
+                      <span className="text-muted-foreground">{m.date || ''}</span>
+                      <span className="flex-1 text-center">{m.homeTeam} vs {m.awayTeam}</span>
+                      <span className="font-medium">{m.homeScore ?? '-'}-{m.awayScore ?? '-'}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-              <div>
-                <h4 className="text-xs font-medium text-muted-foreground mb-2">{matchDetails.awayTeam} Fixtures</h4>
-                <div className="space-y-2">
-                  {[
-                    { date: "Jan 12", opponent: "vs Athletic", result: "W 3-0", status: "finished" },
-                    { date: "Jan 15", opponent: "@ Real Madrid", result: "1-2", status: "live" },
-                    { date: "Jan 19", opponent: "vs Getafe", result: "-", status: "scheduled" },
-                    { date: "Jan 23", opponent: "@ Real Sociedad", result: "-", status: "scheduled" }
-                  ].map((fixture, i) => (
-                    <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded text-xs">
-                      <span className="text-muted-foreground">{fixture.date}</span>
-                      <span className="flex-1 text-center">{fixture.opponent}</span>
-                      <span className={`font-medium ${
-                        fixture.status === 'finished' 
-                          ? fixture.result.startsWith('W') ? 'text-green-600' : 'text-red-600'
-                          : fixture.status === 'live' ? 'text-primary' : 'text-muted-foreground'
-                      }`}>
-                        {fixture.result}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+              </>
+            ) : (
+              <Card className="p-4 text-center">
+                <p className="text-xs text-muted-foreground">No recent fixtures available for these teams.</p>
+              </Card>
+            )}
           </div>
         );
 
@@ -1153,36 +1144,29 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
         return (
           <div className="space-y-4">
             <h3 className="text-sm font-semibold">Match Media</h3>
-            <div className="space-y-4">
+            {matchDetails.media?.highlights && matchDetails.media.highlights.length > 0 ? (
               <div>
                 <h4 className="text-xs font-medium mb-2">Match Highlights</h4>
                 <div className="grid grid-cols-2 gap-2">
-                  {[
-                    "Benzema Goal (23')",
-                    "Lewandowski Goal (67')",
-                    "Vinicius Goal (78')",
-                    "Best Saves"
-                  ].map((highlight, i) => (
-                    <div key={i} className="bg-muted p-3 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors">
+                  {matchDetails.media.highlights.map((h: any, i: number) => (
+                    <div
+                      key={i}
+                      className="bg-muted p-3 rounded-lg cursor-pointer hover:bg-muted/80 transition-colors"
+                      onClick={() => h.url && setSelectedVideo({ url: h.url, title: h.title || 'Highlight' })}
+                    >
                       <div className="aspect-video bg-primary/20 rounded mb-2 flex items-center justify-center">
                         <span className="text-xs text-muted-foreground">▶️ Play</span>
                       </div>
-                      <p className="text-xs font-medium">{highlight}</p>
+                      <p className="text-xs font-medium truncate">{h.title || `Highlight ${i + 1}`}</p>
                     </div>
                   ))}
                 </div>
               </div>
-              <div>
-                <h4 className="text-xs font-medium mb-2">Match Photos</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {Array.from({length: 6}).map((_, i) => (
-                    <div key={i} className="aspect-square bg-muted rounded-lg flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
-                      <span className="text-xs text-muted-foreground">📷</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            ) : (
+              <Card className="p-4 text-center">
+                <p className="text-xs text-muted-foreground">No highlights available yet.</p>
+              </Card>
+            )}
           </div>
         );
 
@@ -1203,16 +1187,10 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
 
 
 
-  // Determine ball position from live phase data or fallback
+  // Determine ball position from live phase data — hold last known position, no random wobble
   const getBallPosition = () => {
     if (!isLiveMatch) return { x: 50, y: 50 };
-    if (matchPhase.ballX !== 50 || matchPhase.ballY !== 50) {
-      return { x: matchPhase.ballX, y: matchPhase.ballY };
-    }
-    const minute = matchDetails.minute || 0;
-    const x = 30 + Math.sin(minute * 0.5) * 40;
-    const y = 30 + Math.cos(minute * 0.3) * 20;
-    return { x, y };
+    return { x: matchPhase.ballX, y: matchPhase.ballY };
   };
 
   // Derive currentAction from live phase

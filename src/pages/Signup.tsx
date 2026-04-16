@@ -107,10 +107,19 @@ export const Signup = ({ onNavigateToLogin, onSignupSuccess }: SignupProps) => {
           });
         }
       } else {
-        toast({
-          title: "Success!",
-          description: "Your account has been created",
-        });
+        // If session is null, email confirmation is required.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast({
+            title: "Check your email",
+            description: "We've sent a confirmation link. Confirm your email to finish signing up.",
+          });
+        } else {
+          toast({
+            title: "Success!",
+            description: "Your account has been created",
+          });
+        }
         onSignupSuccess();
       }
     } catch (error) {

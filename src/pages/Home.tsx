@@ -26,6 +26,9 @@ interface HomeProps {
   onGuestSignup?: () => void;
 }
 
+// Throttle the "no live matches" toast: show at most once per session.
+let noMatchesToastShown = false;
+
 export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGuestSignup }: HomeProps) => {
   const [filteredMatches, setFilteredMatches] = useState<Match[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -87,29 +90,33 @@ export const Home = ({ onMatchClick, selectedSport, isGuest, onGuestLogin, onGue
       if (error) throw error;
 
       const fetchedMatches = data.matches || [];
-      
+
       if (fetchedMatches.length === 0) {
-        const mockForSport = mockMatches.filter(m => 
-          m.sport === selectedSport.toLowerCase()
-        );
-        setApiMatches(mockForSport);
+        // Show empty state instead of mock data; toast at most once per session.
+        setApiMatches([]);
         setIsCached(false);
-        toast({
-          title: "Showing sample matches",
-          description: `No live ${selectedSport} matches found. Displaying sample data for testing.`,
-        });
+        if (!noMatchesToastShown) {
+          noMatchesToastShown = true;
+          toast({
+            title: "No matches found",
+            description: `No ${selectedSport} matches scheduled for this date.`,
+          });
+        }
       } else {
         setApiMatches(fetchedMatches);
         setIsCached(data.cached || false);
       }
     } catch (error) {
       console.error('Error loading API matches:', error);
-      toast({
-        title: "Using mock data",
-        description: "Unable to load live matches, showing sample data",
-        variant: "destructive",
-      });
-      setApiMatches(mockMatches.filter(m => m.sport === selectedSport.toLowerCase()));
+      setApiMatches([]);
+      if (!noMatchesToastShown) {
+        noMatchesToastShown = true;
+        toast({
+          title: "Couldn't load matches",
+          description: "There was a problem loading live matches. Please pull to refresh.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoadingApi(false);
     }

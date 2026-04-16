@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Home } from "./pages/Home";
 import { AddToHomeScreenGuide } from "./components/AddToHomeScreenGuide";
 import { CompetitionDetails } from "./pages/CompetitionDetails";
@@ -20,9 +20,9 @@ import { Match } from "./types/sports";
 import { BottomNavigation } from "./components/BottomNavigation";
 import { Header } from "./components/Header";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 import { useFavoriteNotifications } from "@/hooks/useFavoriteNotifications";
+import { useAuthReady } from "@/hooks/useAuthReady";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +31,10 @@ type Screen = 'matches' | 'match-details' | 'profile' | 'leagues' | 'favourites'
 // Screens accessible to guests (unauthenticated users)
 const GUEST_ACCESSIBLE_SCREENS: Screen[] = ['matches', 'match-details', 'feeds', 'leagues'];
 
+const isStandaloneNow = () =>
+  window.matchMedia("(display-mode: standalone)").matches ||
+  (navigator as any).standalone === true;
+
 const App = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('matches');
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -38,25 +42,35 @@ const App = () => {
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<string | null>(null);
   const [selectedSport, setSelectedSport] = useState<string>('football');
   const [coins, setCoins] = useState(0);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const [showA2HS, setShowA2HS] = useState(false);
   const { toast } = useToast();
+  const { user, isReady, lastEvent } = useAuthReady();
+  const profileFetchedForUserId = useRef<string | null>(null);
 
   // Subscribe to favorite notifications for logged-in users
   useFavoriteNotifications(user?.id);
 
-  // Show Add to Home Screen guide once on mobile
+  // Detect password recovery via URL hash (Supabase puts type=recovery in the URL fragment)
   useEffect(() => {
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone === true;
+    const hash = window.location.hash;
+    if (hash.includes("type=recovery") || window.location.pathname === "/reset-password") {
+      setCurrentScreen("update-password");
+    }
+  }, []);
+
+  // React to PASSWORD_RECOVERY event
+  useEffect(() => {
+    if (lastEvent === "PASSWORD_RECOVERY") {
+      setCurrentScreen("update-password");
+    }
+  }, [lastEvent]);
+
+  // Add to Home Screen guide — re-check standalone every load
+  useEffect(() => {
+    if (isStandaloneNow()) return;
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const dismissed = localStorage.getItem("a2hs_dismissed");
-
-    if (isMobile && !isStandalone && !dismissed) {
-      // Delay slightly so it doesn't flash during initial load
+    if (isMobile && !dismissed) {
       const timer = setTimeout(() => setShowA2HS(true), 2000);
       return () => clearTimeout(timer);
     }
@@ -66,107 +80,67 @@ const App = () => {
     setShowA2HS(false);
     localStorage.setItem("a2hs_dismissed", "1");
   };
-  useEffect(() => {
-    // Set up auth state listener
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Handle password recovery event
-      if (event === 'PASSWORD_RECOVERY') {
-        setCurrentScreen('update-password');
-        setIsLoadingAuth(false);
-        return;
-      }
-      
-      if (session?.user) {
-        // Don't redirect if updating password
-        if (currentScreen === 'update-password') {
-          setIsLoadingAuth(false);
-          return;
-        }
-        
-        // Fetch user profile to get coins and onboarding status
-        setTimeout(async () => {
-          try {
-            const { data: profile } = await supabase
-              .from('user_profiles')
-              .select('coins, onboarding_completed')
-              .eq('id', session.user.id)
-              .single();
-              
-            if (profile) {
-              setCoins(profile.coins);
-              // Check if onboarding is needed
-              if (currentScreen === 'login' || currentScreen === 'signup') {
-                if (!profile.onboarding_completed) {
-                  setCurrentScreen('onboarding');
-                } else {
-                  setCurrentScreen('matches');
-                }
-              }
-            } else {
-              // New user without profile yet
-              if (currentScreen === 'login' || currentScreen === 'signup') {
-                setCurrentScreen('onboarding');
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-            if (currentScreen === 'login' || currentScreen === 'signup') {
-              setCurrentScreen('onboarding');
-            }
-          }
-        }, 0);
-      } else {
-        setCoins(0);
-        // For guests, redirect to matches (scores view) instead of login
-        if (!GUEST_ACCESSIBLE_SCREENS.includes(currentScreen) && 
-            currentScreen !== 'login' && 
-            currentScreen !== 'signup' && 
-            currentScreen !== 'update-password') {
-          setCurrentScreen('matches');
-        }
-      }
-      setIsLoadingAuth(false);
-    });
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Fetch user profile including onboarding status
-        supabase
-          .from('user_profiles')
-          .select('coins, onboarding_completed')
-          .eq('id', session.user.id)
-          .single()
-          .then(({ data: profile }) => {
-            if (profile) {
-              setCoins(profile.coins);
-              // Check if onboarding is needed
-              if (!profile.onboarding_completed) {
-                setCurrentScreen('onboarding');
-              } else {
-                setCurrentScreen('matches');
-              }
-            } else {
-              // Profile doesn't exist yet (new user), show onboarding
-              setCurrentScreen('onboarding');
+  // Once auth is ready, fetch profile + decide initial routing.
+  useEffect(() => {
+    if (!isReady) return;
+
+    // No user: route guests to matches if they're stranded on a protected screen.
+    if (!user) {
+      setCoins(0);
+      profileFetchedForUserId.current = null;
+      setCurrentScreen((prev) => {
+        if (
+          prev === "login" ||
+          prev === "signup" ||
+          prev === "update-password" ||
+          GUEST_ACCESSIBLE_SCREENS.includes(prev)
+        ) {
+          return prev;
+        }
+        return "matches";
+      });
+      return;
+    }
+
+    // User exists. Skip if we've already fetched profile for this user.
+    if (profileFetchedForUserId.current === user.id) return;
+    profileFetchedForUserId.current = user.id;
+
+    (async () => {
+      try {
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("coins, onboarding_completed")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profile) {
+          setCoins(profile.coins);
+          setCurrentScreen((prev) => {
+            // Stay on update-password during password reset.
+            if (prev === "update-password") return prev;
+            // After login/signup, route based on onboarding.
+            if (prev === "login" || prev === "signup") {
+              return profile.onboarding_completed ? "matches" : "onboarding";
             }
-            setIsLoadingAuth(false);
+            return prev;
           });
-      } else {
-        // Guest user - show matches by default
-        setCurrentScreen('matches');
-        setIsLoadingAuth(false);
+        } else {
+          // New user without profile — onboard.
+          setCurrentScreen((prev) => {
+            if (prev === "update-password") return prev;
+            if (prev === "login" || prev === "signup" || GUEST_ACCESSIBLE_SCREENS.includes(prev)) {
+              return "onboarding";
+            }
+            return prev;
+          });
+        }
+      } catch (error) {
+        console.error("[App] Error fetching profile:", error);
       }
-    });
-    return () => subscription.unsubscribe();
-  }, []);
+    })();
+  }, [isReady, user]);
 
   // Real-time coin updates
   const updateCoins = async () => {
@@ -176,7 +150,7 @@ const App = () => {
         .from('user_profiles')
         .select('coins')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       if (profile) {
         setCoins(profile.coins);
       }
@@ -198,10 +172,9 @@ const App = () => {
   };
 
   const handleNavigate = (screen: string, competitionId?: string) => {
-    // Check if the screen requires authentication
     const screenAsType = screen as Screen;
-    const requiresAuth = !GUEST_ACCESSIBLE_SCREENS.includes(screenAsType) && 
-                         screen !== 'login' && 
+    const requiresAuth = !GUEST_ACCESSIBLE_SCREENS.includes(screenAsType) &&
+                         screen !== 'login' &&
                          screen !== 'signup';
 
     if (!user && requiresAuth) {
@@ -256,7 +229,7 @@ const App = () => {
   };
 
   const renderScreen = () => {
-    if (isLoadingAuth) {
+    if (!isReady) {
       return (
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
@@ -273,7 +246,7 @@ const App = () => {
           <Login
             onNavigateToSignup={() => setCurrentScreen('signup')}
             onLoginSuccess={() => {
-              setCurrentScreen('matches');
+              // Profile/onboarding routing handled by the isReady/user effect.
               updateCoins();
             }}
           />
@@ -283,7 +256,7 @@ const App = () => {
           <Signup
             onNavigateToLogin={() => setCurrentScreen('login')}
             onSignupSuccess={() => {
-              // Will be handled by onAuthStateChange which checks onboarding status
+              // Routing handled by the isReady/user effect.
             }}
           />
         );
@@ -367,8 +340,8 @@ const App = () => {
   };
 
   // Determine if we should show header and navigation
-  const showHeaderAndNav = currentScreen !== 'login' && 
-                           currentScreen !== 'signup' && 
+  const showHeaderAndNav = currentScreen !== 'login' &&
+                           currentScreen !== 'signup' &&
                            currentScreen !== 'onboarding' &&
                            currentScreen !== 'update-password';
 
