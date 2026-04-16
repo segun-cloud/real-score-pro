@@ -476,6 +476,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             </div>
           </Card>
         );
+      }
 
       case "prediction":
         if (!aiPredictionUnlocked && !userProfile.isPremium) {
