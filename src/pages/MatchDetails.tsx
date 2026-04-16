@@ -363,7 +363,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
           </Card>
         );
 
-      case "statistics":
+      case "statistics": {
         if (!hasStats) {
           return (
             <Card className="p-6 text-center">
@@ -371,6 +371,7 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             </Card>
           );
         }
+        const renderStatRow = (label: string, homeStat?: number, awayStat?: number) => {
           if (homeStat === undefined || awayStat === undefined) return null;
           return (
             <div className="flex justify-between items-center text-xs py-2 border-b">
