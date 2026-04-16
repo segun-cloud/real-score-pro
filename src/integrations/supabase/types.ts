@@ -1052,6 +1052,10 @@ export type Database = {
         Args: { _team_id: string; _viewer: string }
         Returns: boolean
       }
+      deduct_coins: {
+        Args: { _amount: number; _user_id: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
