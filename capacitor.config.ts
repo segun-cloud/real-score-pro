@@ -1,13 +1,20 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.28e6b2cef6444c879dd98aee80936152',
+  appId: 'com.realscore.app', // Change to your own domain style
   appName: 'RealScore',
   webDir: 'dist',
   server: {
-    url: 'https://28e6b2ce-f644-4c87-9dd9-8aee80936152.lovableproject.com?forceHideBadge=true',
+    url: 'https://real-score-pro.lovable.app', // Fixed URL
     cleartext: true
   },
+  // Add this for better native app behavior
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: "#000000"
+    }
+  }
 };
 
 export default config;
