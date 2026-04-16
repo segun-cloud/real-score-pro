@@ -13,12 +13,12 @@ interface AdMobPlugin {
   addListener: (event: string, callback: (info: any) => void) => Promise<{ remove: () => void }>;
 }
 
-// Ad unit IDs from the project
+// Ad unit IDs from the project. `null` => not yet provisioned, will no-op.
 const AD_IDS = {
   banner: "ca-app-pub-5502720572669424/8305362784",
   native: "ca-app-pub-5502720572669424/2079028457",
-  interstitial: "ca-app-pub-5502720572669424/INTERSTITIAL_ID", // Replace with real ID
-  rewarded: "ca-app-pub-5502720572669424/REWARDED_ID", // Replace with real ID
+  interstitial: null as string | null, // TODO: set real interstitial ad unit ID
+  rewarded: null as string | null,     // TODO: set real rewarded ad unit ID
 };
 
 // Test ad IDs for development
@@ -34,7 +34,8 @@ const isNativePlatform = (): boolean => {
     (window as any).Capacitor.isNativePlatform?.() === true;
 };
 
-export const useAdMob = (useTesting = false) => {
+// Default to test ads in dev/preview, real ads only in production builds.
+export const useAdMob = (useTesting: boolean = !import.meta.env.PROD) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [isNative, setIsNative] = useState(false);
   const [admob, setAdmob] = useState<AdMobPlugin | null>(null);
@@ -86,6 +87,10 @@ export const useAdMob = (useTesting = false) => {
 
   const showInterstitial = useCallback(async () => {
     if (!admob || !isInitialized) return;
+    if (!adIds.interstitial) {
+      console.warn("[AdMob] Interstitial ad ID not configured — skipping.");
+      return;
+    }
     try {
       await admob.prepareInterstitial({
         adId: adIds.interstitial,
@@ -100,6 +105,10 @@ export const useAdMob = (useTesting = false) => {
 
   const showRewarded = useCallback(async (): Promise<boolean> => {
     if (!admob || !isInitialized) return false;
+    if (!adIds.rewarded) {
+      console.warn("[AdMob] Rewarded ad ID not configured — skipping.");
+      return false;
+    }
     try {
       await admob.prepareRewardVideoAd({
         adId: adIds.rewarded,
