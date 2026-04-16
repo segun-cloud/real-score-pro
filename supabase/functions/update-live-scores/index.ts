@@ -58,7 +58,7 @@ function mapDetailedStatus(apiStatus: string): string {
 
 async function fetchLiveMatches(): Promise<LiveScore[]> {
   if (!APISPORTS_KEY) {
-    console.log('No API-Sports key configured');
+    console.log('No API-Sports key configured — early exit.');
     return [];
   }
 

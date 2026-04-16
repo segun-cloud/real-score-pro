@@ -150,10 +150,13 @@ export function useFavoriteNotifications(userId: string | undefined) {
           );
 
           if (relevant) {
-            const scoringTeam =
-              newScore.home_score > (oldScore.home_score || 0)
-                ? newScore.home_team
-                : newScore.away_team;
+            // Determine scoring team via positive diff only — guards against score corrections.
+            const homeDelta = (newScore.home_score ?? 0) - (oldScore.home_score ?? 0);
+            const awayDelta = (newScore.away_score ?? 0) - (oldScore.away_score ?? 0);
+            let scoringTeam: string | null = null;
+            if (homeDelta > 0 && awayDelta <= 0) scoringTeam = newScore.home_team;
+            else if (awayDelta > 0 && homeDelta <= 0) scoringTeam = newScore.away_team;
+            if (!scoringTeam) return; // ambiguous — skip notification
 
             toast.success(
               `⚽ GOAL! ${scoringTeam} scores!\n${newScore.home_team} ${newScore.home_score} - ${newScore.away_score} ${newScore.away_team}`,
