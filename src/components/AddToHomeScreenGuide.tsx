@@ -26,6 +26,20 @@ export const AddToHomeScreenGuide = ({ onDismiss }: AddToHomeScreenGuideProps) =
   const [platform] = useState<Platform>(detectPlatform);
   const [step, setStep] = useState(0);
 
+  // ESC key to dismiss
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onDismiss();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onDismiss]);
+
+  // Re-check standalone — if user installed mid-session, auto-dismiss.
+  useEffect(() => {
+    if (isStandalone()) onDismiss();
+  }, [onDismiss]);
+
   const iosSteps = [
     {
       icon: <Share className="h-10 w-10 text-primary" />,
