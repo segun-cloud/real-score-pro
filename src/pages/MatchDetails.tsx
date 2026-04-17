@@ -1119,14 +1119,14 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
             />
 
             {/* Recent & Upcoming Fixtures — only render if real data exists */}
-            {matchDetails.h2h?.recentMatches && matchDetails.h2h.recentMatches.length > 0 ? (
+            {matchDetails.h2h?.recentMeetings && matchDetails.h2h.recentMeetings.length > 0 ? (
               <>
                 <h3 className="text-sm font-semibold">Recent Meetings</h3>
                 <div className="space-y-2">
-                  {matchDetails.h2h.recentMatches.map((m: any, i: number) => (
+                  {matchDetails.h2h.recentMeetings.map((m, i) => (
                     <div key={i} className="flex justify-between items-center p-2 bg-muted/50 rounded text-xs">
                       <span className="text-muted-foreground">{m.date || ''}</span>
-                      <span className="flex-1 text-center">{m.homeTeam} vs {m.awayTeam}</span>
+                      <span className="flex-1 text-center">{matchDetails.homeTeam} vs {matchDetails.awayTeam}</span>
                       <span className="font-medium">{m.homeScore ?? '-'}-{m.awayScore ?? '-'}</span>
                     </div>
                   ))}
