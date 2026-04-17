@@ -6,10 +6,86 @@ const corsHeaders = {
 };
 
 const APISPORTS_KEY = Deno.env.get('APISPORTS_KEY');
+const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+// SportMonks free-tier league IDs
+// 271 = Danish Superliga, 501 = Scottish Premiership
+const SPORTMONKS_FREE_LEAGUE_IDS = [271, 501];
+
+// SportMonks fixture state IDs that count as "in play"
+// 2=1st half, 3=2nd half, 4=HT, 22=ET 1H, 23=ET 2H, 25=Pen Live, 27=Break
+const SPORTMONKS_LIVE_STATE_IDS = [2, 3, 4, 22, 23, 25, 27];
+
+function mapSportmonksStatus(stateId: number): 'scheduled' | 'live' | 'finished' {
+  if (SPORTMONKS_LIVE_STATE_IDS.includes(stateId)) return 'live';
+  // 5=FT, 7=AET, 11=Pens FT, 13=Postp, 14=Cancl, 15=Abandon, 16=Tech Loss, 17=WO
+  if ([5, 7, 11].includes(stateId)) return 'finished';
+  return 'scheduled';
+}
+
+async function fetchLiveFromSportMonks() {
+  if (!SPORTMONKS_API_KEY) {
+    console.log('SportMonks key not configured — skipping fallback');
+    return [];
+  }
+
+  console.log('Falling back to SportMonks for live matches (free-tier leagues)');
+  const url = `https://api.sportmonks.com/v3/football/livescores/inplay?api_token=${SPORTMONKS_API_KEY}&include=participants;league;scores;state`;
+
+  try {
+    const response = await fetch(url);
+    await logApiRequest('sportmonks/livescores/inplay', 'football', response.status, false);
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error(`SportMonks Error: ${response.status} - ${text}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const fixtures = data?.data || [];
+    console.log(`SportMonks returned ${fixtures.length} live fixtures (all leagues)`);
+
+    // Filter to free-tier leagues only
+    const filtered = fixtures.filter((f: any) =>
+      SPORTMONKS_FREE_LEAGUE_IDS.includes(f.league_id)
+    );
+    console.log(`SportMonks: ${filtered.length} fixtures in free-tier leagues`);
+
+    return filtered.map((f: any) => {
+      const home = f.participants?.find((p: any) => p.meta?.location === 'home');
+      const away = f.participants?.find((p: any) => p.meta?.location === 'away');
+      const homeScore = f.scores?.find((s: any) => s.participant_id === home?.id && s.description === 'CURRENT')?.score?.goals ?? 0;
+      const awayScore = f.scores?.find((s: any) => s.participant_id === away?.id && s.description === 'CURRENT')?.score?.goals ?? 0;
+      const minute = f.periods?.find((p: any) => p.ticking)?.minutes ?? null;
+
+      return {
+        id: `sportmonks-football-${f.id}`,
+        api_match_id: `sportmonks-football-${f.id}`,
+        sport: 'football',
+        homeTeam: home?.name ?? 'Home',
+        awayTeam: away?.name ?? 'Away',
+        homeScore,
+        awayScore,
+        status: mapSportmonksStatus(f.state_id),
+        startTime: f.starting_at,
+        league: f.league?.name ?? 'Unknown',
+        homeTeamLogo: home?.image_path,
+        awayTeamLogo: away?.image_path,
+        minute,
+        round: f.round_id?.toString() ?? null,
+        sportmonksFixtureId: f.id,
+      };
+    });
+  } catch (err) {
+    console.error('SportMonks fallback failed:', err);
+    return [];
+  }
+}
 
 function mapFootballStatus(apiStatus: string): 'scheduled' | 'live' | 'finished' {
   const liveStatuses = ['1H', '2H', 'HT', 'ET', 'P', 'LIVE', 'BT'];
@@ -198,6 +274,14 @@ Deno.serve(async (req) => {
     if (sport === 'football') {
       if (liveOnly) {
         matches = await fetchLiveFootballMatches();
+        // Fallback: if API-Sports returns 0 live matches, try SportMonks free-tier leagues
+        if (matches.length === 0) {
+          const sportmonksMatches = await fetchLiveFromSportMonks();
+          if (sportmonksMatches.length > 0) {
+            console.log(`Using SportMonks fallback: ${sportmonksMatches.length} live matches`);
+            matches = sportmonksMatches;
+          }
+        }
       } else {
         matches = await fetchScheduledFootballMatches(targetDate);
       }
