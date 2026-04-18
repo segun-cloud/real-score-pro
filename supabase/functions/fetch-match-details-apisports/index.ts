@@ -11,17 +11,70 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { matchId } = await req.json();
-    console.log(`Fetching match details for: ${matchId}`);
+    // FIX: verify Supabase JWT — prevents unauthorized API quota consumption
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const apiKey = Deno.env.get('APISPORTS_KEY');
     if (!apiKey) {
       throw new Error('APISPORTS_KEY not configured');
     }
 
-    // Parse match ID to extract sport and fixture ID
-    const [, sport, fixtureId] = matchId.split('-');
-    
+    // FIX: wrap req.json() — malformed body returns clean 400
+    let body: { matchId?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { matchId } = body;
+
+    if (!matchId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required field: matchId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log(`Fetching match details for: ${matchId}`);
+
+    // FIX: fragile split — matchId format is "apisports-football-12345"
+    // splitting on '-' gives ['apisports', 'football', '12345'] which works for
+    // simple IDs, but slice(2).join('-') handles fixture IDs that contain dashes
+    const parts = matchId.split('-');
+    const sport = parts[1];
+    const fixtureId = parts.slice(2).join('-');
+
+    if (!sport || !fixtureId) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid matchId format. Expected: apisports-{sport}-{id}' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     let matchDetails: any = {};
 
     if (sport === 'football') {
@@ -32,6 +85,11 @@ Deno.serve(async (req) => {
       matchDetails = await fetchTennisDetails(apiKey, fixtureId);
     } else if (sport === 'baseball') {
       matchDetails = await fetchBaseballDetails(apiKey, fixtureId);
+    } else {
+      return new Response(
+        JSON.stringify({ error: `Unsupported sport: ${sport}` }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log(`Successfully fetched ${sport} match details`);
@@ -39,70 +97,110 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(matchDetails), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
+
   } catch (error) {
-    console.error('Error fetching match details:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    // FIX: safely extract message from unknown error type
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error fetching match details:', message);
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+async function safeFetch(url: string, headers: Record<string, string>): Promise<any> {
+  const response = await fetch(url, { headers });
+  // FIX: check response.ok before parsing JSON on every fetch call
+  if (!response.ok) {
+    console.warn(`API call failed [${response.status}]: ${url}`);
+    return { response: [] };
+  }
+  return response.json();
+}
+
+// FIX: findStat now strips '%' before parsing — possession values like "45%"
+// were causing parseInt to return NaN silently, always falling back to 0
+function findStat(stats: any[], type: string): number {
+  const stat = stats.find((s: any) => s.type === type);
+  if (!stat || stat.value === null) return 0;
+  const cleaned = String(stat.value).replace('%', '');
+  return parseFloat(cleaned) || 0;
+}
+
+// FIX: red card now correctly mapped — original mapped both Card types to 'yellow_card'
+function mapEventType(apiType: string, detail: string): 'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'penalty' {
+  if (apiType === 'subst') return 'substitution';
+  if (apiType === 'Goal') return detail === 'Penalty' ? 'penalty' : 'goal';
+  if (apiType === 'Card') {
+    if (detail === 'Red Card' || detail === 'Second Yellow card') return 'red_card';
+    return 'yellow_card';
+  }
+  return 'goal';
+}
+
+// ── Football ──────────────────────────────────────────────────────────────────
+
 async function fetchFootballDetails(apiKey: string, fixtureId: string) {
   const baseUrl = 'https://v3.football.api-sports.io';
-  
-  // Fetch events
-  const eventsResponse = await fetch(`${baseUrl}/fixtures/events?fixture=${fixtureId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const eventsData = await eventsResponse.json();
-  
-  // Fetch lineups
-  const lineupsResponse = await fetch(`${baseUrl}/fixtures/lineups?fixture=${fixtureId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const lineupsData = await lineupsResponse.json();
-  
-  // Fetch statistics
-  const statsResponse = await fetch(`${baseUrl}/fixtures/statistics?fixture=${fixtureId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const statsData = await statsResponse.json();
-  
-  // Fetch odds (optional)
-  let oddsData = null;
+  const headers = { 'x-apisports-key': apiKey };
+
+  // FIX: run all 3 required fetches in parallel instead of sequentially
+  // Previously 4 sequential awaits added unnecessary latency
+  const [eventsData, lineupsData, statsData] = await Promise.all([
+    safeFetch(`${baseUrl}/fixtures/events?fixture=${fixtureId}`, headers),
+    safeFetch(`${baseUrl}/fixtures/lineups?fixture=${fixtureId}`, headers),
+    safeFetch(`${baseUrl}/fixtures/statistics?fixture=${fixtureId}`, headers),
+  ]);
+
+  // Odds fetched separately since failure is acceptable
+  let oddsData: any = null;
   try {
-    const oddsResponse = await fetch(`${baseUrl}/odds?fixture=${fixtureId}`, {
-      headers: { 'x-apisports-key': apiKey },
-    });
-    oddsData = await oddsResponse.json();
-  } catch (error) {
+    oddsData = await safeFetch(`${baseUrl}/odds?fixture=${fixtureId}`, headers);
+  } catch {
     console.log('Odds not available for this match');
   }
 
-  // Map events
+  // Determine home team ID for correct team assignment on events
+  const homeTeamId = lineupsData.response?.[0]?.team?.id;
+
+  // FIX: pass detail to mapEventType so red/yellow cards are distinguished
+  // FIX: team resolved from homeTeamId — event.fixture.teams doesn't exist on event objects
   const events = (eventsData.response || []).map((event: any) => ({
     minute: event.time.elapsed,
-    type: mapEventType(event.type),
-    player: event.player.name,
-    team: event.team.id === event.fixture?.teams?.home?.id ? 'home' : 'away',
+    type: mapEventType(event.type, event.detail),
+    player: event.player?.name,
+    assistedBy: event.assist?.name || undefined,
+    team: homeTeamId && event.team?.id === homeTeamId ? 'home' : 'away',
     description: event.detail,
   }));
 
   // Map lineups
   let lineups = null;
-  if (lineupsData.response && lineupsData.response.length >= 2) {
+  if (lineupsData.response?.length >= 2) {
+    const mapPlayer = (p: any) => ({
+      name: p.player.name,
+      position: p.player.pos,
+      number: p.player.number,
+      isSubstitute: false,
+    });
+    const mapSub = (p: any) => ({
+      name: p.player.name,
+      position: p.player.pos,
+      number: p.player.number,
+      isSubstitute: true,
+    });
     lineups = {
-      home: lineupsData.response[0].startXI.map((p: any) => ({
-        name: p.player.name,
-        position: p.player.pos,
-        number: p.player.number,
-      })),
-      away: lineupsData.response[1].startXI.map((p: any) => ({
-        name: p.player.name,
-        position: p.player.pos,
-        number: p.player.number,
-      })),
+      home: [
+        ...lineupsData.response[0].startXI.map(mapPlayer),
+        ...(lineupsData.response[0].substitutes || []).map(mapSub),
+      ],
+      away: [
+        ...lineupsData.response[1].startXI.map(mapPlayer),
+        ...(lineupsData.response[1].substitutes || []).map(mapSub),
+      ],
       homeFormation: lineupsData.response[0].formation,
       awayFormation: lineupsData.response[1].formation,
     };
@@ -110,14 +208,9 @@ async function fetchFootballDetails(apiKey: string, fixtureId: string) {
 
   // Map statistics
   const statistics: any = {};
-  if (statsData.response && statsData.response.length >= 2) {
+  if (statsData.response?.length >= 2) {
     const homeStats = statsData.response[0].statistics;
     const awayStats = statsData.response[1].statistics;
-    
-    const findStat = (stats: any[], type: string) => {
-      const stat = stats.find((s: any) => s.type === type);
-      return stat ? parseInt(stat.value) || 0 : 0;
-    };
 
     statistics.possession = {
       home: findStat(homeStats, 'Ball Possession'),
@@ -139,45 +232,49 @@ async function fetchFootballDetails(apiKey: string, fixtureId: string) {
       home: findStat(homeStats, 'Fouls'),
       away: findStat(awayStats, 'Fouls'),
     };
+    statistics.passes = {
+      home: findStat(homeStats, 'Total passes'),
+      away: findStat(awayStats, 'Total passes'),
+    };
+    statistics.yellowCards = {
+      home: findStat(homeStats, 'Yellow Cards'),
+      away: findStat(awayStats, 'Yellow Cards'),
+    };
+    statistics.redCards = {
+      home: findStat(homeStats, 'Red Cards'),
+      away: findStat(awayStats, 'Red Cards'),
+    };
   }
 
   // Map odds
   let odds = null;
-  if (oddsData?.response && oddsData.response.length > 0) {
-    const bookmaker = oddsData.response[0].bookmakers[0];
-    const matchWinner = bookmaker.bets.find((b: any) => b.name === 'Match Winner');
+  if (oddsData?.response?.length > 0) {
+    const bookmaker = oddsData.response[0].bookmakers?.[0];
+    const matchWinner = bookmaker?.bets?.find((b: any) => b.name === 'Match Winner');
     if (matchWinner) {
       odds = {
-        homeWin: parseFloat(matchWinner.values[0].odd),
+        homeWin: parseFloat(matchWinner.values[0]?.odd || '0'),
         draw: parseFloat(matchWinner.values[1]?.odd || '0'),
-        awayWin: parseFloat(matchWinner.values[2]?.odd || matchWinner.values[1]?.odd),
+        awayWin: parseFloat(matchWinner.values[2]?.odd || '0'),
         updated: bookmaker.last_update,
       };
     }
   }
 
-  return {
-    events,
-    lineups,
-    statistics,
-    odds,
-  };
+  return { events, lineups, statistics, odds };
 }
+
+// ── Basketball ────────────────────────────────────────────────────────────────
 
 async function fetchBasketballDetails(apiKey: string, gameId: string) {
   const baseUrl = 'https://v1.basketball.api-sports.io';
-  
-  // Fetch statistics
-  const statsResponse = await fetch(`${baseUrl}/games/statistics?id=${gameId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const statsData = await statsResponse.json();
-  
-  // Fetch events
-  const eventsResponse = await fetch(`${baseUrl}/games/events?id=${gameId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const eventsData = await eventsResponse.json();
+  const headers = { 'x-apisports-key': apiKey };
+
+  // FIX: parallel fetches
+  const [statsData, eventsData] = await Promise.all([
+    safeFetch(`${baseUrl}/games/statistics?id=${gameId}`, headers),
+    safeFetch(`${baseUrl}/games/events?id=${gameId}`, headers),
+  ]);
 
   const events = (eventsData.response || []).map((event: any) => ({
     minute: parseInt(event.time),
@@ -188,10 +285,10 @@ async function fetchBasketballDetails(apiKey: string, gameId: string) {
   }));
 
   const statistics: any = {};
-  if (statsData.response && statsData.response.length >= 2) {
-    const homeStats = statsData.response[0].statistics[0];
-    const awayStats = statsData.response[1].statistics[0];
-    
+  if (statsData.response?.length >= 2) {
+    const homeStats = statsData.response[0].statistics?.[0];
+    const awayStats = statsData.response[1].statistics?.[0];
+
     statistics.fieldGoalPercentage = {
       home: parseFloat(homeStats?.fieldGoalsPercentage || '0'),
       away: parseFloat(awayStats?.fieldGoalsPercentage || '0'),
@@ -210,61 +307,51 @@ async function fetchBasketballDetails(apiKey: string, gameId: string) {
     };
   }
 
-  return {
-    events,
-    statistics,
-    lineups: null,
-    odds: null,
-  };
+  return { events, statistics, lineups: null, odds: null };
 }
+
+// ── Tennis ────────────────────────────────────────────────────────────────────
 
 async function fetchTennisDetails(apiKey: string, gameId: string) {
   const baseUrl = 'https://v1.tennis.api-sports.io';
-  
-  const statsResponse = await fetch(`${baseUrl}/games/statistics?id=${gameId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const statsData = await statsResponse.json();
+  const statsData = await safeFetch(
+    `${baseUrl}/games/statistics?id=${gameId}`,
+    { 'x-apisports-key': apiKey }
+  );
 
   const statistics: any = {};
-  if (statsData.response && statsData.response.length > 0) {
-    const player1Stats = statsData.response[0];
-    const player2Stats = statsData.response[1];
-    
+  if (statsData.response?.length >= 2) {
+    const p1 = statsData.response[0];
+    const p2 = statsData.response[1];
+
     statistics.aces = {
-      home: parseInt(player1Stats?.aces || '0'),
-      away: parseInt(player2Stats?.aces || '0'),
+      home: parseInt(p1?.aces || '0'),
+      away: parseInt(p2?.aces || '0'),
     };
     statistics.doubleFaults = {
-      home: parseInt(player1Stats?.doubleFaults || '0'),
-      away: parseInt(player2Stats?.doubleFaults || '0'),
+      home: parseInt(p1?.doubleFaults || '0'),
+      away: parseInt(p2?.doubleFaults || '0'),
     };
     statistics.firstServePercentage = {
-      home: parseFloat(player1Stats?.firstServePercentage || '0'),
-      away: parseFloat(player2Stats?.firstServePercentage || '0'),
+      home: parseFloat(p1?.firstServePercentage || '0'),
+      away: parseFloat(p2?.firstServePercentage || '0'),
     };
   }
 
-  return {
-    events: [],
-    statistics,
-    lineups: null,
-    odds: null,
-  };
+  return { events: [], statistics, lineups: null, odds: null };
 }
+
+// ── Baseball ──────────────────────────────────────────────────────────────────
 
 async function fetchBaseballDetails(apiKey: string, gameId: string) {
   const baseUrl = 'https://v1.baseball.api-sports.io';
-  
-  const statsResponse = await fetch(`${baseUrl}/games/statistics?id=${gameId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const statsData = await statsResponse.json();
+  const headers = { 'x-apisports-key': apiKey };
 
-  const eventsResponse = await fetch(`${baseUrl}/games/events?id=${gameId}`, {
-    headers: { 'x-apisports-key': apiKey },
-  });
-  const eventsData = await eventsResponse.json();
+  // FIX: parallel fetches
+  const [statsData, eventsData] = await Promise.all([
+    safeFetch(`${baseUrl}/games/statistics?id=${gameId}`, headers),
+    safeFetch(`${baseUrl}/games/events?id=${gameId}`, headers),
+  ]);
 
   const events = (eventsData.response || []).map((event: any) => ({
     minute: parseInt(event.inning),
@@ -275,10 +362,10 @@ async function fetchBaseballDetails(apiKey: string, gameId: string) {
   }));
 
   const statistics: any = {};
-  if (statsData.response && statsData.response.length >= 2) {
+  if (statsData.response?.length >= 2) {
     const homeStats = statsData.response[0];
     const awayStats = statsData.response[1];
-    
+
     statistics.hits = {
       home: parseInt(homeStats?.hits || '0'),
       away: parseInt(awayStats?.hits || '0'),
@@ -293,19 +380,5 @@ async function fetchBaseballDetails(apiKey: string, gameId: string) {
     };
   }
 
-  return {
-    events,
-    statistics,
-    lineups: null,
-    odds: null,
-  };
-}
-
-function mapEventType(apiType: string): 'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'penalty' {
-  const typeMap: Record<string, any> = {
-    'Goal': 'goal',
-    'Card': 'yellow_card',
-    'subst': 'substitution',
-  };
-  return typeMap[apiType] || 'goal';
+  return { events, statistics, lineups: null, odds: null };
 }
