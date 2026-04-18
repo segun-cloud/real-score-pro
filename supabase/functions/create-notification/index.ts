@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create client to verify user and check admin role
+    // Anon client to verify user identity and admin role
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
     );
 
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
-    
+
     if (userError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -44,7 +44,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify user has admin role
+    // Verify admin role before processing anything
     const { data: roleData } = await supabaseClient
       .from('user_roles')
       .select('role')
@@ -60,13 +60,32 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role client for actual notification creation
+    // FIX: wrap req.json() in try/catch — malformed body would otherwise throw
+    // a cryptic error that hits the outer catch with no useful status code
+    let payload: NotificationPayload;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // FIX: validate required fields before hitting the DB
+    // Without this, missing fields produce a cryptic DB constraint error
+    if (!payload.userId || !payload.type || !payload.title || !payload.message) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: userId, type, title, message' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Service role client for the actual DB write
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
-
-    const payload: NotificationPayload = await req.json();
 
     const { error } = await supabase
       .from('user_notifications')
@@ -75,12 +94,12 @@ Deno.serve(async (req) => {
         notification_type: payload.type,
         title: payload.title,
         message: payload.message,
-        metadata: payload.metadata || null
+        metadata: payload.metadata || null,
       });
 
     if (error) throw error;
 
-    console.log(`Notification created for user ${payload.userId}: ${payload.title}`);
+    console.log(`Notification created by admin ${user.id} for user ${payload.userId}: ${payload.title}`);
 
     return new Response(
       JSON.stringify({ success: true }),
@@ -88,9 +107,11 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating notification:', error);
+    // FIX: error is typed as unknown in Deno — safely extract message
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error creating notification:', message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
