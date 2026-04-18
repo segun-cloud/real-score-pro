@@ -17,18 +17,58 @@ const STAT_TYPES = {
   CORNERS: 34,
 };
 
+// FIX: create Supabase client once at module level instead of per request
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+);
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // FIX: verify Supabase JWT — prevents unauthorized SportMonks quota consumption
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const SPORTMONKS_API_KEY = Deno.env.get('SPORTMONKS_API_KEY');
     if (!SPORTMONKS_API_KEY) {
       throw new Error('SPORTMONKS_API_KEY is not configured');
     }
 
-    const { matchId, sportmonksFixtureId } = await req.json();
+    // FIX: wrap req.json() — malformed body returns clean 400
+    let body: { matchId?: string; sportmonksFixtureId?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { matchId, sportmonksFixtureId } = body;
 
     if (!matchId || !sportmonksFixtureId) {
       return new Response(
@@ -37,9 +77,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Fetch fixture with statistics include
-    const url = `${SPORTMONKS_BASE}/fixtures/${sportmonksFixtureId}?api_token=${SPORTMONKS_API_KEY}&include=statistics`;
-    const response = await fetch(url);
+    // NOTE: SportMonks requires api_token as a query param — header auth is not supported.
+    // The token will appear in server-side logs if the URL is logged — avoid logging it.
+    const url = new URL(`${SPORTMONKS_BASE}/fixtures/${sportmonksFixtureId}`);
+    url.searchParams.set('api_token', SPORTMONKS_API_KEY);
+    url.searchParams.set('include', 'statistics');
+
+    // FIX: log fixture ID only — never log the full URL which contains the API token
+    console.log(`Fetching SportMonks fixture: ${sportmonksFixtureId} for match: ${matchId}`);
+
+    const response = await fetch(url.toString());
 
     if (!response.ok) {
       const text = await response.text();
@@ -56,14 +103,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse statistics from the fixture
     const matchState = extractMatchState(fixture);
 
-    // Upsert into live_match_state table
-    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
+    // Upsert derived phase into live_match_state for Realtime subscribers
     const { error: upsertError } = await supabase
       .from('live_match_state')
       .upsert({
@@ -73,7 +115,17 @@ Deno.serve(async (req) => {
       }, { onConflict: 'match_id' });
 
     if (upsertError) {
+      // FIX: log error but include a warning in the response instead of silently
+      // returning success: true when the DB write actually failed
       console.error('Upsert error:', upsertError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          warning: 'Phase state could not be saved to DB',
+          state: matchState,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     return new Response(
@@ -82,9 +134,10 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error fetching live match state:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error fetching live match state:', message);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
@@ -93,7 +146,7 @@ Deno.serve(async (req) => {
 function extractMatchState(fixture: any) {
   const statistics = fixture.statistics || [];
 
-  // Group stats by participant (team)
+  // Group stats by participant ID → type ID → value
   const teamStats: Record<number, Record<number, any>> = {};
   for (const stat of statistics) {
     const pid = stat.participant_id;
@@ -101,7 +154,6 @@ function extractMatchState(fixture: any) {
     teamStats[pid][stat.type_id] = stat.data?.value ?? stat.data ?? 0;
   }
 
-  // Identify home and away participants
   const participants = fixture.participants || [];
   const homeParticipant = participants.find((p: any) => p.meta?.location === 'home');
   const awayParticipant = participants.find((p: any) => p.meta?.location === 'away');
@@ -126,22 +178,20 @@ function extractMatchState(fixture: any) {
   const homeCorners = getStat(homeId, STAT_TYPES.CORNERS);
   const awayCorners = getStat(awayId, STAT_TYPES.CORNERS);
 
-  // Determine phase based on real-time attack data
+  // NOTE: phase logic uses cumulative match totals, not per-poll deltas.
+  // This means a team that dominated early may still show as "attacking"
+  // even if they're sitting back late. Delta-based inference is handled
+  // client-side in useMatchPhaseTracker for the API-Sports fallback path.
   let phase = 'safe';
   let attackingTeam: string | null = null;
   let ballX = 50;
   let ballY = 50;
 
-  // Compare dangerous attacks to determine who's pressing
-  const dangerousDiff = homeDangerousAttacks - awayDangerousAttacks;
-  const attackDiff = homeAttacks - awayAttacks;
-
-  // Use the state_id to check if match is in play
+  // FIX: removed unused dangerousDiff and attackDiff variables
   const stateId = fixture.state_id;
   const isInPlay = [2, 3, 22, 23].includes(stateId); // 2=1H, 3=2H, 22=ET1H, 23=ET2H
 
   if (isInPlay) {
-    // Determine phase from attack momentum
     if (homeDangerousAttacks > awayDangerousAttacks && homePossession > 55) {
       phase = 'dangerous_attack';
       attackingTeam = 'home';
