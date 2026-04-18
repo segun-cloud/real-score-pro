@@ -15,14 +15,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMatchPhaseTracker } from "@/hooks/useMatchPhaseTracker";
 
 // Tab sub-components
-import { DetailsTab } from "./tabs/DetailsTab";
-import { StatisticsTab } from "./tabs/StatisticsTab";
-import { OddsTab } from "./tabs/OddsTab";
-import { StandingsTab } from "./tabs/StandingsTab";
-import { LineupsTab } from "./tabs/LineupsTab";
-import { MatchesTab } from "./tabs/MatchesTab";
-import { MediaTab } from "./tabs/MediaTab";
-import { PredictionTab } from "./tabs/PredictionTab";
+import { DetailsTab } from "./Tabs/DetailsTab";
+import { StatisticsTab } from "./Tabs/StatisticsTab";
+import { OddsTab } from "./Tabs/OddsTab";
+import { StandingsTab } from "./Tabs/StandingsTab";
+import { LineupsTab } from "./Tabs/LineupsTab";
+import { MatchesTab } from "./Tabs/MatchesTab";
+import { MediaTab } from "./Tabs/MediaTab";
+import { PredictionTab } from "./Tabs/PredictionTab";
 
 interface MatchDetailsProps {
   matchId: string;
@@ -346,6 +346,8 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
               } : undefined}
               currentAction={currentAction}
               ballPosition={getBallPosition()}
+              livePhase={matchPhase.phase}
+              liveAttackingTeam={matchPhase.attackingTeam}
             />
           );
         }
