@@ -1,3 +1,5 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -11,7 +13,49 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { leagueId, season } = await req.json();
+    // FIX: verify Supabase JWT — prevents unauthorized quota consumption
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // FIX: wrap req.json() — malformed body returns clean 400 instead of cryptic 500
+    let body: { leagueId?: string; season?: number };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { leagueId, season } = body;
+
+    // FIX: validate required field — without this API fires with league=undefined
+    if (!leagueId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required field: leagueId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!APISPORTS_KEY) {
       throw new Error('APISPORTS_KEY not configured');
@@ -20,18 +64,36 @@ Deno.serve(async (req) => {
     const currentSeason = season || new Date().getFullYear();
     console.log(`Fetching standings for league: ${leagueId}, season: ${currentSeason}`);
 
-    const url = `https://v3.football.api-sports.io/standings?league=${leagueId}&season=${currentSeason}`;
-    console.log(`Calling API-Sports: ${url}`);
+    // FIX: build URL with searchParams — key passed in header not query string
+    const url = new URL('https://v3.football.api-sports.io/standings');
+    url.searchParams.set('league', leagueId);
+    url.searchParams.set('season', String(currentSeason));
 
-    const response = await fetch(url, {
+    // FIX: log URL without API key — key is in the header, not the URL
+    console.log(`Calling API-Sports: ${url.toString()}`);
+
+    const response = await fetch(url.toString(), {
       headers: { 'x-apisports-key': APISPORTS_KEY },
     });
+
+    // FIX: check response.ok BEFORE parsing JSON — non-JSON error bodies
+    // (e.g. 429 rate limit HTML) would throw before reaching the error check
+    if (!response.ok) {
+      console.warn('API-Sports HTTP error:', response.status);
+      return new Response(
+        JSON.stringify({ standings: [], message: 'Standings not available for this league' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     const apiData = await response.json();
     console.log('API-Sports standings response:', JSON.stringify(apiData).substring(0, 500));
 
-    if (!response.ok || apiData.errors?.length > 0) {
-      console.warn('API-Sports error or no data:', apiData.errors || 'Unknown error');
+    // FIX: API-Sports returns errors as an object {}, not an array — length check
+    // on an object always returns undefined. Use Object.keys() instead.
+    const hasErrors = apiData.errors && Object.keys(apiData.errors).length > 0;
+    if (hasErrors) {
+      console.warn('API-Sports returned errors:', apiData.errors);
       return new Response(
         JSON.stringify({ standings: [], message: 'Standings not available for this league' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -63,14 +125,14 @@ Deno.serve(async (req) => {
       JSON.stringify({ standings }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
   } catch (error) {
-    console.error('Error in fetch-league-standings:', error);
+    // FIX: safely extract message from unknown error type
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error in fetch-league-standings:', message);
     return new Response(
-      JSON.stringify({ error: error.message, standings: [] }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ error: message, standings: [] }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
