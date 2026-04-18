@@ -229,11 +229,11 @@ export const MatchDetails = ({ matchId, match, onBack, onFunHubClick }: MatchDet
       if (!user) return;
       const { data } = await supabase
         .from('user_profiles')
-        .select('coins, is_premium')
+        .select('coins')
         .eq('id', user.id)
         .single();
       if (data) {
-        setUserProfile(prev => ({ ...prev, coins: data.coins, isPremium: data.is_premium }));
+        setUserProfile(prev => ({ ...prev, coins: data.coins }));
       }
     };
     loadCoins();
