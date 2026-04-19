@@ -5,9 +5,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// VAPID keys - in production, use environment variables
-const VAPID_PUBLIC_KEY = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
-const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY') || 'demo-private-key';
+// FIX: both VAPID keys from env vars — hardcoding the public key in source is a bad habit
+// even if the public key is technically safe to expose, keeping it in env keeps config consistent
+const VAPID_PUBLIC_KEY = Deno.env.get('VAPID_PUBLIC_KEY');
+const VAPID_PRIVATE_KEY = Deno.env.get('VAPID_PRIVATE_KEY');
+
+// FIX: module-level service role client
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+);
 
 interface GoalNotificationPayload {
   matchId: string;
@@ -18,36 +25,31 @@ interface GoalNotificationPayload {
   scoringTeam: 'home' | 'away';
 }
 
-async function sendWebPushNotification(
+// NOTE: Deno does not have access to the `web-push` npm package natively.
+// Real web push requires VAPID signing + encrypted payload via the Web Push Protocol.
+// Until a Deno-compatible push library is integrated (e.g. via esm.sh or a service
+// like Firebase Cloud Messaging), this function delivers in-app notifications only.
+// The push subscription data is stored and ready for when push is implemented.
+async function sendWebPush(
   subscription: { endpoint: string; p256dh: string; auth: string },
-  payload: GoalNotificationPayload
-) {
-  const scoringTeamName = payload.scoringTeam === 'home' ? payload.homeTeam : payload.awayTeam;
-  
-  const notificationPayload = JSON.stringify({
-    title: `⚽ GOAL! ${scoringTeamName}`,
-    body: `${payload.homeTeam} ${payload.homeScore} - ${payload.awayScore} ${payload.awayTeam}`,
-    icon: '/favicon.ico',
-    tag: `goal-${payload.matchId}`,
-    matchId: payload.matchId,
-    url: '/'
-  });
-
-  try {
-    // For demo purposes, we'll log the notification
-    // In production, you'd use web-push library or a service like Firebase
-    console.log('Would send push notification:', {
-      endpoint: subscription.endpoint.substring(0, 50) + '...',
-      payload: notificationPayload
-    });
-    
-    // Note: Actual web push requires web-push npm package which isn't available in Deno
-    // For production, consider using Firebase Cloud Messaging or a push notification service
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to send push notification:', error);
-    return { success: false, error };
+  title: string,
+  body: string,
+  matchId: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+    console.warn('VAPID keys not configured — skipping web push for endpoint:', subscription.endpoint.substring(0, 40));
+    return { success: false, error: 'VAPID keys not configured' };
   }
+
+  // TODO: replace this stub with a real Web Push Protocol implementation.
+  // Recommended approach: use a Deno-compatible VAPID library or proxy through
+  // a Firebase Cloud Messaging edge function.
+  console.log('Web push stub — endpoint:', subscription.endpoint.substring(0, 50) + '...');
+  console.log('Push payload:', { title, body, matchId });
+
+  // Return false so successCount accurately reflects that no push was delivered
+  // FIX: was returning { success: true } making successCount always lie
+  return { success: false, error: 'Web push not yet implemented — in-app notification sent instead' };
 }
 
 Deno.serve(async (req) => {
@@ -56,15 +58,63 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    // FIX: auth check — this function sends notifications to real users.
+    // Without this, anyone can call it and spam all users who favourite a match.
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     );
 
-    const payload: GoalNotificationPayload = await req.json();
-    console.log('Received goal notification request:', payload);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Find users who have this match favorited
+    // FIX: wrap req.json()
+    let payload: GoalNotificationPayload;
+    try {
+      payload = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // FIX: validate required payload fields
+    if (
+      !payload.matchId ||
+      !payload.homeTeam ||
+      !payload.awayTeam ||
+      !payload.scoringTeam ||
+      typeof payload.homeScore !== 'number' ||
+      typeof payload.awayScore !== 'number'
+    ) {
+      return new Response(
+        JSON.stringify({ error: 'Missing or invalid payload fields: matchId, homeTeam, awayTeam, homeScore, awayScore, scoringTeam required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Received goal notification request:', payload.matchId);
+
+    const scoringTeamName = payload.scoringTeam === 'home' ? payload.homeTeam : payload.awayTeam;
+    const notifTitle = `⚽ GOAL! ${scoringTeamName}`;
+    const notifBody = `${payload.homeTeam} ${payload.homeScore} - ${payload.awayScore} ${payload.awayTeam}`;
+
+    // Find users who have this match favourited
     const { data: favourites, error: favError } = await supabase
       .from('user_favourites')
       .select('user_id')
@@ -77,15 +127,15 @@ Deno.serve(async (req) => {
     }
 
     if (!favourites || favourites.length === 0) {
-      console.log('No users have this match favorited');
+      console.log('No users have this match favourited');
       return new Response(
         JSON.stringify({ success: true, notificationsSent: 0 }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const userIds = favourites.map(f => f.user_id);
-    console.log(`Found ${userIds.length} users with this match favorited`);
+    const userIds = [...new Set(favourites.map(f => f.user_id))];
+    console.log(`Found ${userIds.length} users with this match favourited`);
 
     // Get push subscriptions for these users
     const { data: subscriptions, error: subError } = await supabase
@@ -98,47 +148,59 @@ Deno.serve(async (req) => {
       throw subError;
     }
 
-    if (!subscriptions || subscriptions.length === 0) {
-      console.log('No push subscriptions found for favorited users');
-      return new Response(
-        JSON.stringify({ success: true, notificationsSent: 0 }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    // Attempt web push for each subscription
+    let pushSuccessCount = 0;
+    if (subscriptions && subscriptions.length > 0) {
+      const pushResults = await Promise.all(
+        subscriptions.map(sub =>
+          sendWebPush(
+            { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
+            notifTitle,
+            notifBody,
+            payload.matchId
+          )
+        )
       );
+      pushSuccessCount = pushResults.filter(r => r.success).length;
     }
 
-    console.log(`Sending notifications to ${subscriptions.length} subscriptions`);
-
-    // Send notifications to all subscribed users
-    const results = await Promise.all(
-      subscriptions.map(sub => sendWebPushNotification(
-        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth },
-        payload
-      ))
-    );
-
-    // Also create in-app notifications
-    const notifications = subscriptions.map(sub => ({
-      user_id: sub.user_id,
+    // FIX: deduplicate in-app notifications by user_id
+    // Previously mapped over subscriptions — a user with 3 devices got 3 notifications
+    const inAppNotifications = userIds.map(userId => ({
+      user_id: userId,
       notification_type: 'goal',
-      title: `⚽ GOAL! ${payload.scoringTeam === 'home' ? payload.homeTeam : payload.awayTeam}`,
-      message: `${payload.homeTeam} ${payload.homeScore} - ${payload.awayScore} ${payload.awayTeam}`,
-      metadata: { matchId: payload.matchId }
+      title: notifTitle,
+      message: notifBody,
+      metadata: { matchId: payload.matchId },
     }));
 
-    await supabase.from('user_notifications').insert(notifications);
+    // FIX: log insert error instead of silently swallowing it
+    const { error: notifError } = await supabase
+      .from('user_notifications')
+      .insert(inAppNotifications);
 
-    const successCount = results.filter(r => r.success).length;
-    console.log(`Successfully sent ${successCount} notifications`);
+    if (notifError) {
+      console.error('Failed to insert in-app notifications:', notifError);
+    }
+
+    const inAppCount = notifError ? 0 : inAppNotifications.length;
+    console.log(`Push: ${pushSuccessCount} sent | In-app: ${inAppCount} sent`);
 
     return new Response(
-      JSON.stringify({ success: true, notificationsSent: successCount }),
+      JSON.stringify({
+        success: true,
+        pushNotificationsSent: pushSuccessCount,
+        inAppNotificationsSent: inAppCount,
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error in send-goal-notification:', error);
+    // FIX: safely extract message from unknown error type
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error in send-goal-notification:', message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
