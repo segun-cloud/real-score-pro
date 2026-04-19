@@ -1,28 +1,56 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RealScore - Live Sports Scores & AI Predictions</title>
-    <meta name="description" content="Get live sports scores, match details, and AI-powered predictions for football, basketball, tennis, baseball, and boxing. Earn coins and unlock premium insights." />
-    <meta name="author" content="Lovable" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <!-- Viewport: Critical for mobile - prevents zoom, handles notches -->
+    <meta 
+      name="viewport" 
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" 
+    />
+    
+    <title>RealScore</title>
+    
+    <!-- SEO / PWA -->
+    <meta name="description" content="Live sports scores, AI predictions, and match insights" />
+    <meta name="author" content="RealScore" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="color-scheme" content="dark" />
+    
+    <!-- iOS Native App Behavior -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="RealScore" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="apple-touch-fullscreen" content="yes" />
+    
+    <!-- Android -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="RealScore" />
+    
+    <!-- Icons -->
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
     <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-    <meta name="theme-color" content="#6d28d9" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="RealScore" />
-
-    <meta property="og:title" content="RealScore - Live Sports Scores" />
-    <meta property="og:description" content="Live sports scores, match details, and AI-powered predictions" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="mask-icon" href="/icon-mask.svg" color="#000000" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preconnect to Supabase for faster API calls -->
+    <link rel="preconnect" href="https://ioajkewinekfdoayvwqs.supabase.co" />
+    <link rel="dns-prefetch" href="https://ioajkewinekfdoayvwqs.supabase.co" />
+    
+    <!-- Prevent flash of wrong theme -->
+    <script>
+      (function() {
+        document.documentElement.style.backgroundColor = '#000000';
+      })();
+    </script>
+    
+    <!-- Remove all Lovable branding -->
+    <!-- Deleted: og:title, og:description, og:type, og:image -->
+    <!-- Deleted: twitter:card, twitter:site, twitter:image -->
   </head>
 
   <body>
