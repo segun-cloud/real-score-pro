@@ -5,47 +5,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Calculate team strength based on player ratings
-async function calculateTeamStrength(supabase: any, teamId: string): Promise<number> {
+// FIX: module-level service role client
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+);
+
+// ── Team strength ─────────────────────────────────────────────────────────────
+
+async function calculateTeamStrength(teamId: string): Promise<number> {
   const { data: players } = await supabase
     .from('team_players')
     .select('overall_rating')
     .eq('team_id', teamId);
 
-  if (!players || players.length === 0) return 50; // Default strength
-
-  const avgRating = players.reduce((sum: number, p: any) => sum + (p.overall_rating || 50), 0) / players.length;
-  return avgRating;
+  if (!players || players.length === 0) return 50;
+  return players.reduce((sum: number, p: any) => sum + (p.overall_rating || 50), 0) / players.length;
 }
 
-// Simulate match result
-function simulateMatchResult(homeStrength: number, awayStrength: number) {
-  // Add home advantage (5% boost)
-  const adjustedHomeStrength = homeStrength * 1.05;
-  
-  // Calculate win probabilities
+// ── Match simulation ──────────────────────────────────────────────────────────
+
+function simulateMatchResult(homeStrength: number, awayStrength: number): { homeScore: number; awayScore: number } {
+  const adjustedHomeStrength = homeStrength * 1.05; // home advantage
   const totalStrength = adjustedHomeStrength + awayStrength;
   const homeWinProb = adjustedHomeStrength / totalStrength;
-  
-  // Add some randomness
-  const random = Math.random();
   const drawProbability = 0.25;
-  
+
+  const random = Math.random();
   let result: 'home' | 'away' | 'draw';
+
   if (random < drawProbability) {
     result = 'draw';
-  } else if (random < drawProbability + (homeWinProb * (1 - drawProbability))) {
+  } else if (random < drawProbability + homeWinProb * (1 - drawProbability)) {
     result = 'home';
   } else {
     result = 'away';
   }
-  
-  // Generate scores based on team strength
+
   const homeAttack = homeStrength / 20;
   const awayAttack = awayStrength / 20;
-  
-  let homeScore: number, awayScore: number;
-  
+
+  let homeScore: number;
+  let awayScore: number;
+
   if (result === 'home') {
     homeScore = Math.floor(homeAttack + Math.random() * 2 + 1);
     awayScore = Math.floor(awayAttack * 0.5 + Math.random() * 2);
@@ -57,9 +59,12 @@ function simulateMatchResult(homeStrength: number, awayStrength: number) {
     homeScore = baseScore;
     awayScore = baseScore;
   }
-  
-  return { homeScore, awayScore };
+
+  // FIX: ensure scores are never negative (low-rated teams + 0.5 multiplier can floor to -1)
+  return { homeScore: Math.max(0, homeScore), awayScore: Math.max(0, awayScore) };
 }
+
+// ── Main handler ──────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -67,12 +72,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get user from auth header
+    // FIX: use anon client + auth header pattern
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(
@@ -81,9 +81,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
@@ -91,7 +95,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if user is admin
+    // Admin check
     const { data: roleData } = await supabase
       .from('user_roles')
       .select('role')
@@ -100,22 +104,47 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) {
+      console.error('Non-admin attempted simulate-scheduled-matches:', user.id);
       return new Response(
         JSON.stringify({ error: 'Forbidden: Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const { matchId } = await req.json();
+    // FIX: wrap req.json()
+    let body: { matchId?: string };
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Get match details
+    const { matchId } = body;
+
+    // FIX: validate matchId
+    if (!matchId) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required field: matchId' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { data: match, error: matchError } = await supabase
       .from('matches')
       .select('*')
       .eq('id', matchId)
       .single();
 
-    if (matchError) throw matchError;
+    // FIX: return 404 instead of throwing on missing match
+    if (matchError || !match) {
+      return new Response(
+        JSON.stringify({ error: 'Match not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (match.status === 'completed') {
       return new Response(
@@ -124,91 +153,91 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Calculate team strengths
-    const homeStrength = await calculateTeamStrength(supabase, match.home_team_id);
-    const awayStrength = await calculateTeamStrength(supabase, match.away_team_id);
+    // FIX: fetch both team strengths in parallel
+    const [homeStrength, awayStrength] = await Promise.all([
+      calculateTeamStrength(match.home_team_id),
+      calculateTeamStrength(match.away_team_id),
+    ]);
 
-    // Simulate match result
     const { homeScore, awayScore } = simulateMatchResult(homeStrength, awayStrength);
+    console.log(`Simulated: ${match.home_team_id} ${homeScore} - ${awayScore} ${match.away_team_id}`);
 
-    console.log(`Match simulated: ${match.home_team_id} ${homeScore} - ${awayScore} ${match.away_team_id}`);
-
-    // Update match with result
-    await supabase
+    // Update match result
+    const { error: updateError } = await supabase
       .from('matches')
-      .update({
-        home_score: homeScore,
-        away_score: awayScore,
-        status: 'completed'
-      })
+      .update({ home_score: homeScore, away_score: awayScore, status: 'completed' })
       .eq('id', matchId);
 
-    // Determine points
-    let homePoints = 0, awayPoints = 0;
-    let homeResult: 'wins' | 'draws' | 'losses';
-    let awayResult: 'wins' | 'draws' | 'losses';
+    // FIX: throw if match update fails — previously silently continued
+    if (updateError) throw updateError;
 
-    if (homeScore > awayScore) {
-      homePoints = 3;
-      awayPoints = 0;
-      homeResult = 'wins';
-      awayResult = 'losses';
-    } else if (homeScore < awayScore) {
-      homePoints = 0;
-      awayPoints = 3;
-      homeResult = 'losses';
-      awayResult = 'wins';
-    } else {
-      homePoints = 1;
-      awayPoints = 1;
-      homeResult = 'draws';
-      awayResult = 'draws';
-    }
+    // Determine outcome
+    const homeWon = homeScore > awayScore;
+    const draw = homeScore === awayScore;
+    const homePoints = homeWon ? 3 : draw ? 1 : 0;
+    const awayPoints = homeWon ? 0 : draw ? 1 : 3;
+    const goalDiffHome = homeScore - awayScore;
 
-    // Update home team stats
-    const { data: homeParticipant } = await supabase
-      .from('competition_participants')
-      .select('*')
-      .eq('competition_id', match.competition_id)
-      .eq('team_id', match.home_team_id)
-      .single();
+    // FIX: fetch both participants in parallel with competition_id scoped query
+    const [{ data: homeParticipant }, { data: awayParticipant }] = await Promise.all([
+      supabase
+        .from('competition_participants')
+        .select('*')
+        .eq('competition_id', match.competition_id)
+        .eq('team_id', match.home_team_id)
+        .single(),
+      supabase
+        .from('competition_participants')
+        .select('*')
+        .eq('competition_id', match.competition_id)
+        .eq('team_id', match.away_team_id)
+        .single(),
+    ]);
+
+    const participantUpdates: Promise<any>[] = [];
 
     if (homeParticipant) {
-      await supabase
-        .from('competition_participants')
-        .update({
-          matches_played: homeParticipant.matches_played + 1,
-          wins: homeParticipant.wins + (homeResult === 'wins' ? 1 : 0),
-          draws: homeParticipant.draws + (homeResult === 'draws' ? 1 : 0),
-          losses: homeParticipant.losses + (homeResult === 'losses' ? 1 : 0),
-          goals_for: homeParticipant.goals_for + homeScore,
-          goals_against: homeParticipant.goals_against + awayScore,
-          points_earned: homeParticipant.points_earned + homePoints
-        })
-        .eq('id', homeParticipant.id);
+      participantUpdates.push(
+        supabase
+          .from('competition_participants')
+          .update({
+            matches_played:  (homeParticipant.matches_played || 0) + 1,
+            wins:            (homeParticipant.wins || 0) + (homeWon ? 1 : 0),
+            draws:           (homeParticipant.draws || 0) + (draw ? 1 : 0),
+            losses:          (homeParticipant.losses || 0) + (!homeWon && !draw ? 1 : 0),
+            goals_for:       (homeParticipant.goals_for || 0) + homeScore,
+            goals_against:   (homeParticipant.goals_against || 0) + awayScore,
+            // FIX: goal_difference updated — was missing, breaking standings tiebreakers
+            goal_difference: (homeParticipant.goal_difference || 0) + goalDiffHome,
+            points_earned:   (homeParticipant.points_earned || 0) + homePoints,
+          })
+          .eq('id', homeParticipant.id)
+      );
     }
 
-    // Update away team stats
-    const { data: awayParticipant } = await supabase
-      .from('competition_participants')
-      .select('*')
-      .eq('competition_id', match.competition_id)
-      .eq('team_id', match.away_team_id)
-      .single();
-
     if (awayParticipant) {
-      await supabase
-        .from('competition_participants')
-        .update({
-          matches_played: awayParticipant.matches_played + 1,
-          wins: awayParticipant.wins + (awayResult === 'wins' ? 1 : 0),
-          draws: awayParticipant.draws + (awayResult === 'draws' ? 1 : 0),
-          losses: awayParticipant.losses + (awayResult === 'losses' ? 1 : 0),
-          goals_for: awayParticipant.goals_for + awayScore,
-          goals_against: awayParticipant.goals_against + homeScore,
-          points_earned: awayParticipant.points_earned + awayPoints
-        })
-        .eq('id', awayParticipant.id);
+      participantUpdates.push(
+        supabase
+          .from('competition_participants')
+          .update({
+            matches_played:  (awayParticipant.matches_played || 0) + 1,
+            wins:            (awayParticipant.wins || 0) + (!homeWon && !draw ? 1 : 0),
+            draws:           (awayParticipant.draws || 0) + (draw ? 1 : 0),
+            losses:          (awayParticipant.losses || 0) + (homeWon ? 1 : 0),
+            goals_for:       (awayParticipant.goals_for || 0) + awayScore,
+            goals_against:   (awayParticipant.goals_against || 0) + homeScore,
+            // FIX: away goal difference is the inverse of home
+            goal_difference: (awayParticipant.goal_difference || 0) - goalDiffHome,
+            points_earned:   (awayParticipant.points_earned || 0) + awayPoints,
+          })
+          .eq('id', awayParticipant.id)
+      );
+    }
+
+    // FIX: run both updates in parallel
+    const updateResults = await Promise.all(participantUpdates);
+    for (const { error } of updateResults) {
+      if (error) console.error('Participant update error:', error);
     }
 
     return new Response(
@@ -218,16 +247,18 @@ Deno.serve(async (req) => {
           homeTeam: match.home_team_id,
           awayTeam: match.away_team_id,
           homeScore,
-          awayScore
-        }
+          awayScore,
+        },
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Error simulating match:', error);
+    // FIX: safely extract message from unknown error type
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error simulating match:', message);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
