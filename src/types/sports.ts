@@ -1,3 +1,17 @@
+// FIX: import SportType from funhub-types instead of duplicating the union here
+// If you prefer to keep this file standalone, keep the SportType definition below
+// but remove it from funhub-types.ts to avoid the two getting out of sync.
+export type SportType =
+  | 'football'
+  | 'basketball'
+  | 'tennis'
+  | 'baseball'
+  | 'boxing'
+  | 'cricket'
+  | 'ice-hockey'
+  | 'rugby'
+  | 'american-football';
+
 export interface Match {
   id: string;
   homeTeam: string;
@@ -6,7 +20,7 @@ export interface Match {
   awayScore?: number;
   status: 'scheduled' | 'live' | 'finished';
   startTime: string;
-  sport: 'football' | 'basketball' | 'tennis' | 'baseball' | 'boxing' | 'cricket' | 'ice-hockey' | 'rugby' | 'american-football';
+  sport: SportType;
   league: string;
   minute?: number;
   homeTeamLogo?: string;
@@ -46,7 +60,9 @@ export interface MatchMedia {
 
 export interface MatchDetails extends Match {
   events: MatchEvent[];
-  odds: Odds;
+  // FIX: odds made optional — MatchDetails.tsx initialises it as a default empty
+  // object when real odds aren't available, so non-optional caused type errors
+  odds?: Odds;
   lineups?: Lineups;
   statistics: Statistics;
   commentary: Commentary[];
@@ -57,10 +73,16 @@ export interface MatchDetails extends Match {
 
 export interface MatchEvent {
   minute: number;
-  type: 'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'penalty';
-  player: string;
+  type: 'goal' | 'yellow_card' | 'red_card' | 'substitution' | 'penalty' | 'corner' | 'halftime';
+  // FIX: player made optional — not all event types have a named player (e.g. halftime)
+  player?: string;
   team: 'home' | 'away';
-  description: string;
+  description?: string;
+  // FIX: added missing fields used in LiveMatchTracker
+  assistedBy?: string;
+  playerIn?: string;  // for substitution events
+  playerOut?: string; // for substitution events
+  score?: { home: number; away: number }; // snapshot score at time of event
 }
 
 export interface Odds {
@@ -86,7 +108,7 @@ export interface Player {
 }
 
 export interface Statistics {
-  // Football/Soccer
+  // ── Football ────────────────────────────────────────────────────────────────
   possession?: { home: number; away: number };
   shots?: { home: number; away: number };
   shotsOnTarget?: { home: number; away: number };
@@ -98,8 +120,12 @@ export interface Statistics {
   attacks?: { home: number; away: number };
   dangerousAttacks?: { home: number; away: number };
   bigChances?: { home: number; away: number };
-  
-  // Basketball
+  // FIX: added yellowCards and redCards — used in LiveMatchTracker stats grid
+  // and returned by fetch-match-details-apisports but missing from this type
+  yellowCards?: { home: number; away: number };
+  redCards?: { home: number; away: number };
+
+  // ── Basketball ───────────────────────────────────────────────────────────────
   fieldGoalPercentage?: { home: number; away: number };
   threePointPercentage?: { home: number; away: number };
   freeThrowPercentage?: { home: number; away: number };
@@ -108,16 +134,16 @@ export interface Statistics {
   steals?: { home: number; away: number };
   blocks?: { home: number; away: number };
   turnovers?: { home: number; away: number };
-  
-  // Tennis
+
+  // ── Tennis ───────────────────────────────────────────────────────────────────
   aces?: { home: number; away: number };
   doubleFaults?: { home: number; away: number };
   firstServePercentage?: { home: number; away: number };
   breakPointsWon?: { home: number; away: number };
   winners?: { home: number; away: number };
   unforcedErrors?: { home: number; away: number };
-  
-  // Baseball
+
+  // ── Baseball ─────────────────────────────────────────────────────────────────
   hits?: { home: number; away: number };
   runs?: { home: number; away: number };
   errors?: { home: number; away: number };
@@ -125,8 +151,8 @@ export interface Statistics {
   strikeouts?: { home: number; away: number };
   walks?: { home: number; away: number };
   homeRuns?: { home: number; away: number };
-  
-  // Boxing
+
+  // ── Boxing ───────────────────────────────────────────────────────────────────
   punchesThrown?: { home: number; away: number };
   punchesLanded?: { home: number; away: number };
   punchAccuracy?: { home: number; away: number };
@@ -140,9 +166,12 @@ export interface Commentary {
   text: string;
 }
 
+// FIX: UserProfile aligned with actual Supabase DB column name (is_premium snake_case)
+// and added premiumExpiry for consistency. The component should map is_premium → isPremium
+// when reading from DB, or use is_premium directly throughout.
 export interface UserProfile {
   id: string;
   coins: number;
-  isPremium: boolean;
+  isPremium: boolean;   // maps from DB column: is_premium
   premiumExpiry?: string;
 }
